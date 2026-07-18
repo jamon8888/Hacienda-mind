@@ -25,7 +25,7 @@ use anyhow::Context as _;
 use xberg::core::mime;
 use xberg::embeddings::{EMBEDDING_PRESETS, EmbeddingPreset};
 
-use crate::config::{DocumentsConfig, LlmConfig};
+use crate::config::{DocumentsConfig, LlmConfig, PiiConfig};
 use crate::extract::doc::{DocConfig, FileMapDoc, extract_doc};
 use crate::hashing::{self, Hash};
 use crate::lance::DocumentRow;
@@ -69,7 +69,12 @@ pub(crate) fn preset_dim(name: &str) -> anyhow::Result<u16> {
 /// Translate the project-level `[documents]` config into the xberg-facing
 /// [`DocConfig`] the extractor expects. Pulled out so the wiring in
 /// `process_file` stays a single call.
-pub(crate) fn doc_config_from(cfg: &DocumentsConfig, llm: &LlmConfig, embed: bool) -> DocConfig {
+pub(crate) fn doc_config_from(
+    cfg: &DocumentsConfig,
+    llm: &LlmConfig,
+    pii: &PiiConfig,
+    embed: bool,
+) -> DocConfig {
     DocConfig {
         max_characters: cfg.max_characters,
         overlap: cfg.overlap,
@@ -81,6 +86,7 @@ pub(crate) fn doc_config_from(cfg: &DocumentsConfig, llm: &LlmConfig, embed: boo
         summarization: cfg.summarization.clone(),
         llm: llm.clone(),
         embed_max_threads: cfg.embed_max_threads,
+        pii: pii.clone(),
     }
 }
 
@@ -220,6 +226,7 @@ pub(crate) fn extract_and_persist_doc(
     mime_type: &str,
     cfg: &DocumentsConfig,
     llm: &LlmConfig,
+    pii: &PiiConfig,
     scope: &str,
     mode: EmbedMode,
 ) -> Result<Option<PendingDocBatch>, anyhow::Error> {
@@ -235,7 +242,7 @@ pub(crate) fn extract_and_persist_doc(
         return Ok(Some(pending_from_doc(cached, rel, scope, cfg, embed)));
     }
 
-    let doc_config = doc_config_from(cfg, llm, embed);
+    let doc_config = doc_config_from(cfg, llm, pii, embed);
     let doc: FileMapDoc =
         extract_doc(abs, Some(mime_type), &doc_config).with_context(|| format!("extract document {rel}"))?;
     store
@@ -585,7 +592,7 @@ mod tests {
             },
             ..Default::default()
         };
-        let doc_cfg = doc_config_from(&cfg, &LlmConfig::default(), cfg.embed);
+        let doc_cfg = doc_config_from(&cfg, &LlmConfig::default(), &PiiConfig::default(), cfg.embed);
         assert!(doc_cfg.language.auto_detect);
         assert_eq!(doc_cfg.language.min_confidence, 0.5);
         assert!(doc_cfg.language.detect_multiple);
@@ -606,7 +613,7 @@ mod tests {
             model: "openai/gpt-4o".to_string(),
             ..Default::default()
         };
-        let doc_cfg = doc_config_from(&cfg, &llm, cfg.embed);
+        let doc_cfg = doc_config_from(&cfg, &llm, &PiiConfig::default(), cfg.embed);
         assert!(doc_cfg.summarization.enabled);
         assert_eq!(doc_cfg.summarization.max_tokens, Some(150));
         assert_eq!(doc_cfg.llm.model, "openai/gpt-4o");

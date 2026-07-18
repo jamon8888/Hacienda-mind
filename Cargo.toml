@@ -3,6 +3,7 @@ members = [
     "crates/tree-sitter-graph",
     "crates/tree-sitter-stack-graphs",
     "crates/lsp-positions",
+    "crates/pii-candle",
 ]
 
 # Shared lint policy for the owned forks under crates/*. The root basemind package opts in via
@@ -61,6 +62,10 @@ documents = [
     "xberg/qr-codes",
     "dep:serde_toon_format",
 ]
+
+# In-process GLiNER2 + Candle PII detection (vendored xberg-gliner-candle), used
+# to redact PERSON/ORG/LOCATION that xberg's pattern redaction engine misses.
+pii = ["dep:pii-candle"]
 
 code-search = ["intelligence", "xberg/embeddings", "xberg/reranker", "xberg/reranker-presets"]
 
@@ -128,6 +133,7 @@ oxc_resolver = { version = "=11.23.0", optional = true }
 oxc_semantic = { version = "=0.138.0", optional = true }
 oxc_span = { version = "=0.138.0", optional = true }
 oxc_syntax = { version = "=0.138.0", optional = true }
+pii-candle = { path = "crates/pii-candle", optional = true }
 rayon = "1"
 regex = "1.13.0"
 rmcp = { version = "2.2", features = ["server", "macros", "schemars", "transport-io"] }

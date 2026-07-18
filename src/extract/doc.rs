@@ -22,8 +22,8 @@ use xberg::{ExtractInput, extract};
 
 use super::{ExtractError, SCHEMA_VER};
 use crate::config::{
-    DocLanguageConfig, KeywordAlgorithm, KeywordsConfig, LlmConfig, NerBackend, NerConfig, SummarizationConfig,
-    SummarizationStrategy,
+    DocLanguageConfig, KeywordAlgorithm, KeywordsConfig, LlmConfig, NerBackend, NerConfig, PiiConfig,
+    SummarizationConfig, SummarizationStrategy,
 };
 
 /// Per-file document extraction result. Mirrors the shape of `FileMapL1` —
@@ -167,6 +167,9 @@ pub struct DocConfig {
     /// Bounded thread cap for xberg's internal ONNX embedding fan-out.
     /// `0` resolves to `max(2, cores / 4)` via `crate::embeddings::resolve_embed_threads`.
     pub embed_max_threads: usize,
+    /// Candle (GLiNER2 + LoRA) PII redaction config. Applied in-process after
+    /// xberg extraction; when disabled or the model is unavailable, a no-op.
+    pub pii: PiiConfig,
 }
 
 impl Default for DocConfig {
@@ -182,6 +185,7 @@ impl Default for DocConfig {
             summarization: SummarizationConfig::default(),
             llm: LlmConfig::default(),
             embed_max_threads: 0,
+            pii: PiiConfig::default(),
         }
     }
 }
@@ -403,10 +407,15 @@ pub fn extract_doc(path: &Path, mime_type: Option<&str>, config: &DocConfig) -> 
             if dim > 0 && embedding_dim == 0 {
                 embedding_dim = u16::try_from(dim).unwrap_or(u16::MAX);
             }
+            let text = if config.pii.enabled {
+                crate::extract::pii::redact_pii(&c.content, &config.pii).0
+            } else {
+                c.content
+            };
             chunks.push(DocChunk {
                 byte_start: u32::try_from(c.metadata.byte_start).unwrap_or(u32::MAX),
                 byte_end: u32::try_from(c.metadata.byte_end).unwrap_or(u32::MAX),
-                text: c.content,
+                text,
                 embedding: c.embedding.unwrap_or_default(),
             });
         }
@@ -453,7 +462,11 @@ pub fn extract_doc(path: &Path, mime_type: Option<&str>, config: &DocConfig) -> 
     Ok(FileMapDoc {
         schema_ver: SCHEMA_VER,
         mime_type: result.mime_type.into_owned(),
-        content: result.content,
+        content: if config.pii.enabled {
+            crate::extract::pii::redact_pii(&result.content, &config.pii).0
+        } else {
+            result.content
+        },
         metadata,
         detected_languages: result.detected_languages.unwrap_or_default(),
         chunks,

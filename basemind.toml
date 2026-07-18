@@ -62,6 +62,22 @@
 # archive can't explode into thousands of embeds. True binaries are always skipped.
 # extract_archives = false
 
+[pii]
+# In-process GLiNER2 + Candle PII redaction (vendored xberg-gliner-candle).
+# Redacts PERSON / ORGANIZATION / LOCATION from extracted document text using a
+# local model. Requires a `pii` build of basemind. When model_dir is missing or
+# the model fails to load, the pass is skipped (graceful) — the scan still runs.
+enabled = true
+model_dir = "E:/basemind-pii-model"
+# Optional PEFT LoRA adapter dir (adapter_config.json + adapter_model.safetensors).
+# lora_adapter_dir = "E:/basemind-pii-model/adapter"
+# Redaction strategy: mask | hash | token_replace | drop.
+strategy = "mask"
+# Categories to detect (default: person, organization, location).
+# categories = ["person", "organization", "location"]
+# Detection confidence threshold (0.0–1.0).
+# threshold = 0.5
+
 [code_search]
 # Semantic code-search tier. Requires a `code-search` build.
 # enabled = true
