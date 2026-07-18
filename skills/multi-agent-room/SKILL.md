@@ -153,7 +153,7 @@ Reads default to RECENT so stale chatter never confuses an agent:
 - A named member must `thread_join` (or be added via `thread_add_member`) before it can post.
 - A private two-member thread reaches exactly one peer — only its members discover it.
 - Front-matter-only reads (history, inbox) are cheap. Fetch bodies only when needed.
-- The CLI offers parity: `basemind comms post --as-agent security …`,
-  `basemind comms thread-start <subject> --member perf --as-agent security`,
-  `basemind comms history <thread> --since-hours 0` (all history),
-  `basemind comms threads` (shows ACTIVE / STALE per thread).
+- The CLI offers parity: `hacienda-mcp comms post --as-agent security …`,
+  `hacienda-mcp comms thread-start <subject> --member perf --as-agent security`,
+  `hacienda-mcp comms history <thread> --since-hours 0` (all history),
+  `hacienda-mcp comms threads` (shows ACTIVE / STALE per thread).

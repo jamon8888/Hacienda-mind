@@ -1,4 +1,4 @@
-//! End-to-end smoke test for the in-process `basemind` CLI tool surface.
+//! End-to-end smoke test for the in-process `hacienda-mcp` CLI tool surface.
 //!
 //! Builds a tiny throwaway git repo, scans it with the built binary, then runs a
 //! representative slice of tool subcommands across groups. For each it asserts:
@@ -15,9 +15,9 @@ use std::process::Command;
 use serde_json::Value;
 use tempfile::TempDir;
 
-/// Path to the freshly built `basemind` binary (cargo sets `CARGO_BIN_EXE_<name>`).
+/// Path to the freshly built `hacienda-mcp` binary (cargo sets `CARGO_BIN_EXE_<name>`).
 fn bin() -> &'static str {
-    env!("CARGO_BIN_EXE_basemind")
+    env!("CARGO_BIN_EXE_hacienda-mcp")
 }
 
 fn git(repo: &Path, args: &[&str]) {
@@ -35,7 +35,7 @@ fn git(repo: &Path, args: &[&str]) {
 
 /// Build a tiny repo with a couple of Rust files and an initial commit, then scan it.
 fn build_and_scan() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     git(root, &["init", "-q"]);
@@ -48,16 +48,16 @@ fn build_and_scan() -> TempDir {
     let status = Command::new(bin())
         .args(["--root", root.to_str().unwrap(), "scan", "--quiet"])
         .status()
-        .expect("run basemind scan");
-    assert!(status.success(), "basemind scan failed");
+        .expect("run hacienda-mcp scan");
+    assert!(status.success(), "hacienda-mcp scan failed");
     dir
 }
 
-/// Run `basemind --root <root> [extra args...]` and return (stdout, success).
+/// Run `hacienda-mcp --root <root> [extra args...]` and return (stdout, success).
 fn run(root: &Path, args: &[&str]) -> (String, bool) {
     let mut full = vec!["--root", root.to_str().unwrap()];
     full.extend_from_slice(args);
-    let output = Command::new(bin()).args(&full).output().expect("run basemind");
+    let output = Command::new(bin()).args(&full).output().expect("run hacienda-mcp");
     (
         String::from_utf8_lossy(&output.stdout).into_owned(),
         output.status.success(),
@@ -211,7 +211,7 @@ fn rescan_scoped_path_reindexes_only_that_path() {
 ///   support = 3, freq[a.rs] = 4, confidence = 3/4 = 0.75 >= 0.1.
 #[cfg(feature = "memory")]
 fn build_cochange_fixture() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     git(root, &["init", "-q"]);
@@ -239,16 +239,16 @@ fn build_cochange_fixture() -> TempDir {
     let status = Command::new(bin())
         .args(["--root", root.to_str().unwrap(), "scan", "--quiet"])
         .status()
-        .expect("run basemind scan");
-    assert!(status.success(), "basemind scan failed on cochange fixture");
+        .expect("run hacienda-mcp scan");
+    assert!(status.success(), "hacienda-mcp scan failed on cochange fixture");
     dir
 }
 
-/// Run `basemind --root <root> [extra args...]` and return (stdout, stderr, success).
+/// Run `hacienda-mcp --root <root> [extra args...]` and return (stdout, stderr, success).
 fn run_full(root: &Path, args: &[&str]) -> (String, String, bool) {
     let mut full = vec!["--root", root.to_str().unwrap()];
     full.extend_from_slice(args);
-    let output = Command::new(bin()).args(&full).output().expect("run basemind");
+    let output = Command::new(bin()).args(&full).output().expect("run hacienda-mcp");
     (
         String::from_utf8_lossy(&output.stdout).into_owned(),
         String::from_utf8_lossy(&output.stderr).into_owned(),

@@ -21,14 +21,14 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-/// Allowed schemes for the basemind crawler. Adding a scheme here is a
+/// Allowed schemes for the hacienda-mcp crawler. Adding a scheme here is a
 /// security decision — keep the list small.
 const ALLOWED_SCHEMES: &[&str] = &["http", "https"];
 
 /// Environment variable that, when set to `1`, disables the private-host
 /// denylist. Opt-in escape hatch for users that legitimately crawl loopback /
 /// RFC1918 / link-local hosts (e.g. an internal docs server).
-const ALLOW_PRIVATE_HOSTS_ENV: &str = "BASEMIND_ALLOW_PRIVATE_HOSTS";
+const ALLOW_PRIVATE_HOSTS_ENV: &str = "HACIENDA_MCP_ALLOW_PRIVATE_HOSTS";
 
 /// Host names that always resolve to the loopback interface and so must be
 /// rejected alongside the literal loopback IPs. `url::Url` does not resolve
@@ -83,7 +83,7 @@ fn is_private_v6(v6: Ipv6Addr) -> bool {
 ///
 /// Returns `Ok(())` when the host is allowed (public, or the escape hatch is
 /// set), and [`UrlError::PrivateHost`] otherwise. Hosts that are textual names
-/// (not IP literals) only trip the `localhost` check — basemind does not resolve
+/// (not IP literals) only trip the `localhost` check — hacienda-mcp does not resolve
 /// DNS at parse time, so a name that later resolves to a private IP is not
 /// caught here (defence-in-depth would require a resolving HTTP client hook).
 fn reject_private_host(host: Option<url::Host<&str>>) -> Result<(), UrlError> {
@@ -157,11 +157,11 @@ impl AsRef<str> for Url {
 pub enum UrlError {
     #[error("invalid URL: {0}")]
     Invalid(String),
-    #[error("disallowed URL scheme: {0:?} (only http/https are accepted by the basemind crawler)")]
+    #[error("disallowed URL scheme: {0:?} (only http/https are accepted by the hacienda-mcp crawler)")]
     DisallowedScheme(String),
     #[error(
         "private / loopback / link-local host rejected: {0:?} \
-         (set BASEMIND_ALLOW_PRIVATE_HOSTS=1 to allow)"
+         (set HACIENDA_MCP_ALLOW_PRIVATE_HOSTS=1 to allow)"
     )]
     PrivateHost(String),
 }

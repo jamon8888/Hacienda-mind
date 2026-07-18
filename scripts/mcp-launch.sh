@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# basemind MCP launcher — ensures a version-matched basemind binary is available,
+# hacienda-mcp MCP launcher — ensures a version-matched hacienda-mcp binary is available,
 # scripts, not a compiled binary. This launcher installs a version-matched
 set -euo pipefail
 
@@ -10,7 +10,7 @@ die() {
 }
 
 die_incomplete_release() {
-	die "$1 — the basemind v${VERSION} release looks incomplete (a missing platform asset or checksums file). Update the basemind plugin to a complete release (Claude Code: run \`/plugin update\`); if it persists, report it at https://github.com/Goldziher/basemind/issues"
+	die "$1 — the hacienda-mcp v${VERSION} release looks incomplete (a missing platform asset or checksums file). Update the hacienda-mcp plugin to a complete release (Claude Code: run \`/plugin update\`); if it persists, report it at https://github.com/jamon8888/Hacienda-mind/issues"
 }
 
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
@@ -18,9 +18,9 @@ if [ -z "$PLUGIN_ROOT" ]; then
 	PLUGIN_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fi
 
-BINARY_NAME="basemind"
+BINARY_NAME="hacienda-mcp"
 case "$(uname -s)" in
-MINGW* | MSYS* | CYGWIN* | Windows_NT) BINARY_NAME="basemind.exe" ;;
+MINGW* | MSYS* | CYGWIN* | Windows_NT) BINARY_NAME="hacienda-mcp.exe" ;;
 esac
 
 MANIFEST="$PLUGIN_ROOT/.claude-plugin/plugin.json"
@@ -56,7 +56,7 @@ try_exec() {
 	fi
 }
 
-try_exec "${BASEMIND_BIN:-}" "$@"
+try_exec "${HACIENDA_MCP_BIN:-}" "$@"
 if [ -x "$MANAGED_BIN" ] && [ "$(binary_version "$MANAGED_BIN")" = "$VERSION" ]; then
 	prune_stale_versions
 	exec "$MANAGED_BIN" "$@"
@@ -91,10 +91,10 @@ case "$TRIPLE" in
 *) EXT="tar.gz" ;;
 esac
 
-BASE_URL="https://github.com/Goldziher/basemind/releases/download/v${VERSION}"
+BASE_URL="https://github.com/jamon8888/Hacienda-mind/releases/download/v${VERSION}"
 ASSET="basemind-${TRIPLE}.${EXT}"
 ASSET_URL="${BASE_URL}/${ASSET}"
-SUMS_URL="${BASE_URL}/basemind_${VERSION}_checksums.txt"
+SUMS_URL="${BASE_URL}/hacienda_mcp_${VERSION}_checksums.txt"
 
 if have curl; then
 	fetch() { curl -fsSL --retry 3 -o "$2" "$1"; }
@@ -178,7 +178,7 @@ chmod +x "$STAGING/$BINARY_NAME"
 [ -e "$CACHE_ROOT" ] && rm -rf "$CACHE_ROOT"
 mv "$STAGING" "$CACHE_ROOT"
 STAGING=""
-log "installed basemind $VERSION to $CACHE_ROOT"
+log "installed hacienda-mcp $VERSION to $CACHE_ROOT"
 
 rm -rf "$TMP"
 TMP=""

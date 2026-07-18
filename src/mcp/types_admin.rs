@@ -28,10 +28,10 @@ pub(super) struct CacheStatsResponse {
     pub telemetry_bytes: u64,
     /// Recursive byte size of the git-history index (`git-history.fjall/`).
     pub git_history_bytes: u64,
-    /// Recursive byte size of the entire `.basemind/` tree — the ground-truth footprint (matches
+    /// Recursive byte size of the entire `.hacienda-mcp/` tree — the ground-truth footprint (matches
     /// `du`). The component fields break this down; unattributed bytes are in `other_bytes`.
     pub total_bytes: u64,
-    /// Bytes under `.basemind/` not attributed to a named component (`total_bytes` minus the
+    /// Bytes under `.hacienda-mcp/` not attributed to a named component (`total_bytes` minus the
     /// component sum): legacy `index.msgpack`, lock/id/config sidecars, `.gitignore`, etc.
     pub other_bytes: u64,
     /// Total blob files on disk (every suffix counts as one file).
@@ -46,7 +46,7 @@ pub(super) struct CacheStatsResponse {
     /// Per-view indexed file count, `(view_name, file_count)`.
     pub per_view_file_count: Vec<(String, usize)>,
     /// Current resident set size (physical RAM) of the process serving this call, in bytes;
-    /// `null` when unreadable. Inside `basemind serve` this is the live MCP server process.
+    /// `null` when unreadable. Inside `hacienda-mcp serve` this is the live MCP server process.
     pub rss_bytes: Option<u64>,
     /// Peak resident set size of the serving process over its lifetime, in bytes; `null` when
     /// unreadable.

@@ -16,13 +16,13 @@ Schema-Version: v1
 
 # basemind-code-search — navigate code without reading it
 
-basemind pre-indexes the repo into a tree-sitter code map across 300+ languages. Structural
+hacienda-mcp pre-indexes the repo into a tree-sitter code map across 300+ languages. Structural
 questions — where a symbol lives, what calls it, what shape a file has — resolve from the index in
 milliseconds and return **paths, line numbers, and signatures, not file bodies**. That is a fraction
 of the tokens of reading source, so it is the default, not an optimization.
 
-**basemind first, grep/read fallback.** If a question is about _where_, _what calls_, _what shape_,
-or _what implements_, a basemind tool answers it cheaper than `grep`/`rg` or opening files. Drop to
+**hacienda-mcp first, grep/read fallback.** If a question is about _where_, _what calls_, _what shape_,
+or _what implements_, a hacienda-mcp tool answers it cheaper than `grep`/`rg` or opening files. Drop to
 raw shell only when no tool covers the question.
 
 ## The discipline
@@ -35,24 +35,24 @@ raw shell only when no tool covers the question.
   text matches.
 - **`workspace_grep` instead of shelling out to ripgrep** when you genuinely need regex over
   content — it runs over the in-RAM index and returns capped, structured hits.
-- **Do not re-read a file basemind already mapped.** If the outline answered the question, stop.
+- **Do not re-read a file hacienda-mcp already mapped.** If the outline answered the question, stop.
 - **`rescan` after you edit code**, not a server reconnect. Pass `paths: [...]` to limit it.
 
 ## Tool routing
 
 | Question | MCP tool | CLI |
 |---|---|---|
-| "Where is X defined?" | `search_symbols` (substring, optional `kind`) | `basemind query symbol "X"` |
-| "What's the shape of file F?" | `outline` (add `l2: true` for calls + docs) | `basemind query outline F [--l2]` |
-| "What calls X?" (any name) | `find_references` | `basemind query references "X"` |
-| "What calls this specific definition?" | `find_callers` (path + name + optional kind) | `basemind query callers F name [--kind]` |
-| "Trace the call graph from a function?" | `call_graph` (BFS, bounded by `max_depth` / `max_nodes`) | `basemind query call-graph "name" [--direction --max-depth]` |
-| "What implements / extends / inherits X?" | `find_implementations` (Rust, Python, TS/TSX, JS) | `basemind query implementations "X"` |
-| "What imports module M?" | `dependents` | `basemind query dependents "M"` |
-| "What files are indexed?" | `list_files` (filter by `language` / `path_contains`) | `basemind query list-files [--language --path-contains]` |
-| "Regex over file contents?" | `workspace_grep` | `basemind query grep "pattern" [--language --path-contains]` |
-| "What's indexed?" | `status` | `basemind query status` |
-| "Refresh the index after editing?" | `rescan` (optional `paths`) | `basemind scan` |
+| "Where is X defined?" | `search_symbols` (substring, optional `kind`) | `hacienda-mcp query symbol "X"` |
+| "What's the shape of file F?" | `outline` (add `l2: true` for calls + docs) | `hacienda-mcp query outline F [--l2]` |
+| "What calls X?" (any name) | `find_references` | `hacienda-mcp query references "X"` |
+| "What calls this specific definition?" | `find_callers` (path + name + optional kind) | `hacienda-mcp query callers F name [--kind]` |
+| "Trace the call graph from a function?" | `call_graph` (BFS, bounded by `max_depth` / `max_nodes`) | `hacienda-mcp query call-graph "name" [--direction --max-depth]` |
+| "What implements / extends / inherits X?" | `find_implementations` (Rust, Python, TS/TSX, JS) | `hacienda-mcp query implementations "X"` |
+| "What imports module M?" | `dependents` | `hacienda-mcp query dependents "M"` |
+| "What files are indexed?" | `list_files` (filter by `language` / `path_contains`) | `hacienda-mcp query list-files [--language --path-contains]` |
+| "Regex over file contents?" | `workspace_grep` | `hacienda-mcp query grep "pattern" [--language --path-contains]` |
+| "What's indexed?" | `status` | `hacienda-mcp query status` |
+| "Refresh the index after editing?" | `rescan` (optional `paths`) | `hacienda-mcp scan` |
 | "Fetch the next page?" | pass `next_cursor` from the prior response as `cursor` | — |
 
 ## Examples
@@ -77,7 +77,7 @@ outline { path: "src/mcp/tools.rs" }
   `bar()` alike. There is no scope resolution — cross-check with `outline` when disambiguation matters.
 - Lists are capped (`limit`, default 100, max 1000). Index scanners use `scan_cap = limit * 8` to
   bound work on common names.
-- Needs an index at `.basemind/` — run `basemind scan` first (see the `basemind-scan` skill). "No
+- Needs an index at `.hacienda-mcp/` — run `hacienda-mcp scan` first (see the `basemind-scan` skill). "No
   indexed files" means the scan hasn't run in this repo yet.
 
 For git history / blame / diffs see `basemind-git-history`; for document RAG and semantic search see

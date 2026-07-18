@@ -1,10 +1,10 @@
-//! Machine-registry CLI verbs (`basemind registry <verb>`).
+//! Machine-registry CLI verbs (`hacienda-mcp registry <verb>`).
 //!
 //! The registry lives in the always-on comms broker daemon (its sole writer). Like the
 //! [`comms`](super::comms) agent verbs — and unlike the code-map / memory CLI groups — these verbs
 //! connect to the daemon DIRECTLY via [`CommsClient::ensure_and_connect`] rather than building a
 //! full [`BasemindServer`](crate::mcp::BasemindServer), so they take no repo index lock and cannot
-//! clash with a running `basemind serve`.
+//! clash with a running `hacienda-mcp serve`.
 //!
 //! This is the human-admin + parity path for the machine registry MCP tools (`workspaces` /
 //! `worktrees` / `branches` / `worktree_claim` / `worktree_release`). `--json` emits the structured
@@ -73,12 +73,12 @@ pub enum RegistryCmd {
 /// Resolve the CLI agent identity, tiered to MATCH the `serve` / `comms` resolver so CLI-driven
 /// registry calls share the session's identity.
 fn cli_agent_id(root: &Path) -> Result<AgentId> {
-    if let Ok(raw) = std::env::var("BASEMIND_AGENT_ID")
+    if let Ok(raw) = std::env::var("HACIENDA_MCP_AGENT_ID")
         && let Ok(id) = AgentId::parse(raw)
     {
         return Ok(id);
     }
-    if let Ok(existing) = std::fs::read_to_string(root.join(".basemind").join("agent-id"))
+    if let Ok(existing) = std::fs::read_to_string(root.join(".hacienda-mcp").join("agent-id"))
         && let Ok(id) = AgentId::parse(existing.trim())
     {
         return Ok(id);

@@ -1,6 +1,6 @@
 //! Focused end-to-end smoke test for the scope-resolved `find_callers` path.
 //!
-//! Mirrors `mcp_smoke.rs`: scan a tiny fixture in-process, spawn `basemind serve`, and drive the
+//! Mirrors `mcp_smoke.rs`: scan a tiny fixture in-process, spawn `hacienda-mcp serve`, and drive the
 //! `find_callers` tool over the rmcp child-process transport. This one exercises the *resolved*
 //! mode — `find_callers` prefers the scope/import-resolved edges over the name scan, so a caller of
 //! a same-named function in another file is never conflated.
@@ -36,7 +36,7 @@ fn git(repo: &Path, args: &[&str]) {
 /// Two TS files each defining a `target` function: `util.ts` has two callers that resolve to its
 /// export; `other.ts` has one caller that resolves to *its own* same-named function.
 fn build_repo() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     git(root, &["init", "-q"]);
@@ -54,17 +54,17 @@ fn build_repo() -> TempDir {
 
 fn run_scan(root: &Path) {
     // Embed off: this runs `scan` on a `#[tokio::test]` thread, and an embedding scan with the ONNX
-    let mut cfg = basemind::config::default_for_root(root);
+    let mut cfg = hacienda_mcp::config::default_for_root(root);
     cfg.documents.embed = false;
     cfg.code_search.embed = false;
-    let _ = basemind::lang::ensure_grammars().expect("grammar bootstrap");
-    let mut store = basemind::store::Store::open(root, basemind::store::VIEW_WORKING).expect("open store");
-    basemind::scanner::scan(
+    let _ = hacienda_mcp::lang::ensure_grammars().expect("grammar bootstrap");
+    let mut store = hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING).expect("open store");
+    hacienda_mcp::scanner::scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .expect("scan");
 }
@@ -96,11 +96,11 @@ async fn find_callers_resolves_scope_and_ignores_same_named_symbol() {
     let root = dir.path();
     run_scan(root);
 
-    let bin = env!("CARGO_BIN_EXE_basemind");
+    let bin = env!("CARGO_BIN_EXE_hacienda-mcp");
     let cmd = AsyncCommand::new(bin).configure(|c| {
         c.arg("--root").arg(root).arg("serve").arg("--view").arg("working");
     });
-    let transport = TokioChildProcess::new(cmd).expect("spawn basemind serve");
+    let transport = TokioChildProcess::new(cmd).expect("spawn hacienda-mcp serve");
     let service = ().serve(transport).await.expect("rmcp handshake");
 
     let body = decode_text(

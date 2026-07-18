@@ -1,5 +1,5 @@
 //! Smoke tests for the root-relocated config: `basemind.toml` at the repo root is the canonical
-//! location, the legacy `.basemind/basemind.toml` is still read as a fallback, and `basemind init`
+//! location, the legacy `.hacienda-mcp/basemind.toml` is still read as a fallback, and `hacienda-mcp init`
 //! scaffolds the root file without touching `.gitignore` (the index cache is machine-global and
 //! out-of-repo, so there is nothing to ignore). Also covers the new scan/embed
 //! config fields introduced alongside the relocation (`follow_symlinks`, `embed_exclude`,
@@ -8,7 +8,7 @@
 use std::fs;
 use std::process::Command;
 
-use basemind::config;
+use hacienda_mcp::config;
 
 /// Write `contents` to `path`, creating parent dirs as needed.
 fn write(path: &std::path::Path, contents: &str) {
@@ -19,7 +19,7 @@ fn write(path: &std::path::Path, contents: &str) {
 }
 
 #[test]
-fn load_reads_root_basemind_toml() {
+fn load_reads_root_hacienda_mcp_toml() {
     let tmp = tempfile::tempdir().expect("tempdir");
     let root = tmp.path();
     write(
@@ -102,19 +102,19 @@ fn embed_exclude_parses_on_both_tiers() {
 fn init_writes_root_config_and_leaves_no_gitignore() {
     let tmp = tempfile::tempdir().expect("tempdir");
     let root = tmp.path();
-    let status = Command::new(env!("CARGO_BIN_EXE_basemind"))
+    let status = Command::new(env!("CARGO_BIN_EXE_hacienda-mcp"))
         .arg("init")
         .current_dir(root)
         .status()
-        .expect("run basemind init");
-    assert!(status.success(), "basemind init exits successfully");
+        .expect("run hacienda-mcp init");
+    assert!(status.success(), "hacienda-mcp init exits successfully");
 
     let config_path = config::config_path(root);
-    assert!(config_path.exists(), "basemind init writes root basemind.toml");
+    assert!(config_path.exists(), "hacienda-mcp init writes root basemind.toml");
     let cfg = config::load(root).expect("scaffolded config loads + validates");
     assert_eq!(cfg.schema, "v1");
 
-    // ~keep The index lives in the machine-global XDG cache, not an in-repo `.basemind/`, so init
+    // ~keep The index lives in the machine-global XDG cache, not an in-repo `.hacienda-mcp/`, so init
     // ~keep no longer touches `.gitignore` — there is nothing in the repo to ignore.
     assert!(
         !root.join(".gitignore").exists(),
@@ -127,18 +127,18 @@ fn init_refuses_to_shadow_a_legacy_in_cache_config() {
     let tmp = tempfile::tempdir().expect("tempdir");
     let root = tmp.path();
     let legacy = config::legacy_config_path(root);
-    fs::create_dir_all(legacy.parent().expect("legacy parent")).expect("mkdir .basemind");
+    fs::create_dir_all(legacy.parent().expect("legacy parent")).expect("mkdir .hacienda-mcp");
     fs::write(
         &legacy,
         "\"$schema\" = \"v1\"\n\n[scan]\nexclude = [\"**/secret/**\"]\n",
     )
     .expect("seed legacy");
 
-    let out = Command::new(env!("CARGO_BIN_EXE_basemind"))
+    let out = Command::new(env!("CARGO_BIN_EXE_hacienda-mcp"))
         .arg("init")
         .current_dir(root)
         .output()
-        .expect("run basemind init");
+        .expect("run hacienda-mcp init");
     assert!(
         !out.status.success(),
         "init must fail rather than shadow a legacy config"
@@ -167,15 +167,15 @@ fn init_leaves_an_existing_gitignore_untouched() {
     let root = tmp.path();
     fs::write(root.join(".gitignore"), "target/\n").expect("seed gitignore");
 
-    let ok = Command::new(env!("CARGO_BIN_EXE_basemind"))
+    let ok = Command::new(env!("CARGO_BIN_EXE_hacienda-mcp"))
         .arg("init")
         .current_dir(root)
         .status()
         .expect("run init");
     assert!(ok.success());
     // ~keep init no longer writes a cache entry (the cache is out-of-repo), so a pre-existing
-    // ~keep `.gitignore` is preserved verbatim and never grows a `.basemind/` line.
+    // ~keep `.gitignore` is preserved verbatim and never grows a `.hacienda-mcp/` line.
     let after = fs::read_to_string(root.join(".gitignore")).expect("read gitignore");
     assert_eq!(after, "target/\n", "existing .gitignore left byte-for-byte untouched");
-    assert!(!after.contains(".basemind"), "no .basemind entry added, got: {after:?}");
+    assert!(!after.contains(".hacienda-mcp"), "no .hacienda-mcp entry added, got: {after:?}");
 }

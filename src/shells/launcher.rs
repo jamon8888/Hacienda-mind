@@ -20,7 +20,7 @@ use anyhow::{Context, Result};
 use crate::config::{TerminalChoice, VisualMode};
 
 /// How to attach to a live rmux session: its name, the daemon socket it lives on,
-/// the initial terminal geometry, and the basemind executable to re-exec.
+/// the initial terminal geometry, and the hacienda-mcp executable to re-exec.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AttachTarget {
     /// rmux session name (the basemind-minted `bmsh-*` id).
@@ -31,7 +31,7 @@ pub struct AttachTarget {
     pub cols: u16,
     /// Initial terminal height handed to the attach driver.
     pub rows: u16,
-    /// The basemind executable to re-exec as the visual attach driver
+    /// The hacienda-mcp executable to re-exec as the visual attach driver
     /// (`current_exe()`); there is no external `rmux` binary.
     pub exe: PathBuf,
 }
@@ -40,7 +40,7 @@ impl AttachTarget {
     /// Build the shell command string that, when run inside a terminal, attaches to this session.
     ///
     /// Shape: `<exe> --__internal-attach <session_name> --socket <socket_path> --size <cols>x<rows>`.
-    /// basemind ships no external `rmux` binary, so the attach re-execs basemind itself with the
+    /// hacienda-mcp ships no external `rmux` binary, so the attach re-execs hacienda-mcp itself with the
     /// hidden `--__internal-attach` flag. Each path / name argument is quoted so values with spaces
     /// survive the host shell; `cols`/`rows` are `u16` and need no quoting.
     ///
@@ -61,7 +61,7 @@ impl AttachTarget {
         )
     }
 
-    /// The attach re-exec as a raw argument vector: the basemind exe followed by the hidden
+    /// The attach re-exec as a raw argument vector: the hacienda-mcp exe followed by the hidden
     /// `--__internal-attach` flag and its operands, each as a SEPARATE element.
     ///
     /// This is the quoting-free form a launcher passes to a terminal that forwards an argv (e.g.
@@ -80,7 +80,7 @@ impl AttachTarget {
     }
 }
 
-/// The argv basemind would execute to present a session: a program plus its arguments.
+/// The argv hacienda-mcp would execute to present a session: a program plus its arguments.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PresentCommand {
     /// Program to spawn (e.g. `osascript`, `gnome-terminal`, `wt.exe`).
@@ -469,7 +469,7 @@ mod tests {
             socket_path: PathBuf::from("/tmp/rmux.sock"),
             cols: 200,
             rows: 50,
-            exe: PathBuf::from("/usr/local/bin/basemind"),
+            exe: PathBuf::from("/usr/local/bin/hacienda-mcp"),
         }
     }
 
@@ -477,7 +477,7 @@ mod tests {
     /// single-quoted form — used by the unix + Linux-emulator assertions. Windows quotes
     /// differently (see `windows_attach_command_uses_double_quotes`).
     #[cfg(not(windows))]
-    const EXPECTED_ATTACH: &str = "'/usr/local/bin/basemind' --__internal-attach 'bmsh-1-2' --socket '/tmp/rmux.sock' \
+    const EXPECTED_ATTACH: &str = "'/usr/local/bin/hacienda-mcp' --__internal-attach 'bmsh-1-2' --socket '/tmp/rmux.sock' \
          --size 200x50";
 
     #[cfg(not(windows))]
@@ -575,7 +575,7 @@ mod tests {
         assert_eq!(cmd.args[1], "0");
         assert_eq!(cmd.args[2], "new-tab");
         assert_eq!(cmd.args[3], "--");
-        assert_eq!(cmd.args[4], "/usr/local/bin/basemind");
+        assert_eq!(cmd.args[4], "/usr/local/bin/hacienda-mcp");
         assert_eq!(cmd.args[5], "--__internal-attach");
         assert_eq!(cmd.args[6], "bmsh-1-2");
         assert_eq!(cmd.args[7], "--socket");
@@ -607,7 +607,7 @@ mod tests {
     #[test]
     fn windows_attach_command_uses_double_quotes() {
         let cmd = target().attach_command();
-        assert!(cmd.contains("\"/usr/local/bin/basemind\""), "{cmd}");
+        assert!(cmd.contains("\"/usr/local/bin/hacienda-mcp\""), "{cmd}");
         assert!(cmd.contains("\"bmsh-1-2\""), "{cmd}");
         assert!(!cmd.contains('\''), "no single quotes on Windows: {cmd}");
     }

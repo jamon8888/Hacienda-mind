@@ -3,7 +3,7 @@
 //!
 //! Mirrors the `mcp_smoke.rs` harness shape exactly: build a tiny git repo from the fixtures
 //! under `tests/fixtures/precise_resolution_{py,java}/`, scan it in-process, spawn
-//! `basemind serve` over stdio, and drive `goto_definition` / `find_callers` through the real
+//! `hacienda-mcp serve` over stdio, and drive `goto_definition` / `find_callers` through the real
 //! rmcp child-process transport. Every position and expected response body below is taken
 //! verbatim from `/tmp/track-d-test-spec.md`, which was captured empirically against the real
 //! CLI — do not eyeball or recompute positions here.
@@ -41,7 +41,7 @@ fn git(repo: &Path, args: &[&str]) {
 /// Build a throwaway git repo containing the two Python fixtures (`app.py` + `mod.py`) from
 /// `tests/fixtures/precise_resolution_py/`, copied verbatim.
 fn build_python_repo() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     git(root, &["init", "-q"]);
@@ -59,7 +59,7 @@ fn build_python_repo() -> TempDir {
 /// Build a throwaway git repo containing the two Java fixtures (`App.java` + `Foo.java`) from
 /// `tests/fixtures/precise_resolution_java/`, copied verbatim.
 fn build_java_repo() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     git(root, &["init", "-q"]);
@@ -77,20 +77,20 @@ fn build_java_repo() -> TempDir {
 /// Scan `root` into a working-tree index (same pattern as `mcp_smoke.rs::run_scan`), with
 /// embedding disabled so the test doesn't depend on the ONNX model cache.
 fn run_scan(root: &Path) {
-    let mut cfg = basemind::config::default_for_root(root);
+    let mut cfg = hacienda_mcp::config::default_for_root(root);
     cfg.documents.embed = false;
     cfg.code_search.embed = false;
-    let _ = basemind::lang::ensure_grammars().expect("grammar bootstrap");
+    let _ = hacienda_mcp::lang::ensure_grammars().expect("grammar bootstrap");
     // `#[tokio::test]`, so run the scan on a dedicated std thread to mirror the production context.
     std::thread::scope(|scope| {
         scope.spawn(|| {
-            let mut store = basemind::store::Store::open(root, basemind::store::VIEW_WORKING).expect("open store");
-            basemind::scanner::scan(
+            let mut store = hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING).expect("open store");
+            hacienda_mcp::scanner::scan(
                 root,
                 &mut store,
                 &cfg,
-                basemind::scanner::ScanSource::WorkingTree,
-                basemind::scanner::EmbedMode::Inline,
+                hacienda_mcp::scanner::ScanSource::WorkingTree,
+                hacienda_mcp::scanner::EmbedMode::Inline,
             )
             .expect("scan");
         });
@@ -120,13 +120,13 @@ fn call_params(name: &'static str, args: Value) -> CallToolRequestParams {
     params
 }
 
-/// Spawn `basemind serve --view working` against `root` and complete the rmcp handshake.
+/// Spawn `hacienda-mcp serve --view working` against `root` and complete the rmcp handshake.
 async fn spawn_serve(root: &Path) -> rmcp::service::RunningService<rmcp::RoleClient, ()> {
-    let bin = env!("CARGO_BIN_EXE_basemind");
+    let bin = env!("CARGO_BIN_EXE_hacienda-mcp");
     let cmd = AsyncCommand::new(bin).configure(|c| {
         c.arg("--root").arg(root).arg("serve").arg("--view").arg("working");
     });
-    let transport = TokioChildProcess::new(cmd).expect("spawn basemind serve");
+    let transport = TokioChildProcess::new(cmd).expect("spawn hacienda-mcp serve");
     ().serve(transport).await.expect("rmcp handshake")
 }
 

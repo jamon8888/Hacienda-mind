@@ -1,15 +1,15 @@
 # Agent (MCP) demo — capture checklist
 
-The CLI GIF (`demo.gif`) shows the command-line surface, but basemind's real
-value is the **MCP tools an agent calls** — and `basemind serve` is a stdio
+The CLI GIF (`demo.gif`) shows the command-line surface, but hacienda-mcp's real
+value is the **MCP tools an agent calls** — and `hacienda-mcp serve` is a stdio
 JSON-RPC server with nothing to _see_. The `mcp-demo.gif` screen recording
 captures the agent experience the CLI GIF can't. It is a manual capture (a live
 Claude Code session can't be scripted).
 
 ## What to show (~20–25s)
 
-1. Open a fresh Claude Code session in a real repository with the basemind
-   plugin connected (`/plugin marketplace add Goldziher/basemind`, then install).
+1. Open a fresh Claude Code session in a real repository with the hacienda-mcp
+   plugin connected (`/plugin marketplace add jamon8888/Hacienda-mind`, then install).
 2. Ask something that triggers a code-map tool, e.g. _"where is X defined and
    what calls it?"_ — show `search_symbols` / `find_references` / `outline`
    returning **paths, line numbers, and signatures, not file bodies**. The point

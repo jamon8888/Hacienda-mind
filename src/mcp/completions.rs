@@ -1,7 +1,7 @@
 //! Argument completion (`completion/complete`) for prompt arguments.
 //!
 //! MCP completion is scoped to a *reference* — a prompt or a resource template — not to arbitrary
-//! tool arguments. basemind backs the typed arguments of its [`super::prompts`] templates from the
+//! tool arguments. hacienda-mcp backs the typed arguments of its [`super::prompts`] templates from the
 //! in-RAM code map: the `trace-symbol` prompt's `symbol` argument completes against indexed symbol
 //! names, and the `explain-file` prompt's `path` argument completes against indexed file paths.
 //! Both sources are the `MapCache.by_path` snapshot already held in RAM, so completion is a pure
@@ -18,7 +18,7 @@ const MAX_COMPLETIONS: usize = 100;
 
 impl BasemindServer {
     /// Resolve a `completion/complete` request into up to [`MAX_COMPLETIONS`] candidate values.
-    /// Only prompt-argument references are completed; resource references (basemind exposes no
+    /// Only prompt-argument references are completed; resource references (hacienda-mcp exposes no
     /// resources) yield an empty list.
     pub(super) fn complete_argument(&self, params: &CompleteRequestParams) -> CompleteResult {
         let values = match &params.r#ref {
@@ -26,7 +26,7 @@ impl BasemindServer {
                 self.complete_prompt_argument(&prompt.name, &params.argument.name, &params.argument.value)
             }
             Reference::Resource(_) => Vec::new(),
-            // `Reference` is #[non_exhaustive] in rmcp 2.1; basemind exposes no resources and
+            // `Reference` is #[non_exhaustive] in rmcp 2.1; hacienda-mcp exposes no resources and
             _ => Vec::new(),
         };
         let info = CompletionInfo::new(values).unwrap_or_default();

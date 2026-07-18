@@ -1,4 +1,4 @@
-//! Regression test for bug #18 (serve half): `basemind serve --view <named>` for a view
+//! Regression test for bug #18 (serve half): `hacienda-mcp serve --view <named>` for a view
 //! that was never scanned must error with actionable guidance instead of silently opening
 //! an empty, working-like index. The working view stays exempt (it auto-scans on first run).
 //!
@@ -9,12 +9,12 @@
 use std::process::{Command, Stdio};
 
 fn bin() -> &'static str {
-    env!("CARGO_BIN_EXE_basemind")
+    env!("CARGO_BIN_EXE_hacienda-mcp")
 }
 
 #[test]
 fn serve_errors_on_never_scanned_named_view() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     std::fs::write(root.join("a.rs"), b"pub fn a() {}\n").unwrap();
@@ -23,7 +23,7 @@ fn serve_errors_on_never_scanned_named_view() {
         .args(["--root", root.to_str().unwrap(), "serve", "--view", "rev-deadbee"])
         .stdin(Stdio::null())
         .output()
-        .expect("run basemind serve");
+        .expect("run hacienda-mcp serve");
 
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert_ne!(

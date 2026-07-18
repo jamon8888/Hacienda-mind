@@ -1,13 +1,13 @@
 use std::fs;
 
-use basemind::config::ConfigV1;
-use basemind::extract::SymbolKind;
-use basemind::scanner::{FileStatus, scan, scan_paths};
-use basemind::store::Store;
+use hacienda_mcp::config::ConfigV1;
+use hacienda_mcp::extract::SymbolKind;
+use hacienda_mcp::scanner::{FileStatus, scan, scan_paths};
+use hacienda_mcp::store::Store;
 use tempfile::TempDir;
 
 fn fresh_repo() -> (TempDir, ConfigV1) {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let cfg = ConfigV1::with_defaults();
     (dir, cfg)
@@ -20,13 +20,13 @@ fn scan_extracts_rust_symbols() {
 
     fs::write(root.join("a.rs"), b"pub fn alpha() {}\npub struct Beta { x: i32 }\n").unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     let report = scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert_eq!(report.stats.updated, 1);
@@ -35,12 +35,12 @@ fn scan_extracts_rust_symbols() {
     let entry = store.lookup("a.rs").expect("a.rs indexed");
     assert_eq!(entry.language, "rust");
 
-    let hits = basemind::query::search_symbols(&store, "alpha", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "alpha", None).unwrap();
     assert_eq!(hits.len(), 1);
     assert_eq!(hits[0].symbol.kind, SymbolKind::Function);
     assert_eq!(hits[0].path.as_str(), Some("a.rs"));
 
-    let hits = basemind::query::search_symbols(&store, "Beta", Some(SymbolKind::Struct)).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "Beta", Some(SymbolKind::Struct)).unwrap();
     assert_eq!(hits.len(), 1);
 }
 
@@ -58,13 +58,13 @@ fn scan_reuses_extraction_across_views_sharing_blobs() {
     )
     .unwrap();
 
-    let mut working = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut working = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     let first = scan(
         root,
         &mut working,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert_eq!(first.stats.updated, 1);
@@ -79,8 +79,8 @@ fn scan_reuses_extraction_across_views_sharing_blobs() {
         root,
         &mut sibling,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert_eq!(second.stats.updated, 1, "file is new to this view's index");
@@ -94,7 +94,7 @@ fn scan_reuses_extraction_across_views_sharing_blobs() {
     );
 
     let hits =
-        basemind::query::search_symbols(&sibling, "reuse_across_views_alpha", Some(SymbolKind::Function)).unwrap();
+        hacienda_mcp::query::search_symbols(&sibling, "reuse_across_views_alpha", Some(SymbolKind::Function)).unwrap();
     assert_eq!(hits.len(), 1);
     assert_eq!(hits[0].path.as_str(), Some("a.rs"));
 }
@@ -104,20 +104,20 @@ fn store_open_writes_nothing_under_repo_root() {
     let (dir, _cfg) = fresh_repo();
     let root = dir.path();
 
-    let _store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let _store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
 
     // The cache is a machine-global XDG store now — opening a store must not create any
-    // `.basemind/` under the repo (the old in-repo `.gitignore` scaffolding is gone; the durable
-    // in-repo marker is the committed `basemind.toml`, written by `basemind init` in Track G).
+    // `.hacienda-mcp/` under the repo (the old in-repo `.gitignore` scaffolding is gone; the durable
+    // in-repo marker is the committed `basemind.toml`, written by `hacienda-mcp init` in Track G).
     assert!(
-        !root.join(".basemind").exists(),
-        "no in-repo .basemind/ should be created on store open"
+        !root.join(".hacienda-mcp").exists(),
+        "no in-repo .hacienda-mcp/ should be created on store open"
     );
     // The workspace's state lives under the global cache instead.
     assert!(
-        basemind::store::workspace_cache_dir(root)
+        hacienda_mcp::store::workspace_cache_dir(root)
             .join("views")
-            .join(basemind::store::VIEW_WORKING)
+            .join(hacienda_mcp::store::VIEW_WORKING)
             .exists(),
         "the working view dir is created under the global workspace cache"
     );
@@ -130,13 +130,13 @@ fn scan_indexes_dynamic_language_without_override_queries() {
 
     fs::write(root.join("data.json"), b"{ \"alpha\": 1 }\n").unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     let report = scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert_eq!(report.stats.updated, 1, "json file should be processed");
@@ -145,7 +145,7 @@ fn scan_indexes_dynamic_language_without_override_queries() {
     let entry = store.lookup("data.json").expect("data.json indexed");
     assert_eq!(entry.language, "json", "language stored as TSLP pack name");
 
-    let hits = basemind::query::search_symbols(&store, "alpha", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "alpha", None).unwrap();
     assert!(hits.is_empty(), "json has no tags.scm; symbols stay empty");
 }
 
@@ -156,25 +156,25 @@ fn rescan_is_idempotent_and_uses_cache() {
 
     fs::write(root.join("a.rs"), b"pub fn alpha() {}\n").unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     let first = scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert_eq!(first.stats.updated, 1);
     drop(store);
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     let second = scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert_eq!(second.stats.updated, 0);
@@ -188,31 +188,31 @@ fn modifying_a_file_triggers_reextract() {
 
     fs::write(root.join("a.rs"), b"pub fn alpha() {}\n").unwrap();
     {
-        let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+        let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
         scan(
             root,
             &mut store,
             &cfg,
-            basemind::scanner::ScanSource::WorkingTree,
-            basemind::scanner::EmbedMode::Inline,
+            hacienda_mcp::scanner::ScanSource::WorkingTree,
+            hacienda_mcp::scanner::EmbedMode::Inline,
         )
         .unwrap();
     }
     fs::write(root.join("a.rs"), b"pub fn gamma() {}\n").unwrap();
     {
-        let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+        let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
         let s = scan(
             root,
             &mut store,
             &cfg,
-            basemind::scanner::ScanSource::WorkingTree,
-            basemind::scanner::EmbedMode::Inline,
+            hacienda_mcp::scanner::ScanSource::WorkingTree,
+            hacienda_mcp::scanner::EmbedMode::Inline,
         )
         .unwrap();
         assert_eq!(s.stats.updated, 1);
-        let hits = basemind::query::search_symbols(&store, "gamma", None).unwrap();
+        let hits = hacienda_mcp::query::search_symbols(&store, "gamma", None).unwrap();
         assert_eq!(hits.len(), 1);
-        let hits = basemind::query::search_symbols(&store, "alpha", None).unwrap();
+        let hits = hacienda_mcp::query::search_symbols(&store, "alpha", None).unwrap();
         assert!(hits.is_empty(), "old symbol should be gone");
     }
 }
@@ -225,25 +225,25 @@ fn removed_files_get_purged_from_index() {
     fs::write(root.join("a.rs"), b"pub fn alpha() {}\n").unwrap();
     fs::write(root.join("b.rs"), b"pub fn beta() {}\n").unwrap();
     {
-        let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+        let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
         scan(
             root,
             &mut store,
             &cfg,
-            basemind::scanner::ScanSource::WorkingTree,
-            basemind::scanner::EmbedMode::Inline,
+            hacienda_mcp::scanner::ScanSource::WorkingTree,
+            hacienda_mcp::scanner::EmbedMode::Inline,
         )
         .unwrap();
     }
     fs::remove_file(root.join("b.rs")).unwrap();
     {
-        let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+        let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
         let s = scan(
             root,
             &mut store,
             &cfg,
-            basemind::scanner::ScanSource::WorkingTree,
-            basemind::scanner::EmbedMode::Inline,
+            hacienda_mcp::scanner::ScanSource::WorkingTree,
+            hacienda_mcp::scanner::EmbedMode::Inline,
         )
         .unwrap();
         assert_eq!(s.stats.removed, 1);
@@ -261,13 +261,13 @@ fn skips_large_files() {
     let big = vec![b'x'; 4096];
     fs::write(root.join("big.rs"), &big).unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     let s = scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert_eq!(s.stats.skipped_too_large, 1);
@@ -280,13 +280,13 @@ fn ignores_unknown_languages() {
     let root = dir.path();
     fs::write(root.join("weird.xyz"), b"data").unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     let _report = scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     #[cfg(not(feature = "documents"))]
@@ -304,17 +304,17 @@ fn extracts_python() {
     )
     .unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
-    let outline = basemind::query::file_outline(&store, "m.py").unwrap();
+    let outline = hacienda_mcp::query::file_outline(&store, "m.py").unwrap();
     assert_eq!(outline.language, "python");
     let names: Vec<&str> = outline.symbols.iter().map(|s| s.name.as_str()).collect();
     assert!(names.contains(&"foo"));
@@ -326,13 +326,13 @@ fn extracts_python() {
 fn store_lock_prevents_concurrent_open() {
     let (dir, _cfg) = fresh_repo();
     let root = dir.path();
-    let first = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
-    let err = Store::open(root, basemind::store::VIEW_WORKING)
+    let first = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
+    let err = Store::open(root, hacienda_mcp::store::VIEW_WORKING)
         .err()
         .expect("second open must fail");
-    assert!(matches!(err, basemind::store::StoreError::Locked { .. }));
+    assert!(matches!(err, hacienda_mcp::store::StoreError::Locked { .. }));
     drop(first);
-    Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
 }
 
 #[test]
@@ -345,13 +345,13 @@ fn scan_flags_files_with_syntax_errors() {
     )
     .unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     let report = scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert_eq!(report.stats.updated, 1);
@@ -377,7 +377,7 @@ fn scan_flags_files_with_syntax_errors() {
         other => panic!("expected Updated, got {other:?}"),
     }
 
-    let outline = basemind::query::file_outline(&store, "broken.rs").unwrap();
+    let outline = hacienda_mcp::query::file_outline(&store, "broken.rs").unwrap();
     assert!(outline.had_errors);
     let names: Vec<&str> = outline.symbols.iter().map(|s| s.name.as_str()).collect();
     assert!(
@@ -394,13 +394,13 @@ fn scan_paths_only_touches_listed_files() {
     fs::write(root.join("b.rs"), b"pub fn b() {}\n").unwrap();
     fs::write(root.join("c.rs"), b"pub fn c() {}\n").unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
@@ -414,7 +414,7 @@ fn scan_paths_only_touches_listed_files() {
         &mut store,
         &cfg,
         &[root.join("a.rs")],
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert_eq!(report.stats.scanned, 1, "scan_paths visited only one file");
@@ -423,7 +423,7 @@ fn scan_paths_only_touches_listed_files() {
     assert_eq!(store.lookup("b.rs").unwrap().hash_hex, hash_b_before);
     assert_eq!(store.lookup("c.rs").unwrap().hash_hex, hash_c_before);
 
-    let hits = basemind::query::search_symbols(&store, "a_changed", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "a_changed", None).unwrap();
     assert_eq!(hits.len(), 1);
 }
 
@@ -439,17 +439,17 @@ fn ts_arrow_function_const_is_function_kind() {
         b"export const Greet = (name: string) => `hi ${name}`;\nexport const N: number = 1;\n",
     )
     .unwrap();
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
-    let hits = basemind::query::search_symbols(&store, "Greet", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "Greet", None).unwrap();
     assert_eq!(hits.len(), 1, "arrow-fn const should produce one symbol");
     assert_eq!(
         hits[0].symbol.kind,
@@ -457,7 +457,7 @@ fn ts_arrow_function_const_is_function_kind() {
         "arrow-fn const should be kind=function"
     );
 
-    let hits = basemind::query::search_symbols(&store, "N", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "N", None).unwrap();
     assert_eq!(hits.len(), 1, "non-function const stays as one symbol");
     assert_eq!(hits[0].symbol.kind, SymbolKind::Const, "regular const stays kind=const");
 }
@@ -471,17 +471,17 @@ fn js_function_expression_const_is_function_kind() {
         b"const Greet = function(name) { return 'hi ' + name; };\n",
     )
     .unwrap();
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
-    let hits = basemind::query::search_symbols(&store, "Greet", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "Greet", None).unwrap();
     assert_eq!(hits.len(), 1);
     assert_eq!(hits[0].symbol.kind, SymbolKind::Function);
 }
@@ -495,21 +495,21 @@ fn rust_impl_block_is_impl_kind() {
         b"pub struct Foo;\nimpl Foo { pub fn bar(&self) {} }\n",
     )
     .unwrap();
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
-    let impls = basemind::query::search_symbols(&store, "Foo", Some(SymbolKind::Impl)).unwrap();
+    let impls = hacienda_mcp::query::search_symbols(&store, "Foo", Some(SymbolKind::Impl)).unwrap();
     assert_eq!(impls.len(), 1, "expected an impl block for Foo");
     assert_eq!(impls[0].symbol.kind, SymbolKind::Impl);
 
-    let structs = basemind::query::search_symbols(&store, "Foo", Some(SymbolKind::Struct)).unwrap();
+    let structs = hacienda_mcp::query::search_symbols(&store, "Foo", Some(SymbolKind::Struct)).unwrap();
     assert_eq!(structs.len(), 1);
 }
 
@@ -523,13 +523,13 @@ fn binary_file_with_source_extension_is_skipped() {
     payload.extend_from_slice(&[0u8; 64]);
     fs::write(root.join("not_really.ts"), &payload).unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     let report = scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
@@ -547,19 +547,19 @@ fn tsx_file_uses_tsx_query() {
     let (dir, cfg) = fresh_repo();
     let root = dir.path();
     fs::write(root.join("App.tsx"), b"export const App = () => (<div>hello</div>);\n").unwrap();
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
     let entry = store.lookup("App.tsx").expect("App.tsx indexed");
     assert_eq!(entry.language, "tsx");
-    let hits = basemind::query::search_symbols(&store, "App", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "App", None).unwrap();
     assert_eq!(hits.len(), 1);
     assert_eq!(hits[0].symbol.kind, SymbolKind::Function);
 }
@@ -570,13 +570,13 @@ fn scan_paths_purges_removed_files() {
     let root = dir.path();
     fs::write(root.join("a.rs"), b"pub fn a() {}\n").unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert!(store.lookup("a.rs").is_some());
@@ -587,7 +587,7 @@ fn scan_paths_purges_removed_files() {
         &mut store,
         &cfg,
         &[root.join("a.rs")],
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert_eq!(report.stats.removed, 1);
@@ -603,17 +603,17 @@ fn ts_namespace_is_namespace_kind() {
         b"namespace Outer {\n  export const x: number = 1;\n}\n",
     )
     .unwrap();
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
-    let hits = basemind::query::search_symbols(&store, "Outer", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "Outer", None).unwrap();
     assert_eq!(hits.len(), 1, "expected one Outer namespace hit");
     assert_eq!(
         hits[0].symbol.kind,
@@ -631,17 +631,17 @@ fn ts_getter_and_setter_kinds() {
         b"class Box {\n  private _x: number = 0;\n  get x(): number { return this._x; }\n  set x(v: number) { this._x = v; }\n}\n",
     )
     .unwrap();
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
-    let hits = basemind::query::search_symbols(&store, "x", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "x", None).unwrap();
     let getter = hits
         .iter()
         .find(|h| h.symbol.kind == SymbolKind::Getter)
@@ -663,17 +663,17 @@ fn python_decorators_attach_to_symbol() {
         b"@dataclass\n@total_ordering\nclass Point:\n    x: int\n    y: int\n\n@property\ndef name(self):\n    return self._name\n",
     )
     .unwrap();
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
-    let hits = basemind::query::search_symbols(&store, "Point", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "Point", None).unwrap();
     let point = hits
         .iter()
         .find(|h| h.symbol.kind == SymbolKind::Class)
@@ -689,7 +689,7 @@ fn python_decorators_attach_to_symbol() {
         point.symbol.decorators
     );
 
-    let hits = basemind::query::search_symbols(&store, "name", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "name", None).unwrap();
     let name = hits
         .iter()
         .find(|h| h.symbol.kind == SymbolKind::Function)
@@ -714,13 +714,13 @@ fn scanner_preserves_non_utf8_filename_bytes() {
     let bad_name = std::ffi::OsStr::from_bytes(raw_bytes);
     fs::write(root.join(bad_name), b"pub fn from_bad_path() {}\n").unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     let report = scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert!(
@@ -728,7 +728,7 @@ fn scanner_preserves_non_utf8_filename_bytes() {
         "scanner should index files with non-UTF-8 names; updated={}",
         report.stats.updated
     );
-    let key = basemind::path::RelPath::from(raw_bytes);
+    let key = hacienda_mcp::path::RelPath::from(raw_bytes);
     let entry = store.lookup(&key).expect("non-UTF-8 path should be in index");
     assert_eq!(entry.language, "rust");
 }
@@ -745,8 +745,8 @@ fn scanner_preserves_non_utf8_filename_bytes() {
 fn scan_detects_french_in_markdown_fixture() {
     use std::fs;
 
-    use basemind::config::DocLanguageConfig;
-    use basemind::extract::doc::{DocConfig, extract_doc};
+    use hacienda_mcp::config::DocLanguageConfig;
+    use hacienda_mcp::extract::doc::{DocConfig, extract_doc};
 
     let dir = tempfile::tempdir().expect("tempdir");
     let dst = dir.path().join("sample.md");
@@ -781,8 +781,8 @@ fn extract_doc_surfaces_keywords_when_enabled() {
     use std::fs;
     use std::path::Path;
 
-    use basemind::config::{KeywordAlgorithm, KeywordsConfig};
-    use basemind::extract::doc::{DocConfig, extract_doc};
+    use hacienda_mcp::config::{KeywordAlgorithm, KeywordsConfig};
+    use hacienda_mcp::extract::doc::{DocConfig, extract_doc};
 
     let dir = tempfile::tempdir().expect("tempdir");
     let path = dir.path().join("article.txt");
@@ -825,8 +825,8 @@ fn scan_extracts_keywords_and_entities() {
     use std::fs;
     use std::path::Path;
 
-    use basemind::config::{KeywordAlgorithm, KeywordsConfig, NerBackend, NerConfig};
-    use basemind::extract::doc::{DocConfig, extract_doc};
+    use hacienda_mcp::config::{KeywordAlgorithm, KeywordsConfig, NerBackend, NerConfig};
+    use hacienda_mcp::extract::doc::{DocConfig, extract_doc};
 
     let dir = tempfile::tempdir().expect("tempdir");
     let path = dir.path().join("press_release.txt");
@@ -880,17 +880,17 @@ fn ts_multiline_generic_signature_is_collapsed() {
         b"function foo<\n  T extends Bar,\n  U extends Baz,\n>(x: T): U {\n  return x as unknown as U;\n}\n",
     )
     .unwrap();
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
-    let hits = basemind::query::search_symbols(&store, "foo", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "foo", None).unwrap();
     assert_eq!(hits.len(), 1);
     let sig = hits[0]
         .symbol
@@ -917,32 +917,32 @@ fn scan_paths_noop_batch_does_no_work() {
     fs::write(root.join("build/out.o"), b"\x00").unwrap();
     fs::create_dir_all(root.join("node_modules/pkg")).unwrap();
     fs::write(root.join("node_modules/pkg/index.js"), b"module.exports={}\n").unwrap();
-    fs::create_dir_all(root.join("child/.basemind")).unwrap();
-    fs::write(root.join("child/.basemind/index.msgpack"), b"\x00").unwrap();
+    fs::create_dir_all(root.join("child/.hacienda-mcp")).unwrap();
+    fs::write(root.join("child/.hacienda-mcp/index.msgpack"), b"\x00").unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     fs::write(root.join("a.rs"), b"pub fn alpha() {}\n").unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
     let touched = vec![
         root.join("build/out.o"),
         root.join("node_modules/pkg/index.js"),
-        root.join("child/.basemind/index.msgpack"),
+        root.join("child/.hacienda-mcp/index.msgpack"),
     ];
-    let report = scan_paths(root, &mut store, &cfg, &touched, basemind::scanner::EmbedMode::Inline).unwrap();
+    let report = scan_paths(root, &mut store, &cfg, &touched, hacienda_mcp::scanner::EmbedMode::Inline).unwrap();
     assert_eq!(report.stats.updated, 0, "no indexable file changed");
     assert_eq!(report.stats.removed, 0, "nothing removed");
     assert_eq!(report.results.len(), 0, "short-circuit: no per-file work recorded");
     assert!(store.lookup("build/out.o").is_none());
     assert!(store.lookup("node_modules/pkg/index.js").is_none());
-    assert!(store.lookup("child/.basemind/index.msgpack").is_none());
+    assert!(store.lookup("child/.hacienda-mcp/index.msgpack").is_none());
 }
 
 #[test]
@@ -951,13 +951,13 @@ fn scan_paths_prunes_deleted_indexed_file() {
     let root = dir.path();
     fs::write(root.join("a.rs"), b"pub fn alpha() {}\n").unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert!(store.lookup("a.rs").is_some());
@@ -968,7 +968,7 @@ fn scan_paths_prunes_deleted_indexed_file() {
         &mut store,
         &cfg,
         &[root.join("a.rs")],
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert_eq!(report.stats.removed, 1, "deleted indexed file pruned");
@@ -987,23 +987,23 @@ fn markdown_headings_and_obsidian_references_are_indexed() {
     .unwrap();
     fs::write(root.join("Other Note.md"), b"# Other Note\n").unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     let report = scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert_eq!(report.stats.updated, 2);
 
-    let hits = basemind::query::search_symbols(&store, "Section A", Some(SymbolKind::Heading)).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "Section A", Some(SymbolKind::Heading)).unwrap();
     assert_eq!(hits.len(), 1);
     assert_eq!(hits[0].path.as_str(), Some("note.md"));
     assert_eq!(hits[0].symbol.kind, SymbolKind::Heading);
     assert_eq!(
-        basemind::query::search_symbols(&store, "Title", Some(SymbolKind::Heading))
+        hacienda_mcp::query::search_symbols(&store, "Title", Some(SymbolKind::Heading))
             .unwrap()
             .len(),
         1
@@ -1037,26 +1037,26 @@ fn documents_are_cached_unchanged_and_pruned() {
 
     fs::write(root.join("notes.svg"), svg).unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     let report = scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert_eq!(report.stats.docs_indexed, 1, "doc extracted on first scan");
     assert!(store.lookup_doc("notes.svg").is_some(), "doc tracked in doc_files");
     drop(store);
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     let report = scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert_eq!(report.stats.docs_indexed, 0, "unchanged doc not re-indexed");
@@ -1068,13 +1068,13 @@ fn documents_are_cached_unchanged_and_pruned() {
     drop(store);
 
     fs::remove_file(root.join("notes.svg")).unwrap();
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert!(
@@ -1094,26 +1094,26 @@ fn identical_documents_share_the_content_addressed_cache() {
     let body = br#"<svg xmlns="http://www.w3.org/2000/svg"><text>identical dedup content</text></svg>"#;
 
     fs::write(root.join("a.svg"), body).unwrap();
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     let hash_a = store.lookup_doc("a.svg").expect("a.svg tracked").hash_hex.clone();
     drop(store);
 
     fs::write(root.join("b.svg"), body).unwrap();
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     let hash_b = &store.lookup_doc("b.svg").expect("b.svg tracked").hash_hex;
@@ -1132,24 +1132,24 @@ fn same_size_content_change_is_reextracted() {
     let root = dir.path();
     fs::write(root.join("a.rs"), b"pub fn alpha() {}\n").unwrap();
     {
-        let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+        let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
         scan(
             root,
             &mut store,
             &cfg,
-            basemind::scanner::ScanSource::WorkingTree,
-            basemind::scanner::EmbedMode::Inline,
+            hacienda_mcp::scanner::ScanSource::WorkingTree,
+            hacienda_mcp::scanner::EmbedMode::Inline,
         )
         .unwrap();
     }
     fs::write(root.join("a.rs"), b"pub fn gamma() {}\n").unwrap();
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     let report = scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert_eq!(
@@ -1157,7 +1157,7 @@ fn same_size_content_change_is_reextracted() {
         "same-size content change re-extracted, not skipped"
     );
     assert_eq!(report.stats.skipped_unchanged, 0);
-    let hits = basemind::query::search_symbols(&store, "gamma", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "gamma", None).unwrap();
     assert_eq!(hits.len(), 1, "the new symbol is indexed");
 }
 
@@ -1168,7 +1168,7 @@ fn same_size_content_change_is_reextracted() {
 #[cfg(feature = "code-search")]
 #[test]
 fn deferred_embed_mode_indexes_symbols_and_keyword_lane_but_writes_no_vectors() {
-    use basemind::scanner::EmbedMode;
+    use hacienda_mcp::scanner::EmbedMode;
 
     let (dir, cfg) = fresh_repo();
     assert!(cfg.code_search.enabled, "fixture must chunk source");
@@ -1180,22 +1180,22 @@ fn deferred_embed_mode_indexes_symbols_and_keyword_lane_but_writes_no_vectors() 
     )
     .unwrap();
 
-    let mut store = Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+    let mut store = Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
     let report = scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
         EmbedMode::Deferred,
     )
     .unwrap();
     assert_eq!(report.stats.updated, 1);
 
-    let hits = basemind::query::search_symbols(&store, "parse_config", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "parse_config", None).unwrap();
     assert_eq!(hits.len(), 1, "deferred scan must still index symbols");
 
     let db = store.index_db.as_ref().expect("index db present");
-    let keyword = basemind::search::bm25::bm25_search(db, "parse", 10);
+    let keyword = hacienda_mcp::search::bm25::bm25_search(db, "parse", 10);
     assert!(!keyword.is_empty(), "deferred scan must populate the BM25 keyword lane");
 
     assert!(

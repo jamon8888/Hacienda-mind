@@ -1,5 +1,5 @@
 {
-  "name": "basemind",
+  "name": "hacienda-mcp",
   "version": "0.22.0",
   "description": "Full AI context layer over MCP — tree-sitter code-map, document RAG (PDF/Office/HTML/email + OCR + reranker), shared agent memory, on-demand web crawl, git history + blame + per-symbol diff. 300+ languages, 10+ coding-agent harnesses, content-addressed Fjall + LanceDB.",
   "author": {
@@ -7,16 +7,16 @@
     "email": "nhirschfeld@gmail.com",
     "url": "https://github.com/Goldziher"
   },
-  "homepage": "https://github.com/Goldziher/basemind",
-  "repository": "https://github.com/Goldziher/basemind",
+  "homepage": "https://github.com/jamon8888/Hacienda-mind",
+  "repository": "https://github.com/jamon8888/Hacienda-mind",
   "license": "MIT",
   "keywords": ["mcp", "agent-context", "rag", "code-map", "tree-sitter"],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
-    "displayName": "basemind",
+    "displayName": "hacienda-mcp",
     "shortDescription": "Code-map MCP server for navigating large codebases",
-    "longDescription": "basemind indexes a repository with tree-sitter and exposes a structured code map — outlines, references, callers, history, blame, diff — over MCP. Designed for AI agents to navigate unfamiliar code without reading every file.",
+    "longDescription": "hacienda-mcp indexes a repository with tree-sitter and exposes a structured code map — outlines, references, callers, history, blame, diff — over MCP. Designed for AI agents to navigate unfamiliar code without reading every file.",
     "developerName": "Na'aman Hirschfeld",
     "category": "Developer Tools",
     "capabilities": ["Interactive", "Read"],
@@ -26,7 +26,7 @@
       "Where is `<symbol>` defined?",
       "What changed in this file in the last 20 commits?"
     ],
-    "websiteURL": "https://github.com/Goldziher/basemind",
+    "websiteURL": "https://github.com/jamon8888/Hacienda-mind",
     "brandColor": "#F97316"
   }
 }

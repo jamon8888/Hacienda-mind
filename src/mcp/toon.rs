@@ -1,7 +1,7 @@
 //! Native TOON (Token-Oriented Object Notation) encoder for high-volume list responses.
 //!
 //! TOON is a compact tabular encoding of a uniform array-of-objects: a single header line
-//! naming the columns, then one comma-joined row per object. For the list responses basemind
+//! naming the columns, then one comma-joined row per object. For the list responses hacienda-mcp
 //! returns — `search_symbols`, `find_references`, `workspace_grep`, `list_files`, `outline` —
 //! this drops the per-row `"key":` repetition that dominates JSON's token cost.
 //!
@@ -14,7 +14,7 @@
 //!
 //! ## Shape handled
 //!
-//! basemind responses are *envelopes*: a flat object of scalar metadata (`total`, `truncated`,
+//! hacienda-mcp responses are *envelopes*: a flat object of scalar metadata (`total`, `truncated`,
 //! …) plus exactly one high-volume array field (`results` / `hits` / `files` / `symbols`). The
 //! encoder emits the scalars as `key: value` lines and renders the array field as a TOON table
 //! when — and only when — it is a uniform array of flat objects (every element an object with

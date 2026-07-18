@@ -7,8 +7,8 @@
 use std::path::Path;
 use std::process::Command;
 
-use basemind::git_history::shared_history_basemind_dir;
-use basemind::store::workspace_cache_dir;
+use hacienda_mcp::git_history::shared_history_hacienda_mcp_dir;
+use hacienda_mcp::store::workspace_cache_dir;
 
 fn git(dir: &Path, args: &[&str]) {
     let status = Command::new("git")
@@ -21,7 +21,7 @@ fn git(dir: &Path, args: &[&str]) {
 
 #[test]
 fn git_history_index_is_shared_from_linked_worktree() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let tmp = tempfile::tempdir().expect("tempdir");
     let main = tmp.path().join("main");
     std::fs::create_dir(&main).unwrap();
@@ -36,8 +36,8 @@ fn git_history_index_is_shared_from_linked_worktree() {
     let wt = tmp.path().join("wt");
     git(&main, &["worktree", "add", "-q", "--detach", wt.to_str().unwrap()]);
 
-    let main_bm = shared_history_basemind_dir(&main);
-    let wt_bm = shared_history_basemind_dir(&wt);
+    let main_bm = shared_history_hacienda_mcp_dir(&main);
+    let wt_bm = shared_history_hacienda_mcp_dir(&wt);
 
     // Both the main and the linked worktree must resolve the git-history index to the SAME
     // workspace cache dir — the one keyed on the main worktree root.

@@ -95,7 +95,7 @@ pub struct ScanConfig {
     /// Files under an extra root are keyed by their **absolute** path (repo files stay
     /// repo-relative), so returned paths for external files are absolute. Missing or
     /// unreadable roots are skipped with a warning; a root inside the repo is ignored (the
-    /// primary walk already covers it). Extra roots are (re-)indexed on a full `basemind
+    /// primary walk already covers it). Extra roots are (re-)indexed on a full `hacienda-mcp
     /// scan` only — the live watcher does not track them. Symlinks are followed for extra
     /// roots (Bazel `external/` is symlink-heavy). Because these trees can be large, scope
     /// them narrowly and lean on `exclude` + `max_file_bytes`.
@@ -113,7 +113,7 @@ impl ScanConfig {
             "**/node_modules/**",
             "**/dist/**",
             "**/.venv/**",
-            "**/.basemind/**",
+            "**/.hacienda-mcp/**",
             "**/.git/**",
             "**/bazel-out/**",
             "**/bazel-bin/**",
@@ -169,7 +169,7 @@ pub struct CodeIntelConfig {
     /// import instead of matching by name. Set to `false` to fall back to fast tree-sitter `locals`
     /// scope binding for every language (the precise engines are skipped). Inert for languages with
     /// no precise engine regardless. Takes effect on files (re)analyzed after the change; run a full
-    /// `basemind scan` to apply it to an already-indexed repo.
+    /// `hacienda-mcp scan` to apply it to an already-indexed repo.
     #[serde(default = "CodeIntelConfig::default_precise_resolution")]
     pub precise_resolution: bool,
 }
@@ -349,7 +349,7 @@ pub struct CrawlConfig {
     #[schemars(range(min = 1024))]
     pub max_body_size: u64,
     /// User-Agent header sent with every request. Override to identify your
-    /// crawler to operators; the default includes the basemind release
+    /// crawler to operators; the default includes the hacienda-mcp release
     /// version + the upstream repo URL so site operators can trace traffic.
     #[serde(default = "CrawlConfig::default_user_agent")]
     #[schemars(length(min = 1))]
@@ -382,7 +382,7 @@ impl CrawlConfig {
     }
     fn default_user_agent() -> String {
         format!(
-            "basemind/{} (+https://github.com/Goldziher/basemind)",
+            "basemind/{} (+https://github.com/Goldziher/hacienda-mcp)",
             env!("CARGO_PKG_VERSION")
         )
     }

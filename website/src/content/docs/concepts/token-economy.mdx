@@ -1,17 +1,17 @@
 ---
 title: Token economy
 description: >
-  Why basemind saves tokens: pointers (paths and line numbers) cost less than whole files.
+  Why hacienda-mcp saves tokens: pointers (paths and line numbers) cost less than whole files.
   Good habits the plugin sets up by default, plus optional guardrails.
 ---
 
-basemind saves tokens by answering with **file paths, line numbers, and signatures — not whole
+hacienda-mcp saves tokens by answering with **file paths, line numbers, and signatures — not whole
 files**. A question about your code costs a small fraction of the tokens it takes to read the
 source.
 
 ## Why pointers beat file reads
 
-When you ask "where is the `User` class defined?", basemind returns:
+When you ask "where is the `User` class defined?", hacienda-mcp returns:
 ```
 src/models/user.ts:42
 ```
@@ -19,7 +19,7 @@ src/models/user.ts:42
 Reading the entire `user.ts` file would cost 200–2000 tokens, depending on size. The answer costs
 just a few tokens.
 
-When you ask "what calls `processFile`?", basemind returns 10 call sites with their paths and
+When you ask "what calls `processFile`?", hacienda-mcp returns 10 call sites with their paths and
 line numbers — enough for an agent to decide whether to open each one. Re-reading the whole
 calling files would explode your context.
 
@@ -27,7 +27,7 @@ The same discipline applies to every tool: `outline` gives you a file's structur
 imports) before you open it, so you read only the span you need. `find_references` returns
 pointers, not source. `recent_changes` shows what happened (commits + file list), not diffs.
 
-See [How it works](/concepts/how-it-works/) to understand how basemind builds the map that makes
+See [How it works](/concepts/how-it-works/) to understand how hacienda-mcp builds the map that makes
 this possible.
 
 ## Good habits the plugin sets up
@@ -39,7 +39,7 @@ The plugin nudges agents toward the cheap path by default:
 - **Look up who calls a function instead of grepping for call sites** — `find_references` vs
   `grep`.
 - **Refresh the index after edits** — `rescan` instead of restarting the server.
-- **Don't re-read a file basemind already mapped** — use the outline instead.
+- **Don't re-read a file hacienda-mcp already mapped** — use the outline instead.
 
 ## Optional guardrails
 
@@ -48,18 +48,18 @@ Three environment variables enforce token discipline at the moment a tool is use
 ### Guard: redirect wasteful searches
 
 ```bash
-BASEMIND_GUARD=off      # disable (default: on)
-BASEMIND_GUARD=redirect # block instead of nudge
+HACIENDA_MCP_GUARD=off      # disable (default: on)
+HACIENDA_MCP_GUARD=redirect # block instead of nudge
 ```
 
 When an agent reaches for a built-in `Grep`/`Glob`-style search, `Guard` gently redirects it to
-the matching basemind tool (`workspace_grep` for patterns, `search_symbols` for names,
+the matching hacienda-mcp tool (`workspace_grep` for patterns, `search_symbols` for names,
 `find_references` for call sites). Set `redirect` to block the command instead of nudging.
 
 ### Output compressor: shrink large results
 
 ```bash
-BASEMIND_COMPRESS_OUTPUT=1
+HACIENDA_MCP_COMPRESS_OUTPUT=1
 ```
 
 When a tool returns a long result (e.g., 100 matching files), the compressor shrinks the output
@@ -70,15 +70,15 @@ can't help.
 ### Re-read shortcut: show only what changed
 
 ```bash
-BASEMIND_DELTA_READS=1
+HACIENDA_MCP_DELTA_READS=1
 ```
 
-When an agent re-reads a file it already read earlier in the session, `BASEMIND_DELTA_READS` shows
+When an agent re-reads a file it already read earlier in the session, `HACIENDA_MCP_DELTA_READS` shows
 just the changed lines instead of resending the whole file.
 
 ## Compression that understands code
 
-basemind shrinks code by keeping the shape and dropping the bodies — function signatures and
+hacienda-mcp shrinks code by keeping the shape and dropping the bodies — function signatures and
 imports stay, implementations go — because a signature is useless without its shape:
 
 ```rust

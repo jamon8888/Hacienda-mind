@@ -1,7 +1,7 @@
 //! Singleton-daemon machinery: per-user path resolution, bind-as-lock, and spawn-on-demand.
 //!
 //! The broker is a **per-user, repo-independent singleton**. Its socket + store live under the
-//! user's data directory (`directories::ProjectDirs`), never inside any repo's `.basemind/`.
+//! user's data directory (`directories::ProjectDirs`), never inside any repo's `.hacienda-mcp/`.
 //!
 //! ## Bind-as-lock
 //!
@@ -51,7 +51,7 @@ pub struct CommsPaths {
 #[derive(Debug, thiserror::Error)]
 pub enum SingletonError {
     /// The platform could not provide a per-user data directory.
-    #[error("could not resolve a per-user data directory for basemind")]
+    #[error("could not resolve a per-user data directory for hacienda-mcp")]
     NoDataDir,
     /// An io failure with the offending path.
     #[error("io error on {path}: {source}")]
@@ -72,8 +72,8 @@ pub enum SingletonError {
     /// over. Surfaced instead of silently talking to an incompatible daemon (which is how the
     /// pre-0.10 version-skew bug manifested as an opaque "connection closed").
     #[error(
-        "a previous basemind comms daemon (v{version}, pid {pid}) is still running and did not \
-         stop; run `basemind comms stop` or terminate pid {pid}, then retry"
+        "a previous hacienda-mcp comms daemon (v{version}, pid {pid}) is still running and did not \
+         stop; run `hacienda-mcp comms stop` or terminate pid {pid}, then retry"
     )]
     StalePredecessor {
         /// The stale daemon's build version.
@@ -86,15 +86,15 @@ pub enum SingletonError {
 /// Environment override for the comms data directory. When set, it is used verbatim as the
 /// `comms_dir` instead of the per-user `directories::ProjectDirs` location. Intended for tests,
 /// CI, and users who want the broker's socket + store in a custom (e.g. sandboxed) location.
-pub const COMMS_DIR_ENV: &str = "BASEMIND_COMMS_DIR";
+pub const COMMS_DIR_ENV: &str = "HACIENDA_MCP_COMMS_DIR";
 
-/// Resolve the per-user comms paths via `directories::ProjectDirs::from("", "", "basemind")`,
+/// Resolve the per-user comms paths via `directories::ProjectDirs::from("", "", "hacienda-mcp")`,
 /// or the [`COMMS_DIR_ENV`] override when set. Creates the dir (mode 0700 on Unix) as a side effect.
 pub fn resolve_paths() -> Result<CommsPaths, SingletonError> {
     let comms_dir = match std::env::var_os(COMMS_DIR_ENV) {
         Some(dir) if !dir.is_empty() => PathBuf::from(dir),
         _ => {
-            let dirs = ProjectDirs::from("", "", "basemind").ok_or(SingletonError::NoDataDir)?;
+            let dirs = ProjectDirs::from("", "", "hacienda-mcp").ok_or(SingletonError::NoDataDir)?;
             dirs.data_dir().join(COMMS_SUBDIR)
         }
     };
@@ -232,7 +232,7 @@ pub fn bind_listener(
 }
 
 /// Ensure a daemon is running and reachable: probe-connect + ping; if that succeeds, return
-/// without doing anything. Otherwise spawn `basemind comms daemon` detached and poll the
+/// without doing anything. Otherwise spawn `hacienda-mcp comms daemon` detached and poll the
 /// socket until it answers (or the timeout elapses).
 ///
 /// `is_alive` probes the socket (connect + ping). `spawn` launches the detached daemon. Both
@@ -447,7 +447,7 @@ pub fn probe_alive(_socket_path: &Path) -> bool {
     false
 }
 
-/// Spawn `basemind comms daemon` detached so it outlives the spawning process. stdout/stderr
+/// Spawn `hacienda-mcp comms daemon` detached so it outlives the spawning process. stdout/stderr
 /// are redirected to null; the daemon's own tracing goes to its log sink.
 pub fn spawn_detached_daemon(_paths: &CommsPaths) -> std::io::Result<()> {
     let exe = std::env::current_exe()?;

@@ -1,8 +1,8 @@
 //! End-to-end smoke test for the embedded-rmux `shells` feature.
 //!
-//! Drives the `basemind::shells` API directly (the MCP layer is a thin wrapper
+//! Drives the `hacienda_mcp::shells` API directly (the MCP layer is a thin wrapper
 //! over it): point the SDK's daemon-binary discovery at the separately-built
-//! `basemind` binary — which carries the `--__internal-daemon` intercept that
+//! `hacienda-mcp` binary — which carries the `--__internal-daemon` intercept that
 //! the test-harness binary does not — sandbox the daemon on a per-test temp
 //! socket, then prove spawn → capture → kill end-to-end.
 //!
@@ -13,17 +13,17 @@
 
 use std::time::{Duration, Instant};
 
-use basemind::shells::ShellRuntime;
-use basemind::shells::session::{self, ShellCommand};
+use hacienda_mcp::shells::ShellRuntime;
+use hacienda_mcp::shells::session::{self, ShellCommand};
 use tempfile::TempDir;
 
 /// Build a runtime sandboxed to its own socket under `dir`, with the SDK's
-/// daemon-binary discovery pointed at the built `basemind` executable (which
+/// daemon-binary discovery pointed at the built `hacienda-mcp` executable (which
 /// carries the `--__internal-daemon` intercept the test-harness binary lacks).
 fn runtime_in(dir: &TempDir) -> ShellRuntime {
-    let daemon = std::path::PathBuf::from(env!("CARGO_BIN_EXE_basemind"));
+    let daemon = std::path::PathBuf::from(env!("CARGO_BIN_EXE_hacienda-mcp"));
     // SAFETY: `set_var` is not thread-safe under the 2024 edition. This runs once
-    unsafe { basemind::shells::daemon::point_sdk_daemon_at(&daemon) }
+    unsafe { hacienda_mcp::shells::daemon::point_sdk_daemon_at(&daemon) }
     let socket = dir.path().join("shells.sock");
     ShellRuntime::with_socket_path(socket)
 }

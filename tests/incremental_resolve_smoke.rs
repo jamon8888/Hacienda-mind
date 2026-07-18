@@ -14,10 +14,10 @@
 
 use std::fs;
 
-use basemind::config::ConfigV1;
-use basemind::path::RelPath;
-use basemind::scanner::{ScanSource, scan, scan_paths};
-use basemind::store::{Store, VIEW_WORKING};
+use hacienda_mcp::config::ConfigV1;
+use hacienda_mcp::path::RelPath;
+use hacienda_mcp::scanner::{ScanSource, scan, scan_paths};
+use hacienda_mcp::store::{Store, VIEW_WORKING};
 
 /// `def_start` byte offset of the `count` binding in `const count = 1;` at file head — stable
 /// across the edit because the edit only appends a use inside `f`.
@@ -27,7 +27,7 @@ fn count_def_start(src: &str) -> u32 {
 
 #[test]
 fn scan_paths_refreshes_resolved_edges_after_edit() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path();
     let before = "const count = 1;\nfunction f() {\n  return count + count;\n}\n";
@@ -41,7 +41,7 @@ fn scan_paths_refreshes_resolved_edges_after_edit() {
         &mut store,
         &cfg,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
@@ -53,14 +53,14 @@ fn scan_paths_refreshes_resolved_edges_after_edit() {
     let app = RelPath::from("app.js");
     let def_start = count_def_start(before);
 
-    let baseline = basemind::query::resolved_references(&store, &app, def_start);
+    let baseline = hacienda_mcp::query::resolved_references(&store, &app, def_start);
     assert_eq!(baseline.len(), 2, "full scan must resolve both uses; got {baseline:?}");
 
     let after = "const count = 1;\nfunction f() {\n  return count + count + count;\n}\n";
     fs::write(&app_abs, after).unwrap();
-    scan_paths(root, &mut store, &cfg, &[app_abs], basemind::scanner::EmbedMode::Inline).unwrap();
+    scan_paths(root, &mut store, &cfg, &[app_abs], hacienda_mcp::scanner::EmbedMode::Inline).unwrap();
 
-    let mut uses = basemind::query::resolved_references(&store, &app, def_start);
+    let mut uses = hacienda_mcp::query::resolved_references(&store, &app, def_start);
     uses.sort_by_key(|(_, s)| *s);
     assert_eq!(
         uses.len(),
@@ -74,7 +74,7 @@ fn scan_paths_refreshes_resolved_edges_after_edit() {
 
     let first_use = (after.find("return count").unwrap() + "return ".len()) as u32;
     assert_eq!(
-        basemind::query::definition_of(&store, &app, first_use),
+        hacienda_mcp::query::definition_of(&store, &app, first_use),
         Some((app.clone(), def_start)),
         "goto-definition of a use must still point at the const after the incremental re-scan"
     );
@@ -82,7 +82,7 @@ fn scan_paths_refreshes_resolved_edges_after_edit() {
 
 #[test]
 fn scan_paths_purges_resolved_edges_for_removed_file() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path();
     let src = "const count = 1;\nfunction f() {\n  return count + count;\n}\n";
@@ -98,7 +98,7 @@ fn scan_paths_purges_resolved_edges_for_removed_file() {
         &mut store,
         &cfg,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
@@ -111,8 +111,8 @@ fn scan_paths_purges_resolved_edges_for_removed_file() {
     let gone = RelPath::from("gone.js");
     let def_start = count_def_start(src);
 
-    assert_eq!(basemind::query::resolved_references(&store, &gone, def_start).len(), 2);
-    assert_eq!(basemind::query::resolved_references(&store, &keep, def_start).len(), 2);
+    assert_eq!(hacienda_mcp::query::resolved_references(&store, &gone, def_start).len(), 2);
+    assert_eq!(hacienda_mcp::query::resolved_references(&store, &keep, def_start).len(), 2);
 
     fs::remove_file(&gone_abs).unwrap();
     scan_paths(
@@ -120,16 +120,16 @@ fn scan_paths_purges_resolved_edges_for_removed_file() {
         &mut store,
         &cfg,
         &[gone_abs],
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
     assert!(
-        basemind::query::resolved_references(&store, &gone, def_start).is_empty(),
+        hacienda_mcp::query::resolved_references(&store, &gone, def_start).is_empty(),
         "removed file's resolved edges must be purged by scan_paths"
     );
     assert_eq!(
-        basemind::query::resolved_references(&store, &keep, def_start).len(),
+        hacienda_mcp::query::resolved_references(&store, &keep, def_start).len(),
         2,
         "surviving file's resolved edges must remain intact"
     );

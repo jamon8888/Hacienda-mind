@@ -263,7 +263,7 @@ mod tests {
 
     /// Blob-compat guarantee: a record written before the W10 fields existed must decode into
     /// the current struct with the new fields defaulted. This is what lets W10 ship without an
-    /// `INDEX_SCHEMA_VER` / `RELEASE_MINOR` bump — old `.basemind` memory blobs stay readable.
+    /// `INDEX_SCHEMA_VER` / `RELEASE_MINOR` bump — old `.hacienda-mcp` memory blobs stay readable.
     #[test]
     fn should_decode_legacy_memory_record_with_defaulted_w10_fields() {
         let legacy = LegacyMemoryRecord {

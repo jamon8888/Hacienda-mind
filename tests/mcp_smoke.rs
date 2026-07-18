@@ -1,7 +1,7 @@
 //! End-to-end smoke test for the MCP server.
 //!
 //! Builds a tiny throwaway git repo with the system `git` (same pattern as `git_smoke.rs`),
-//! scans it via the basemind library, spawns `basemind serve` as a subprocess, and exercises
+//! scans it via the hacienda-mcp library, spawns `hacienda-mcp serve` as a subprocess, and exercises
 //! a representative slice of MCP tools through the rmcp child-process transport. The goal
 //! is to keep the entire MCP integration path green in normal `cargo test` runs without
 //! waiting for the heavier real-OSS hardening harness (`tests/harden.rs`, `#[ignore]`'d).
@@ -10,7 +10,7 @@
 //! * stdio JSON-RPC framing through `rmcp`
 //! * tool dispatch + parameter deserialization
 //! * `Repo::is_shallow()` plumbing → `truncated` flag on history-walking responses
-//! * the in-process scan → on-disk `.basemind/` → MCP server preload chain
+//! * the in-process scan → on-disk `.hacienda-mcp/` → MCP server preload chain
 //!
 //! Runs in < 5 s on a warm-build machine.
 
@@ -38,7 +38,7 @@ fn git(repo: &Path, args: &[&str]) {
 }
 
 fn build_repo() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     git(root, &["init", "-q"]);
@@ -96,18 +96,18 @@ fn build_repo() -> TempDir {
 }
 
 fn run_scan(root: &Path) {
-    let cfg = basemind::config::default_for_root(root);
-    let _ = basemind::lang::ensure_grammars().expect("grammar bootstrap");
+    let cfg = hacienda_mcp::config::default_for_root(root);
+    let _ = hacienda_mcp::lang::ensure_grammars().expect("grammar bootstrap");
     // `#[tokio::test]`, so run the scan on a dedicated std thread to mirror the production context.
     std::thread::scope(|scope| {
         scope.spawn(|| {
-            let mut store = basemind::store::Store::open(root, basemind::store::VIEW_WORKING).expect("open store");
-            basemind::scanner::scan(
+            let mut store = hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING).expect("open store");
+            hacienda_mcp::scanner::scan(
                 root,
                 &mut store,
                 &cfg,
-                basemind::scanner::ScanSource::WorkingTree,
-                basemind::scanner::EmbedMode::Inline,
+                hacienda_mcp::scanner::ScanSource::WorkingTree,
+                hacienda_mcp::scanner::EmbedMode::Inline,
             )
             .expect("scan");
         });
@@ -155,11 +155,11 @@ async fn mcp_server_exercises_representative_tools() {
     let root = dir.path();
     run_scan(root);
 
-    let bin = env!("CARGO_BIN_EXE_basemind");
+    let bin = env!("CARGO_BIN_EXE_hacienda-mcp");
     let cmd = AsyncCommand::new(bin).configure(|c| {
         c.arg("--root").arg(root).arg("serve").arg("--view").arg("working");
     });
-    let transport = TokioChildProcess::new(cmd).expect("spawn basemind serve");
+    let transport = TokioChildProcess::new(cmd).expect("spawn hacienda-mcp serve");
     let service = ().serve(transport).await.expect("rmcp handshake");
 
     let instructions = service
@@ -2236,7 +2236,7 @@ async fn mcp_server_exercises_representative_tools() {
 /// ≥ 5 "modified" entries. The last commit in the helper rewrites only line 1 so
 /// `paged.rs` blame partitions into ≥ 2 distinct hunks.
 fn build_paging_repo() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     git(root, &["init", "-q"]);
@@ -2258,11 +2258,11 @@ async fn spawn_paging_server() -> (TempDir, rmcp::service::RunningService<rmcp::
     let dir = build_paging_repo();
     let root = dir.path();
     run_scan(root);
-    let bin = env!("CARGO_BIN_EXE_basemind");
+    let bin = env!("CARGO_BIN_EXE_hacienda-mcp");
     let cmd = AsyncCommand::new(bin).configure(|c| {
         c.arg("--root").arg(root).arg("serve").arg("--view").arg("working");
     });
-    let transport = TokioChildProcess::new(cmd).expect("spawn basemind serve");
+    let transport = TokioChildProcess::new(cmd).expect("spawn hacienda-mcp serve");
     let service = ().serve(transport).await.expect("rmcp handshake");
     (dir, service)
 }
@@ -2306,7 +2306,7 @@ async fn recent_changes_paginates_with_stable_cursor() {
         p2_shas.iter().all(|s| !p1_shas.contains(s)),
         "recent_changes pages must not overlap: {p1_shas:?} vs {p2_shas:?}"
     );
-    let bogus = basemind::testing::encode_in_memory_cursor(0, 0xDEAD_BEEF);
+    let bogus = hacienda_mcp::testing::encode_in_memory_cursor(0, 0xDEAD_BEEF);
     let stale = decode_text(
         &service
             .call_tool(call_params("recent_changes", json!({ "limit": 2, "cursor": bogus })))
@@ -2355,7 +2355,7 @@ async fn commits_touching_paginates_with_stable_cursor() {
         p2_shas.iter().all(|s| !p1_shas.contains(s)),
         "commits_touching pages must not overlap: {p1_shas:?} vs {p2_shas:?}"
     );
-    let bogus = basemind::testing::encode_in_memory_cursor(0, 0xDEAD_BEEF);
+    let bogus = hacienda_mcp::testing::encode_in_memory_cursor(0, 0xDEAD_BEEF);
     let stale = decode_text(
         &service
             .call_tool(call_params(
@@ -2447,7 +2447,7 @@ async fn find_commits_by_path_paginates_with_stable_cursor() {
         p2_shas.iter().all(|s| !p1_shas.contains(s)),
         "find_commits_by_path pages must not overlap: {p1_shas:?} vs {p2_shas:?}"
     );
-    let bogus = basemind::testing::encode_in_memory_cursor(0, 0xDEAD_BEEF);
+    let bogus = hacienda_mcp::testing::encode_in_memory_cursor(0, 0xDEAD_BEEF);
     let stale = decode_text(
         &service
             .call_tool(call_params(
@@ -2519,7 +2519,7 @@ async fn symbol_history_paginates_with_stable_cursor() {
         p2_shas.iter().all(|s| !p1_shas.contains(s)),
         "symbol_history pages must not overlap: {p1_shas:?} vs {p2_shas:?}"
     );
-    let bogus = basemind::testing::encode_in_memory_cursor(0, 0xDEAD_BEEF);
+    let bogus = hacienda_mcp::testing::encode_in_memory_cursor(0, 0xDEAD_BEEF);
     let stale = decode_text(
         &service
             .call_tool(call_params(
@@ -2631,7 +2631,7 @@ async fn blame_symbol_paginates_by_start_line() {
         p1_start >= 1,
         "blame_symbol start_line should be 1-based, got {p1_start}"
     );
-    let huge_cursor = basemind::testing::encode_in_memory_cursor(9_999, 0);
+    let huge_cursor = hacienda_mcp::testing::encode_in_memory_cursor(9_999, 0);
     let page_empty = decode_text(
         &service
             .call_tool(call_params(
@@ -2681,11 +2681,11 @@ async fn reranks_search_results() {
     let dir = build_repo();
     let root = dir.path();
     run_scan(root);
-    let bin = env!("CARGO_BIN_EXE_basemind");
+    let bin = env!("CARGO_BIN_EXE_hacienda-mcp");
     let cmd = AsyncCommand::new(bin).configure(|c| {
         c.arg("--root").arg(root).arg("serve").arg("--view").arg("working");
     });
-    let transport = TokioChildProcess::new(cmd).expect("spawn basemind serve");
+    let transport = TokioChildProcess::new(cmd).expect("spawn hacienda-mcp serve");
     let service = ().serve(transport).await.expect("rmcp handshake");
 
     let no_rerank = service
@@ -2751,11 +2751,11 @@ async fn summarizes_via_extractive_default() {
     let root = dir.path();
     run_scan(root);
 
-    let bin = env!("CARGO_BIN_EXE_basemind");
+    let bin = env!("CARGO_BIN_EXE_hacienda-mcp");
     let cmd = AsyncCommand::new(bin).configure(|c| {
         c.arg("--root").arg(root).arg("serve").arg("--view").arg("working");
     });
-    let transport = TokioChildProcess::new(cmd).expect("spawn basemind serve");
+    let transport = TokioChildProcess::new(cmd).expect("spawn hacienda-mcp serve");
     let service = ().serve(transport).await.expect("rmcp handshake");
 
     let result = service
@@ -2812,11 +2812,11 @@ async fn search_documents_accepts_post_filter_params() {
     let root = dir.path();
     run_scan(root);
 
-    let bin = env!("CARGO_BIN_EXE_basemind");
+    let bin = env!("CARGO_BIN_EXE_hacienda-mcp");
     let cmd = AsyncCommand::new(bin).configure(|c| {
         c.arg("--root").arg(root).arg("serve").arg("--view").arg("working");
     });
-    let transport = TokioChildProcess::new(cmd).expect("spawn basemind serve");
+    let transport = TokioChildProcess::new(cmd).expect("spawn hacienda-mcp serve");
     let service = ().serve(transport).await.expect("rmcp handshake");
 
     let result = service
@@ -2862,13 +2862,13 @@ async fn search_documents_accepts_post_filter_params() {
 async fn comms_round_trip_front_matter_then_body_then_inbox() {
     use std::sync::Arc;
 
-    use basemind::comms::client::CommsClient;
-    use basemind::comms::daemon::Broker;
-    use basemind::comms::frontend_uds::UdsFrontend;
-    use basemind::comms::ids::AgentId;
-    use basemind::comms::singleton::CommsPaths;
-    use basemind::comms::store::CommsStore;
-    use basemind::comms::transport::CommsFrontend;
+    use hacienda_mcp::comms::client::CommsClient;
+    use hacienda_mcp::comms::daemon::Broker;
+    use hacienda_mcp::comms::frontend_uds::UdsFrontend;
+    use hacienda_mcp::comms::ids::AgentId;
+    use hacienda_mcp::comms::singleton::CommsPaths;
+    use hacienda_mcp::comms::store::CommsStore;
+    use hacienda_mcp::comms::transport::CommsFrontend;
 
     let dir = tempfile::tempdir().expect("tempdir");
     let socket_path = dir.path().join("c.sock");
@@ -2902,7 +2902,7 @@ async fn comms_round_trip_front_matter_then_body_then_inbox() {
         .start_thread(
             Some("Team".to_string()),
             None,
-            vec![basemind::comms::ids::AgentId::parse("agent-b").unwrap()],
+            vec![hacienda_mcp::comms::ids::AgentId::parse("agent-b").unwrap()],
         )
         .await
         .expect("start thread")
@@ -3001,9 +3001,9 @@ async fn comms_round_trip_front_matter_then_body_then_inbox() {
 }
 
 /// End-to-end MCP contract for the headless-shell tools through a real
-/// `basemind serve` child process. The child binary carries the
-/// `--__internal-daemon` intercept, so `shell_spawn` actually re-execs basemind
-/// as the embedded rmux daemon. `BASEMIND_SHELLS_SOCKET` sandboxes that daemon on
+/// `hacienda-mcp serve` child process. The child binary carries the
+/// `--__internal-daemon` intercept, so `shell_spawn` actually re-execs hacienda-mcp
+/// as the embedded rmux daemon. `HACIENDA_MCP_SHELLS_SOCKET` sandboxes that daemon on
 /// a per-test temp socket so parallel runs and the user's environment never
 /// collide.
 ///
@@ -3019,7 +3019,7 @@ async fn shell_tools_spawn_capture_kill_through_mcp() {
     run_scan(root);
 
     // Canonical committed config location (`<root>/basemind.toml`); the cache moved to a global
-    // XDG store so there is no in-repo `.basemind/` dir to hold a legacy config anymore.
+    // XDG store so there is no in-repo `.hacienda-mcp/` dir to hold a legacy config anymore.
     std::fs::write(
         root.join("basemind.toml"),
         b"\"$schema\" = \"v1\"\n\n[shells]\nvisual = \"headless\"\n",
@@ -3027,13 +3027,13 @@ async fn shell_tools_spawn_capture_kill_through_mcp() {
     .expect("write headless shells config");
 
     let socket = dir.path().join("shells.sock");
-    let bin = env!("CARGO_BIN_EXE_basemind");
+    let bin = env!("CARGO_BIN_EXE_hacienda-mcp");
     let socket_for_env = socket.clone();
     let cmd = AsyncCommand::new(bin).configure(move |c| {
         c.arg("--root").arg(root).arg("serve").arg("--view").arg("working");
-        c.env("BASEMIND_SHELLS_SOCKET", &socket_for_env);
+        c.env("HACIENDA_MCP_SHELLS_SOCKET", &socket_for_env);
     });
-    let transport = TokioChildProcess::new(cmd).expect("spawn basemind serve");
+    let transport = TokioChildProcess::new(cmd).expect("spawn hacienda-mcp serve");
     let service = ().serve(transport).await.expect("rmcp handshake");
 
     let spawned = service
@@ -3057,7 +3057,7 @@ async fn shell_tools_spawn_capture_kill_through_mcp() {
         attach_command.contains("--__internal-attach ")
             && attach_command.contains("--socket ")
             && attach_command.contains("--size "),
-        "attach_command should be a basemind internal-attach re-exec line: {spawned:?}"
+        "attach_command should be a hacienda-mcp internal-attach re-exec line: {spawned:?}"
     );
 
     let escaped = service
@@ -3111,20 +3111,20 @@ async fn shell_tools_spawn_capture_kill_through_mcp() {
     let _ = service.cancel().await;
 }
 
-/// Spawn `basemind serve` against `root`, optionally setting `BASEMIND_MCP_LEAN`, and return the
+/// Spawn `hacienda-mcp serve` against `root`, optionally setting `HACIENDA_MCP_MCP_LEAN`, and return the
 /// connected rmcp client service.
 async fn spawn_serve(root: &Path, lean: Option<&str>) -> rmcp::service::RunningService<rmcp::RoleClient, ()> {
-    let bin = env!("CARGO_BIN_EXE_basemind");
+    let bin = env!("CARGO_BIN_EXE_hacienda-mcp");
     let lean = lean.map(str::to_string);
     let root = root.to_path_buf();
     let cmd = AsyncCommand::new(bin).configure(move |c| {
         c.arg("--root").arg(&root).arg("serve").arg("--view").arg("working");
-        c.env_remove("BASEMIND_MCP_LEAN");
+        c.env_remove("HACIENDA_MCP_MCP_LEAN");
         if let Some(v) = &lean {
-            c.env("BASEMIND_MCP_LEAN", v);
+            c.env("HACIENDA_MCP_MCP_LEAN", v);
         }
     });
-    let transport = TokioChildProcess::new(cmd).expect("spawn basemind serve");
+    let transport = TokioChildProcess::new(cmd).expect("spawn hacienda-mcp serve");
     ().serve(transport).await.expect("rmcp handshake")
 }
 
@@ -3194,7 +3194,7 @@ async fn serve_auto_scan_reports_index_build_ms_on_status() {
 
 /// W5 slice 3: the lean MCP surface is STRICTLY opt-in.
 ///
-/// * `BASEMIND_MCP_LEAN=1` → exactly the three wrapper tools are advertised, and
+/// * `HACIENDA_MCP_MCP_LEAN=1` → exactly the three wrapper tools are advertised, and
 ///   `invoke_tool { search_symbols }` returns the same payload as a direct `search_symbols` call.
 /// * flag UNSET → the full surface is advertised unchanged (well over the three wrappers, and
 ///   `search_symbols` is callable directly).
@@ -3383,7 +3383,7 @@ async fn prompts_are_listed_and_rendered_with_arguments() {
         .collect::<String>();
     assert!(
         body.contains("Greeter") && body.contains("search_symbols"),
-        "rendered trace-symbol must interpolate the symbol and name basemind tools, got: {body}"
+        "rendered trace-symbol must interpolate the symbol and name hacienda-mcp tools, got: {body}"
     );
 
     let _ = server.cancel().await;
@@ -3474,13 +3474,13 @@ async fn rescan_emits_logging_and_progress_notifications() {
     let logs = Arc::clone(&capture.logs);
     let progress = Arc::clone(&capture.progress);
 
-    let bin = env!("CARGO_BIN_EXE_basemind");
+    let bin = env!("CARGO_BIN_EXE_hacienda-mcp");
     let root_buf = root.to_path_buf();
     let cmd = AsyncCommand::new(bin).configure(move |c| {
         c.arg("--root").arg(&root_buf).arg("serve").arg("--view").arg("working");
-        c.env_remove("BASEMIND_MCP_LEAN");
+        c.env_remove("HACIENDA_MCP_MCP_LEAN");
     });
-    let transport = TokioChildProcess::new(cmd).expect("spawn basemind serve");
+    let transport = TokioChildProcess::new(cmd).expect("spawn hacienda-mcp serve");
     let server = capture.serve(transport).await.expect("rmcp handshake");
 
     let mut params = call_params("rescan", json!({}));

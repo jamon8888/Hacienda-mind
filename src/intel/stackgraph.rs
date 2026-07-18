@@ -53,7 +53,7 @@ pub fn has_tsg_ruleset(lang: LangId) -> bool {
 
 /// The raw `.tsg` source for a supported language, with grammar-drift adaptations applied.
 ///
-/// GRAMMAR DRIFT: basemind's tree-sitter Python grammar (TSLP 1.12.5) has no `except_group_clause`
+/// GRAMMAR DRIFT: hacienda-mcp's tree-sitter Python grammar (TSLP 1.12.5) has no `except_group_clause`
 /// node (the `except*` construct). The upstream `python.tsg` references it in two places — an
 /// alternation entry and a standalone stanza — both of which fail to compile against our grammar.
 /// We strip both; `except*` handling folds into the existing `except_clause` rules already present.
@@ -65,7 +65,7 @@ fn tsg_source(lang: LangId) -> Option<String> {
     }
 }
 
-/// Remove the two `except_group_clause` references that don't exist in basemind's Python grammar.
+/// Remove the two `except_group_clause` references that don't exist in hacienda-mcp's Python grammar.
 /// Both are self-contained: one alternation list entry and one empty stanza.
 fn adapt_python_tsg(src: &str) -> String {
     src.replace("  (except_group_clause)\n", "")

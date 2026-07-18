@@ -1,4 +1,4 @@
-//! Regression test for bug #22: `basemind cache clear --component views:<name>` clears a
+//! Regression test for bug #22: `hacienda-mcp cache clear --component views:<name>` clears a
 //! single view, leaving the other views (and shared blobs) intact — previously the only
 //! option, `--component views`, removed every view at once.
 
@@ -8,7 +8,7 @@ use std::path::Path;
 use std::process::Command;
 
 fn bin() -> &'static str {
-    env!("CARGO_BIN_EXE_basemind")
+    env!("CARGO_BIN_EXE_hacienda-mcp")
 }
 
 fn git(repo: &Path, args: &[&str]) {
@@ -30,12 +30,12 @@ fn run(root: &Path, args: &[&str]) -> std::process::Output {
         .arg(root)
         .args(args)
         .output()
-        .expect("run basemind")
+        .expect("run hacienda-mcp")
 }
 
 #[test]
 fn cache_clear_single_view_leaves_others_intact() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     git(root, &["init", "-q"]);
@@ -47,7 +47,7 @@ fn cache_clear_single_view_leaves_others_intact() {
     assert!(run(root, &["scan"]).status.success(), "working scan");
     assert!(run(root, &["scan", "--rev", "HEAD"]).status.success(), "rev scan");
 
-    let views_dir = basemind::store::workspace_cache_dir(root).join("views");
+    let views_dir = hacienda_mcp::store::workspace_cache_dir(root).join("views");
     let rev_view = std::fs::read_dir(&views_dir)
         .unwrap()
         .filter_map(Result::ok)

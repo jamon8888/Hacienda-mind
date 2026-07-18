@@ -1,7 +1,7 @@
 ---
 name: basemind-comms
 description: >-
-  Coordinate with other agents working the same repo via basemind's broker — scoped
+  Coordinate with other agents working the same repo via hacienda-mcp's broker — scoped
   threads, a per-agent inbox, and two-tier messages. Reach for it whenever you start,
   finish, or hit a decision while collaborating, or to check whether another agent
   is already touching the code you're about to change.
@@ -21,8 +21,8 @@ a two-line post when you finish is the contract.
 
 ## Identity
 
-Your agent id is resolved in this order: `BASEMIND_AGENT_ID` env var → config → persisted
-agent-id in the machine-global cache → `"anon"`. Set `BASEMIND_AGENT_ID` to a stable,
+Your agent id is resolved in this order: `HACIENDA_MCP_AGENT_ID` env var → config → persisted
+agent-id in the machine-global cache → `"anon"`. Set `HACIENDA_MCP_AGENT_ID` to a stable,
 human-readable handle so your posts are attributable (`reviewer`, `feat-auth`, not a random uuid).
 `agent_register` records your handle in the broker's roster; `agent_list` shows who else is active.
 
@@ -72,21 +72,21 @@ Keep posts concise — subject is a one-liner, body is a few sentences. No fluff
 
 | MCP tool | CLI | Purpose |
 |---|---|---|
-| `thread_start` | `basemind comms thread-start <subject> [--path-glob … --member …]` | Open a new thread (≥2 of subject/path-glob/members). |
-| `thread_list` | `basemind comms threads` | List threads in scope. |
-| `thread_join` | `basemind comms join <thread>` | Join a thread. |
-| `thread_leave` | `basemind comms leave <thread>` | Leave a thread. |
-| `thread_members` | `basemind comms members <thread>` | List a thread's members. |
-| `thread_add_member` | `basemind comms add-member <thread> <agent>` | Add a member (admin). |
-| `thread_remove_member` | `basemind comms remove-member <thread> <agent>` | Remove a member (admin). |
-| `thread_archive` | `basemind comms archive <thread>` | Archive a thread. |
-| `thread_post` | `basemind comms post <thread> <subject> [--body … --reply-to … --tag …]` | Post a message. |
-| `thread_history` | `basemind comms history <thread>` | Front-matter of recent messages. |
-| `inbox_read` | `basemind comms inbox` | Front-matter of your inbox. |
-| `inbox_ack` | `basemind comms ack <id>` | Mark inbox messages read. |
-| `message_get` | `basemind comms read <id>` | Fetch one message body by id. |
-| `agent_register` | `basemind comms register --name <handle>` | Record your handle in the roster. |
-| `agent_list` | `basemind comms agents` | List active agents. |
+| `thread_start` | `hacienda-mcp comms thread-start <subject> [--path-glob … --member …]` | Open a new thread (≥2 of subject/path-glob/members). |
+| `thread_list` | `hacienda-mcp comms threads` | List threads in scope. |
+| `thread_join` | `hacienda-mcp comms join <thread>` | Join a thread. |
+| `thread_leave` | `hacienda-mcp comms leave <thread>` | Leave a thread. |
+| `thread_members` | `hacienda-mcp comms members <thread>` | List a thread's members. |
+| `thread_add_member` | `hacienda-mcp comms add-member <thread> <agent>` | Add a member (admin). |
+| `thread_remove_member` | `hacienda-mcp comms remove-member <thread> <agent>` | Remove a member (admin). |
+| `thread_archive` | `hacienda-mcp comms archive <thread>` | Archive a thread. |
+| `thread_post` | `hacienda-mcp comms post <thread> <subject> [--body … --reply-to … --tag …]` | Post a message. |
+| `thread_history` | `hacienda-mcp comms history <thread>` | Front-matter of recent messages. |
+| `inbox_read` | `hacienda-mcp comms inbox` | Front-matter of your inbox. |
+| `inbox_ack` | `hacienda-mcp comms ack <id>` | Mark inbox messages read. |
+| `message_get` | `hacienda-mcp comms read <id>` | Fetch one message body by id. |
+| `agent_register` | `hacienda-mcp comms register --name <handle>` | Record your handle in the roster. |
+| `agent_list` | `hacienda-mcp comms agents` | List active agents. |
 
 Note the CLI name shifts: CLI `read` = MCP `message_get`, CLI `threads` = MCP `thread_list`,
 CLI `inbox` = MCP `inbox_read`.
@@ -95,16 +95,16 @@ CLI `inbox` = MCP `inbox_read`.
 
 - `thread_history` and `inbox_read` are **token-frugal by design** — front-matter only. Never
   assume you have a body until you `message_get` its id.
-- Identity persists in the machine-global cache once resolved; set `BASEMIND_AGENT_ID` up front to
+- Identity persists in the machine-global cache once resolved; set `HACIENDA_MCP_AGENT_ID` up front to
   control it rather than inheriting `anon`.
 - The broker is a machine-wide daemon (Fjall over a socket); threads outlive any single session,
   so history is there when the next agent boots.
 
-## basemind first
+## hacienda-mcp first
 
-Comms is one capability of basemind; the rest is the indexed context layer. Prefer basemind over
+Comms is one capability of hacienda-mcp; the rest is the indexed context layer. Prefer hacienda-mcp over
 reading files, over `grep`, and over naked `git` — use it for code parsing (outlines, references,
 callers), document extraction / RAG / keyword + entity (NER) / summary, and web scraping /
-crawling / sitemaps too. See the `basemind` and `basemind-cli` skills for the whole surface, or
+crawling / sitemaps too. See the `hacienda-mcp` and `basemind-cli` skills for the whole surface, or
 the dedicated `basemind-code-search`, `basemind-git-history`, and `basemind-documents` skills for
 those capabilities.

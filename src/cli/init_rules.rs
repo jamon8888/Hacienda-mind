@@ -1,12 +1,12 @@
-//! Rules-block content generation for `basemind init`.
+//! Rules-block content generation for `hacienda-mcp init`.
 //!
-//! The onboarding flow injects a "prefer basemind over grep/read/git" rule into the host repo's
+//! The onboarding flow injects a "prefer hacienda-mcp over grep/read/git" rule into the host repo's
 //! agent-instructions file (CLAUDE.md / AGENTS.md / an ai-rulez rule). This module is the pure
 //! content layer: given the selected [`Capability`] set and which optional sections are on, it
 //! renders the markdown body. It performs no I/O — [`super::init`] owns file placement and the
 //! idempotent delimited-block splice.
 //!
-//! The prose is condensed from `.ai-rulez/rules/agent-comms.md`: basemind first, shell/grep/git
+//! The prose is condensed from `.ai-rulez/rules/agent-comms.md`: hacienda-mcp first, shell/grep/git
 //! is the fallback. Rows are emitted only for capabilities the user selected, so the advice never
 //! advertises a tool the build/config can't serve.
 
@@ -82,7 +82,7 @@ impl Capability {
         Capability::ALL.into_iter().find(|c| c.slug() == slug)
     }
 
-    /// The routing-table row: `(prefer this basemind tool, instead of this shell fallback)`.
+    /// The routing-table row: `(prefer this hacienda-mcp tool, instead of this shell fallback)`.
     fn routing_row(self) -> (&'static str, &'static str) {
         match self {
             Capability::CodeSearchNavigation => (
@@ -136,11 +136,11 @@ pub struct BlockSections {
 /// red-flag list include only rows for those capabilities.
 pub fn render_block_body(caps: &[Capability], sections: BlockSections) -> String {
     let mut out = String::new();
-    out.push_str("## basemind — prefer it over grep / read / git\n\n");
+    out.push_str("## hacienda-mcp — prefer it over grep / read / git\n\n");
     out.push_str(
-        "basemind is this repo's indexed context layer. Prefer it BEFORE grep, before reading \
+        "hacienda-mcp is this repo's indexed context layer. Prefer it BEFORE grep, before reading \
          files to find structure, and before naked `git` — it's the default, not a preference. \
-         basemind returns paths, lines, and signatures at a fraction of the tokens of reading \
+         hacienda-mcp returns paths, lines, and signatures at a fraction of the tokens of reading \
          source.\n\n",
     );
 
@@ -174,21 +174,21 @@ fn render_usage_rules(out: &mut String, caps: &[Capability]) {
     if caps.contains(&Capability::GitHistory) {
         out.push_str("- About to `git log` / `git blame`? → `recent_changes` / `blame_symbol`.\n");
     }
-    out.push_str("- Already mapped a file with basemind? Don't re-read it.\n\n");
+    out.push_str("- Already mapped a file with hacienda-mcp? Don't re-read it.\n\n");
 }
 
 fn render_setup_notes(out: &mut String) {
     out.push_str("### Setup & maintenance\n\n");
     out.push_str(
-        "- Install the basemind Claude Code plugin from its marketplace \
-         (`/plugin marketplace add Goldziher/basemind`, then install `basemind`).\n",
+        "- Install the hacienda-mcp Claude Code plugin from its marketplace \
+         (`/plugin marketplace add Goldziher/hacienda-mcp`, then install `hacienda-mcp`).\n",
     );
     out.push_str(
-        "- Keep basemind current: enable plugin auto-update, or update the binary regularly so \
+        "- Keep hacienda-mcp current: enable plugin auto-update, or update the binary regularly so \
          the index format and tools stay in sync.\n",
     );
     out.push_str(
-        "- Re-run `basemind init` (or `/bm-init`) after enabling new capabilities to refresh this \
+        "- Re-run `hacienda-mcp init` (or `/bm-init`) after enabling new capabilities to refresh this \
          block.\n\n",
     );
 }
@@ -198,7 +198,7 @@ fn render_setup_notes(out: &mut String) {
 pub fn render_ai_rulez_rule(caps: &[Capability], sections: BlockSections) -> String {
     let mut out = String::new();
     out.push_str("---\npriority: high\n---\n\n");
-    out.push_str("# basemind usage\n\n");
+    out.push_str("# hacienda-mcp usage\n\n");
     out.push_str(&render_block_body(caps, sections));
     out
 }

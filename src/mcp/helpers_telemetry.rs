@@ -14,7 +14,7 @@ use super::ServerState;
 
 /// The response text of a tool result, so telemetry can route it through the real tokenizer; the
 /// byte length is recovered as `.len()` for the rows that report raw response bytes. Image /
-/// resource / link content is skipped — basemind tools only ever return text.
+/// resource / link content is skipped — hacienda-mcp tools only ever return text.
 ///
 /// Borrows on the common single-`Content::Text` path (every tool that goes through
 /// `json_result` returns exactly one item), so `record_call` allocates nothing there; only a
@@ -41,7 +41,7 @@ fn result_text(result: &CallToolResult) -> std::borrow::Cow<'_, str> {
     }
 }
 
-/// Record one tool-call row to `.basemind/telemetry.jsonl`. Best-effort:
+/// Record one tool-call row to `.hacienda-mcp/telemetry.jsonl`. Best-effort:
 /// errors are logged via `tracing::warn!` and swallowed so a misbehaving
 /// telemetry write can never break a tool response. Only successful calls
 /// produce rows — error responses don't carry a meaningful "saved" number.

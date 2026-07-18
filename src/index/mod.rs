@@ -1,6 +1,6 @@
 //! Fjall-backed inverted index over the msgpack content-addressed blob store.
 //!
-//! The blob store (`.basemind/blobs/<hash>.fm.msgpack`) stays canonical — it holds the per-
+//! The blob store (`.hacienda-mcp/blobs/<hash>.fm.msgpack`) stays canonical — it holds the per-
 //! file extracted maps (L1 outline + L2 calls) in their full shape. This module adds a
 //! *secondary* index on top:
 //! six Fjall keyspaces that let MCP tools answer "who calls `foo`?" or "what imports
@@ -8,7 +8,7 @@
 //!
 //! ## Layout
 //!
-//! `.basemind/views/<view>/index.fjall/` — Fjall manages its own directory shape.
+//! `.hacienda-mcp/views/<view>/index.fjall/` — Fjall manages its own directory shape.
 //!
 //! ## Schema versioning
 //!

@@ -1,10 +1,10 @@
-"""Contract tests for the basemind Hermes Agent plugin (basemind_hermes_plugin/hermes.py).
+"""Contract tests for the hacienda-mcp Hermes Agent plugin (hacienda_mcp_hermes_plugin/hermes.py).
 
 These use a duck-typed fake ``ctx`` — no Hermes dependency — and assert the plugin:
 
 * registers every bundled skill and slash command,
 * wires the two comms hooks,
-* is fully fail-open (runs with a ``ctx`` missing methods, and with no ``basemind`` binary),
+* is fully fail-open (runs with a ``ctx`` missing methods, and with no ``hacienda-mcp`` binary),
 * ships its manifest + bundled assets where the wheel's package-data expects them.
 """
 
@@ -13,14 +13,14 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-import basemind_hermes_plugin
+import hacienda_mcp_hermes_plugin
 import pytest
 import tomllib
 
 try:
-    from basemind_hermes_plugin import hermes
+    from hacienda_mcp_hermes_plugin import hermes
 except ImportError:
-    hermes = basemind_hermes_plugin
+    hermes = hacienda_mcp_hermes_plugin
 
 PKG_DIR = Path(hermes.__file__).resolve().parent
 PIP_PKG_ROOT = PKG_DIR.parents[1] if PKG_DIR.parent.name == "src" else PKG_DIR.parent
@@ -49,15 +49,15 @@ class RecordingCtx:
 
 
 def test_register_is_exported_from_package():
-    assert callable(basemind_hermes_plugin.register)
-    assert basemind_hermes_plugin.register is hermes.register
+    assert callable(hacienda_mcp_hermes_plugin.register)
+    assert hacienda_mcp_hermes_plugin.register is hermes.register
 
 
 def test_register_wires_all_skills():
     ctx = RecordingCtx()
     hermes.register(ctx)
     names = {name for name, _ in ctx.skills}
-    assert "basemind" in names
+    assert "hacienda-mcp" in names
     assert len(ctx.skills) >= 8
     for _, path in ctx.skills:
         assert Path(path).is_file()
@@ -80,8 +80,8 @@ def test_register_wires_comms_hooks():
     assert set(ctx.hooks) == {"on_session_start", "pre_llm_call"}
 
 
-def test_hooks_are_fail_open_without_a_basemind_binary(monkeypatch):
-    monkeypatch.setattr(hermes, "_run_basemind_json", lambda *a, **k: None)
+def test_hooks_are_fail_open_without_a_hacienda_mcp_binary(monkeypatch):
+    monkeypatch.setattr(hermes, "_run_hacienda_mcp_json", lambda *a, **k: None)
     ctx = RecordingCtx()
     hermes.register(ctx)
     ctx.hooks["on_session_start"]()
@@ -101,7 +101,7 @@ def test_register_never_raises_on_a_minimal_ctx():
 def test_session_start_context_lists_messages(monkeypatch):
     monkeypatch.setattr(
         hermes,
-        "_run_basemind_json",
+        "_run_hacienda_mcp_json",
         lambda *a, **k: {"messages": [{"subject": "hi", "from": "peer", "id": "m1", "ts_micros": 5}]},
     )
     text = hermes._session_start_context("/tmp")
@@ -113,7 +113,7 @@ def test_delta_context_baselines_then_reports_new(monkeypatch, tmp_path):
     monkeypatch.setattr(hermes, "tempfile", hermes.tempfile)
     monkeypatch.setattr(hermes.tempfile, "gettempdir", lambda: str(tmp_path))
     msgs = [{"subject": "a", "from": "p", "id": "m1", "ts_micros": 10}]
-    monkeypatch.setattr(hermes, "_run_basemind_json", lambda *a, **k: {"messages": msgs})
+    monkeypatch.setattr(hermes, "_run_hacienda_mcp_json", lambda *a, **k: {"messages": msgs})
     assert hermes._delta_context("/tmp", "sid") is None
     msgs.append({"subject": "b", "from": "p", "id": "m2", "ts_micros": 20})
     out = hermes._delta_context("/tmp", "sid")
@@ -123,13 +123,13 @@ def test_delta_context_baselines_then_reports_new(monkeypatch, tmp_path):
 def test_pyproject_declares_the_hermes_entry_point():
     data = tomllib.loads((PIP_PKG_ROOT / "pyproject.toml").read_text())
     entry = data["project"]["entry-points"]["hermes_agent.plugins"]
-    assert entry == {"basemind": "basemind_hermes_plugin"}
+    assert entry == {"hacienda-mcp": "hacienda_mcp_hermes_plugin"}
     if "setuptools" in data["tool"]:
-        pkg_data = data["tool"]["setuptools"]["package-data"]["basemind_hermes_plugin"]
+        pkg_data = data["tool"]["setuptools"]["package-data"]["hacienda_mcp_hermes_plugin"]
         assert "plugin.yaml" in pkg_data
     else:
         packages = data["tool"]["hatch"]["build"]["targets"]["wheel"]["packages"]
-        assert packages == ["src/basemind_hermes_plugin"]
+        assert packages == ["src/hacienda_mcp_hermes_plugin"]
 
 
 def test_bundled_assets_match_package_data_globs():
@@ -156,8 +156,8 @@ def test_built_wheel_contains_manifest_and_skills(tmp_path):
     assert wheels, "no wheel produced"
     with zipfile.ZipFile(wheels[0]) as zf:
         names = zf.namelist()
-    assert any(n.endswith("basemind_hermes_plugin/plugin.yaml") for n in names)
-    assert any("basemind_hermes_plugin/skills/" in n and n.endswith("SKILL.md") for n in names)
+    assert any(n.endswith("hacienda_mcp_hermes_plugin/plugin.yaml") for n in names)
+    assert any("hacienda_mcp_hermes_plugin/skills/" in n and n.endswith("SKILL.md") for n in names)
     ep = next(n for n in names if n.endswith("entry_points.txt"))
     with zipfile.ZipFile(wheels[0]) as zf:
         assert "hermes_agent.plugins" in zf.read(ep).decode()

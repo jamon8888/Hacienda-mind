@@ -2,7 +2,7 @@
 
 use crate::store::Store;
 
-/// File under `.basemind/` holding the generated-and-persisted per-session agent id. Created
+/// File under `.hacienda-mcp/` holding the generated-and-persisted per-session agent id. Created
 /// the first time identity resolution falls through to the generated tier, so two `serve`
 /// sessions against different repos get distinct ids while a single repo stays stable.
 const AGENT_ID_FILE: &str = "agent-id";
@@ -10,9 +10,9 @@ const AGENT_ID_FILE: &str = "agent-id";
 /// Resolve this server's stable agent identity. Tiered, each candidate validated through
 /// [`crate::comms::ids::AgentId`] (an invalid candidate falls through, not fails):
 ///
-/// 1. `BASEMIND_AGENT_ID` env — explicit per-process override.
+/// 1. `HACIENDA_MCP_AGENT_ID` env — explicit per-process override.
 /// 2. `config.comms.agent_id` — workspace config.
-/// 3. A generated-and-persisted id at `.basemind/agent-id` — stable per repo across restarts,
+/// 3. A generated-and-persisted id at `.hacienda-mcp/agent-id` — stable per repo across restarts,
 ///    distinct across repos so two windows differ.
 /// 4. `"anon"` — the final fallback (itself a valid `AgentId`).
 pub(super) fn resolve_agent_id(config: &crate::config::Config, store: &Store) -> String {
@@ -22,23 +22,23 @@ pub(super) fn resolve_agent_id(config: &crate::config::Config, store: &Store) ->
             .map(|a| a.into_string())
     }
 
-    if let Some(id) = validated(std::env::var("BASEMIND_AGENT_ID").ok()) {
+    if let Some(id) = validated(std::env::var("HACIENDA_MCP_AGENT_ID").ok()) {
         return id;
     }
     if let Some(id) = validated(config.comms.agent_id.clone()) {
         return id;
     }
-    if let Some(id) = validated(load_or_create_persisted_agent_id(&store.basemind_dir)) {
+    if let Some(id) = validated(load_or_create_persisted_agent_id(&store.hacienda_mcp_dir)) {
         return id;
     }
     "anon".to_string()
 }
 
-/// Read the persisted per-session agent id from `<basemind_dir>/agent-id`, generating and
+/// Read the persisted per-session agent id from `<hacienda_mcp_dir>/agent-id`, generating and
 /// writing a fresh one when absent or unreadable. Best-effort: any io failure returns `None`
 /// so the resolver falls through to `"anon"` rather than erroring at server boot.
-fn load_or_create_persisted_agent_id(basemind_dir: &std::path::Path) -> Option<String> {
-    let path = basemind_dir.join(AGENT_ID_FILE);
+fn load_or_create_persisted_agent_id(hacienda_mcp_dir: &std::path::Path) -> Option<String> {
+    let path = hacienda_mcp_dir.join(AGENT_ID_FILE);
     if let Ok(existing) = std::fs::read_to_string(&path) {
         let trimmed = existing.trim();
         if !trimmed.is_empty() {

@@ -1,15 +1,15 @@
 //! Real-OSS hardening harness — Stage 1 of the hardening iteration.
 //!
-//! Drives `basemind serve` against a previously-cloned repository (typically under
+//! Drives `hacienda-mcp serve` against a previously-cloned repository (typically under
 //! `/tmp/basemind-harden/`), exercises every MCP tool, asserts pass/fail criteria,
 //! and emits an NDJSON record per repo for the orchestrator.
 //!
 //! Invocation (orchestrated by `scripts/harden.sh`):
 //!
 //! ```sh
-//! BASEMIND_HARDEN_REPO=/tmp/basemind-harden/react \
-//! BASEMIND_HARDEN_REPO_NAME=react \
-//! BASEMIND_HARDEN_RESULTS=/tmp/basemind-harden/results.ndjson \
+//! HACIENDA_MCP_HARDEN_REPO=/tmp/basemind-harden/react \
+//! HACIENDA_MCP_HARDEN_REPO_NAME=react \
+//! HACIENDA_MCP_HARDEN_RESULTS=/tmp/basemind-harden/results.ndjson \
 //! cargo test --release --test harden -- --ignored --nocapture --exact harden_repo
 //! ```
 //!
@@ -85,11 +85,11 @@ struct GitOpsQuery {
 struct GitOpsMetrics {
     /// Wall-clock of the full `builder::sync` rebuild, ms.
     build_ms: u128,
-    /// `RebuildOutcome` debug string (`FullRebuild { reason, commits }` on a fresh `.basemind/`).
+    /// `RebuildOutcome` debug string (`FullRebuild { reason, commits }` on a fresh `.hacienda-mcp/`).
     outcome: String,
     /// Commits indexed.
     commits: u32,
-    /// On-disk size of `.basemind/git-history.fjall/`, bytes.
+    /// On-disk size of `.hacienda-mcp/git-history.fjall/`, bytes.
     index_bytes: u64,
     /// On-disk size of `.git/`, bytes — for the index-to-repo ratio.
     git_dir_bytes: u64,
@@ -116,18 +116,18 @@ struct RepoRecord {
 
 type ServiceHandle = RunningService<RoleClient, ()>;
 
-fn basemind_bin() -> &'static str {
-    env!("CARGO_BIN_EXE_basemind")
+fn hacienda_mcp_bin() -> &'static str {
+    env!("CARGO_BIN_EXE_hacienda-mcp")
 }
 
 async fn connect(repo_root: &Path) -> ServiceHandle {
-    let bin = basemind_bin();
+    let bin = hacienda_mcp_bin();
     let root = repo_root.to_path_buf();
     let cmd = Command::new(bin).configure(|c| {
         c.arg("--root").arg(&root).arg("serve").arg("--view").arg("working");
     });
-    let transport = TokioChildProcess::new(cmd).expect("spawn basemind serve");
-    ().serve(transport).await.expect("rmcp handshake with basemind serve")
+    let transport = TokioChildProcess::new(cmd).expect("spawn hacienda-mcp serve");
+    ().serve(transport).await.expect("rmcp handshake with hacienda-mcp serve")
 }
 
 /// Decode the first text-content item from a `CallToolResult` as JSON.
@@ -208,13 +208,13 @@ async fn call(
 
 struct ScanOutcome {
     elapsed: Duration,
-    stats: basemind::scanner::ScanStats,
+    stats: hacienda_mcp::scanner::ScanStats,
     sample_file: Option<SampleFile>,
 }
 
 struct SampleFile {
     /// repo-relative forward-slash path
-    path: basemind::path::RelPath,
+    path: hacienda_mcp::path::RelPath,
     /// non-empty when the file has at least one indexed symbol
     sample_symbol: Option<String>,
     /// non-empty when the file has at least one import with a resolved module
@@ -222,21 +222,21 @@ struct SampleFile {
 }
 
 fn run_scan(repo_root: &Path) -> ScanOutcome {
-    let _ = basemind::lang::ensure_grammars().expect("grammar bootstrap");
+    let _ = hacienda_mcp::lang::ensure_grammars().expect("grammar bootstrap");
 
-    let mut config = match basemind::config::load(repo_root) {
+    let mut config = match hacienda_mcp::config::load(repo_root) {
         Ok(c) => c,
-        Err(_) => basemind::config::default_for_root(repo_root),
+        Err(_) => hacienda_mcp::config::default_for_root(repo_root),
     };
     config.documents.enabled = false;
-    let mut store = basemind::store::Store::open(repo_root, basemind::store::VIEW_WORKING).expect("open store");
+    let mut store = hacienda_mcp::store::Store::open(repo_root, hacienda_mcp::store::VIEW_WORKING).expect("open store");
     let t0 = Instant::now();
-    let report = basemind::scanner::scan(
+    let report = hacienda_mcp::scanner::scan(
         repo_root,
         &mut store,
         &config,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .expect("scan");
     let elapsed = t0.elapsed();
@@ -250,7 +250,7 @@ fn run_scan(repo_root: &Path) -> ScanOutcome {
     }
 }
 
-fn pick_sample(store: &basemind::store::Store) -> Option<SampleFile> {
+fn pick_sample(store: &hacienda_mcp::store::Store) -> Option<SampleFile> {
     let mut sample: Option<SampleFile> = None;
     let mut fallback_module: Option<String> = None;
     for (path, entry) in &store.index.files {
@@ -440,7 +440,7 @@ async fn drive_tools(svc: &ServiceHandle, sample: Option<&SampleFile>) -> Vec<To
         svc,
         &mut records,
         "compress",
-        json!({ "text": "It is worth noting that basemind provides code-aware compression. The index is fast." }),
+        json!({ "text": "It is worth noting that hacienda-mcp provides code-aware compression. The index is fast." }),
     )
     .await;
 
@@ -448,7 +448,7 @@ async fn drive_tools(svc: &ServiceHandle, sample: Option<&SampleFile>) -> Vec<To
         svc,
         &mut records,
         "memory_put",
-        json!({ "key": "harden_probe", "value": "basemind harden probe", "embed": false }),
+        json!({ "key": "harden_probe", "value": "hacienda-mcp harden probe", "embed": false }),
     )
     .await;
     call(svc, &mut records, "memory_get", json!({ "key": "harden_probe" })).await;
@@ -551,13 +551,13 @@ async fn drive_tools(svc: &ServiceHandle, sample: Option<&SampleFile>) -> Vec<To
     records
 }
 
-/// Whether the spawned `basemind` binary is expected to have precise Python/Java resolution
-/// (`code-intel-stack`) compiled in, derived from `BASEMIND_HARDEN_FEATURES` (which the harness
+/// Whether the spawned `hacienda-mcp` binary is expected to have precise Python/Java resolution
+/// (`code-intel-stack`) compiled in, derived from `HACIENDA_MCP_HARDEN_FEATURES` (which the harness
 /// builds the binary with). Unset → the harness default is `full`, which includes it. Set to `""`
 /// or a set without the code-intel stack → off, and the resolution canary is skipped rather than
 /// false-failing. This keeps the canary a stable lower bound across the harness's feature matrix.
 fn precise_resolution_expected() -> bool {
-    match std::env::var("BASEMIND_HARDEN_FEATURES") {
+    match std::env::var("HACIENDA_MCP_HARDEN_FEATURES") {
         Err(_) => true,
         Ok(features) => {
             let features = features.trim();
@@ -1139,11 +1139,11 @@ const GITOPS_ITERS_LIVE: usize = 25;
 /// This is the in-process, pure-query measurement (no MCP transport) — the µs-scale numbers the
 /// README's git-ops section reports. It reuses the exact public APIs `benches/git_history.rs` does.
 fn measure_git_ops(repo_root: &Path) -> Option<GitOpsMetrics> {
-    use basemind::git::Repo;
-    use basemind::git_history::{GitHistoryIndex, builder};
+    use hacienda_mcp::git::Repo;
+    use hacienda_mcp::git_history::{GitHistoryIndex, builder};
 
     let repo = Repo::discover(repo_root).ok()?;
-    let bdir = repo_root.join(".basemind");
+    let bdir = repo_root.join(".hacienda-mcp");
     std::fs::create_dir_all(&bdir).ok()?;
     let index = GitHistoryIndex::open(&bdir).ok()?;
 
@@ -1200,9 +1200,9 @@ fn measure_git_ops(repo_root: &Path) -> Option<GitOpsMetrics> {
 /// Sample a `(hot, rare)` path pair from the index's recent history: the most-changed path in the
 /// newest window is "hot", a single-touch path is "rare". Mirrors `benches/git_history.rs`.
 fn sample_paths(
-    index: &basemind::git_history::GitHistoryIndex,
-) -> Option<(basemind::path::RelPath, basemind::path::RelPath)> {
-    use basemind::path::RelPath;
+    index: &hacienda_mcp::git_history::GitHistoryIndex,
+) -> Option<(hacienda_mcp::path::RelPath, hacienda_mcp::path::RelPath)> {
+    use hacienda_mcp::path::RelPath;
     let window = index.window_commits(2000);
     let mut counts: ahash::AHashMap<RelPath, usize> = ahash::AHashMap::new();
     for commit in &window {
@@ -1303,7 +1303,7 @@ fn human_bytes(bytes: u64) -> String {
 /// Append a paste-ready markdown git-ops table for one repo to `<results_dir>/gitops.md`, so the
 /// README author (and `harness-interpreter`) can read the numbers without parsing NDJSON.
 fn append_gitops_md(repo_name: &str, m: &GitOpsMetrics) {
-    let Ok(results) = std::env::var("BASEMIND_HARDEN_RESULTS") else {
+    let Ok(results) = std::env::var("HACIENDA_MCP_HARDEN_RESULTS") else {
         return;
     };
     let md = Path::new(&results).with_file_name("gitops.md");
@@ -1334,7 +1334,7 @@ fn append_gitops_md(repo_name: &str, m: &GitOpsMetrics) {
 }
 
 fn append_results(record: &RepoRecord) {
-    let Ok(path) = std::env::var("BASEMIND_HARDEN_RESULTS") else {
+    let Ok(path) = std::env::var("HACIENDA_MCP_HARDEN_RESULTS") else {
         return;
     };
     let Ok(line) = serde_json::to_string(record) else {
@@ -1347,19 +1347,19 @@ fn append_results(record: &RepoRecord) {
 
 /// Single ignored test that exercises one repo per invocation. Spawn via the
 /// orchestrator script — it iterates the configured repo set and runs `cargo
-/// test` once per clone with a different `BASEMIND_HARDEN_REPO`.
+/// test` once per clone with a different `HACIENDA_MCP_HARDEN_REPO`.
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 #[ignore = "real-OSS hardening harness; invoke via scripts/harden.sh"]
 async fn harden_repo() {
-    let repo = std::env::var("BASEMIND_HARDEN_REPO")
+    let repo = std::env::var("HACIENDA_MCP_HARDEN_REPO")
         .map(PathBuf::from)
-        .expect("BASEMIND_HARDEN_REPO must point at a cloned repository");
+        .expect("HACIENDA_MCP_HARDEN_REPO must point at a cloned repository");
     assert!(
         repo.is_dir(),
-        "BASEMIND_HARDEN_REPO does not exist or is not a directory: {}",
+        "HACIENDA_MCP_HARDEN_REPO does not exist or is not a directory: {}",
         repo.display()
     );
-    let repo_name = std::env::var("BASEMIND_HARDEN_REPO_NAME").unwrap_or_else(|_| {
+    let repo_name = std::env::var("HACIENDA_MCP_HARDEN_REPO_NAME").unwrap_or_else(|_| {
         repo.file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("unknown")

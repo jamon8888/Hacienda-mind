@@ -1,6 +1,6 @@
 ---
 name: bm-doctor
-description: Diagnose and recover basemind when it isn't working (MCP tools missing/erroring, "no index", dead server) — runs CLI checks and gives the client-specific way to reconnect the server.
+description: Diagnose and recover hacienda-mcp when it isn't working (MCP tools missing/erroring, "no index", dead server) — runs CLI checks and gives the client-specific way to reconnect the server.
 ---
 
 <!--
@@ -10,14 +10,14 @@ Source-Hash: blake3:960affce8e7d6c8efa32c93ebdd7ca85100e78044731248bd9b44189655e
 Schema-Version: v1
 -->
 
-# bm-doctor — diagnose and recover basemind
+# bm-doctor — diagnose and recover hacienda-mcp
 
-Diagnose and recover basemind using the CLI (works even with no MCP server running).
+Diagnose and recover hacienda-mcp using the CLI (works even with no MCP server running).
 
 ## When to use
 
-basemind isn't behaving: MCP tools are missing or erroring, the statusline or a tool reports
-"no index" / "no indexed files", results are empty when they shouldn't be, or the `basemind
+hacienda-mcp isn't behaving: MCP tools are missing or erroring, the statusline or a tool reports
+"no index" / "no indexed files", results are empty when they shouldn't be, or the `hacienda-mcp
 serve` MCP server seems dead.
 
 ## How to use
@@ -25,14 +25,14 @@ serve` MCP server seems dead.
 Invoke `/bm-doctor` (optional free-text detail, e.g. `/bm-doctor tools return no indexed files`).
 It runs the checks below in order:
 
-1. Check the index: `basemind query status`.
-2. Check for a lock-holding server: `cat .basemind/.lock.meta`.
-3. Rebuild the index if needed: `basemind scan`.
+1. Check the index: `hacienda-mcp query status`.
+2. Check for a lock-holding server: `cat .hacienda-mcp/.lock.meta`.
+3. Rebuild the index if needed: `hacienda-mcp scan`.
 4. Reconnect the MCP server (client-specific — this is the only way to restart it).
 
 ## Notes
 
-- A stdio MCP server can't be restarted by an agent or by basemind itself; reconnecting it is
+- A stdio MCP server can't be restarted by an agent or by hacienda-mcp itself; reconnecting it is
   the MCP client's job. The CLI stays usable throughout.
 
 ## See also

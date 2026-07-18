@@ -1,12 +1,12 @@
-//! MCP server exposing the basemind code map + git context to AI agents.
+//! MCP server exposing the hacienda-mcp code map + git context to AI agents.
 //!
 //! The server opens the store writably and is the canonical Fjall owner: it holds the exclusive
 //! lock so the in-process `rescan` tool (and the background watcher) can refresh the index. While
-//! a server is running, standalone `basemind scan` / `basemind watch` against the same repo fail
+//! a server is running, standalone `hacienda-mcp scan` / `hacienda-mcp watch` against the same repo fail
 //! fast with a lock error rather than racing it. Tools return JSON so the agent can navigate by
 //! file path + line numbers without opening source files.
 //!
-//! Transport: stdio (the canonical MCP transport). Spawn via `basemind serve`.
+//! Transport: stdio (the canonical MCP transport). Spawn via `hacienda-mcp serve`.
 
 mod background;
 mod budget;
@@ -208,9 +208,9 @@ pub(crate) struct ServerState {
     pub(crate) outline_cache: Arc<OutlineCache>,
     /// Scanner config (include / exclude globs, eager_l2, document tier knobs, …).
     /// Held on the server so the `rescan` MCP tool can re-run a scan in-process
-    /// without re-reading `.basemind/basemind.toml`.
+    /// without re-reading `.hacienda-mcp/basemind.toml`.
     pub(crate) config: Arc<crate::config::Config>,
-    /// Per-tool-call telemetry writer; appends to `.basemind/telemetry.jsonl`.
+    /// Per-tool-call telemetry writer; appends to `.hacienda-mcp/telemetry.jsonl`.
     /// Always present (best-effort writes); the dashboard surfaces / statusline
     /// read from the same file.
     pub(crate) telemetry: Arc<telemetry::Telemetry>,
@@ -228,7 +228,7 @@ pub(crate) struct ServerState {
     #[allow(dead_code)]
     pub(crate) scope: String,
     /// Owner segment for the individual-memory tier. Resolved once at boot from
-    /// `BASEMIND_AGENT_ID` (validated through [`crate::comms::ids::AgentId`] so it is
+    /// `HACIENDA_MCP_AGENT_ID` (validated through [`crate::comms::ids::AgentId`] so it is
     /// NUL-free) or `"anon"` when unset/invalid. Group-tier writes ignore it.
     #[allow(dead_code)]
     pub(crate) agent_id: String,
@@ -452,7 +452,7 @@ impl MapCache {
     /// existing maps and patch only the changed entries — re-read L1 from disk for `updated` paths,
     /// drop `removed` paths. This avoids `build`'s whole-corpus blob I/O (read + msgpack-decode of
     /// every L1, the dominant cost) on every debounced batch, which is what pegged multi-core CPU on
-    /// gitignored / nested-`.basemind` churn (issue #33). `imports_index` is rebuilt from the
+    /// gitignored / nested-`.hacienda-mcp` churn (issue #33). `imports_index` is rebuilt from the
     /// patched in-RAM `by_path` — a pure clone pass, no I/O.
     ///
     /// Only valid on a writer session, where `calls`/`impls` are `None` (a read-only fallback
@@ -515,7 +515,7 @@ pub struct ServerOptions {
     /// When false, fall back to the passive view watcher (which only reacts to
     /// external scans writing `index.msgpack`). Disabled for one-shot queries.
     ///
-    /// `--no-watch` on `basemind serve` flips this off — useful for very large
+    /// `--no-watch` on `hacienda-mcp serve` flips this off — useful for very large
     /// repos (e.g. the ~81k-file TypeScript tree) or CI, where the continuous
     /// incremental re-scan is not worth the cost.
     pub watch: bool,
@@ -559,7 +559,7 @@ impl BasemindServer {
 
     /// Construct a one-shot server with every background facility disabled.
     ///
-    /// Used by the `basemind` CLI to run a single MCP tool in-process and exit —
+    /// Used by the `hacienda-mcp` CLI to run a single MCP tool in-process and exit —
     /// no auto-scan, no view watcher, no background GC. The in-RAM map cache is
     /// still preloaded so the tool sees the same data an MCP client would.
     pub fn new_oneshot(
@@ -599,9 +599,9 @@ impl BasemindServer {
             .as_ref()
             .map(|r| crate::git::scope_key(r))
             .unwrap_or_else(|| format!("path:{}", root.display()));
-        let basemind_dir = store.basemind_dir.clone();
+        let hacienda_mcp_dir = store.hacienda_mcp_dir.clone();
         let git_history = if !options.read_only && repo.is_some() && crate::git_history::index_enabled() {
-            match crate::git_history::GitHistoryIndex::open(&basemind_dir) {
+            match crate::git_history::GitHistoryIndex::open(&hacienda_mcp_dir) {
                 Ok(idx) => Some(Arc::new(idx)),
                 Err(error) => {
                     tracing::warn!(?error, "git-history index unavailable; tools will live-walk");
@@ -639,7 +639,7 @@ impl BasemindServer {
         let outline_cache: Arc<OutlineCache> = Arc::new(Mutex::new(LruCache::new(
             NonZeroUsize::new(OUTLINE_CACHE_CAP).expect("OUTLINE_CACHE_CAP > 0"),
         )));
-        let telemetry_handle = Arc::new(telemetry::Telemetry::new(&store.basemind_dir));
+        let telemetry_handle = Arc::new(telemetry::Telemetry::new(&store.hacienda_mcp_dir));
         #[cfg(feature = "crawl")]
         let crawl_engine = match crate::web::build_engine(&config.crawl) {
             Ok(e) => Some(e),
@@ -696,9 +696,9 @@ impl BasemindServer {
                 background::spawn_view_watcher(Arc::clone(&state));
             }
             if let (Some(git_history), Some(repo)) = (state.git_history.clone(), state.repo.clone()) {
-                let basemind_dir = basemind_dir.clone();
+                let hacienda_mcp_dir = hacienda_mcp_dir.clone();
                 tokio::task::spawn_blocking(move || {
-                    match crate::git_history::builder::sync(&git_history, &repo, &basemind_dir) {
+                    match crate::git_history::builder::sync(&git_history, &repo, &hacienda_mcp_dir) {
                         Ok(outcome) => {
                             tracing::info!(?outcome, "git-history index sync complete")
                         }
@@ -750,7 +750,7 @@ impl BasemindServer {
     }
 
     /// Names of every tool this server advertises via `tools/list` (the full router, ignoring the
-    /// `BASEMIND_MCP_LEAN` wrapper mode). Exposed for the `tests/cli_parity.rs` guard, which asserts
+    /// `HACIENDA_MCP_MCP_LEAN` wrapper mode). Exposed for the `tests/cli_parity.rs` guard, which asserts
     /// each advertised tool has a CLI counterpart. The set follows the compiled feature flags.
     pub fn tool_names(&self) -> Vec<String> {
         self.tool_router
@@ -764,7 +764,7 @@ impl BasemindServer {
 #[tool_handler(router = self.tool_router.clone())]
 impl ServerHandler for BasemindServer {
     /// `tools/list`. Default (the overwhelming case): delegate to the static router exactly as
-    /// the `#[tool_handler]` macro would, advertising every real tool. When `BASEMIND_MCP_LEAN`
+    /// the `#[tool_handler]` macro would, advertising every real tool. When `HACIENDA_MCP_MCP_LEAN`
     /// is set, advertise only the three lean wrapper tools instead. The macro detects this
     /// hand-written method and skips generating its own, so the default branch must remain a
     /// faithful copy of the generated body to keep the unset-flag surface byte-for-byte identical.
@@ -808,7 +808,7 @@ impl ServerHandler for BasemindServer {
     }
 
     /// `prompts/list`: advertise the reusable prompt templates. Delegates to the
-    /// `#[prompt_router]`-built router (basemind can't use `#[prompt_handler]` — it would
+    /// `#[prompt_router]`-built router (hacienda-mcp can't use `#[prompt_handler]` — it would
     /// regenerate `get_info`).
     async fn list_prompts(
         &self,
@@ -869,14 +869,14 @@ impl ServerHandler for BasemindServer {
                 .build(),
         )
         .with_instructions(
-            "basemind is the indexed context layer for this repository, served over MCP: a \
+            "hacienda-mcp is the indexed context layer for this repository, served over MCP: a \
              tree-sitter code map across 300+ languages (symbols, references, callers, call \
              graphs, implementations), git history + blame at symbol resolution, full-text + \
              semantic search, document RAG over 90+ file formats, and shared cross-session \
-             memory. The index lives in a machine-global cache (`~/.local/share/basemind/`, \
-             override `BASEMIND_DATA_HOME`) keyed by workspace — nothing is written into the \
+             memory. The index lives in a machine-global cache (`~/.local/share/hacienda-mcp/`, \
+             override `HACIENDA_MCP_DATA_HOME`) keyed by workspace — nothing is written into the \
              repo — and a background daemon is the sole writer, so any number of sessions on \
-             this repo read and write concurrently. basemind first, shell/grep/git fallback: \
+             this repo read and write concurrently. hacienda-mcp first, shell/grep/git fallback: \
              prefer these tools over reading files, over grep, and over naked `git` — and use \
              them for document extraction, web crawling, and code parsing too. You may be one of \
              several agents in this repo: on start, check your inbox and the threads scoped to \
@@ -887,7 +887,7 @@ impl ServerHandler for BasemindServer {
              `search_symbols` instead of grep for a definition; `find_references` / \
              `find_callers` instead of grepping call sites; `workspace_grep` instead of \
              shelling out to ripgrep; `rescan` after edits instead of reconnecting. Do not \
-             re-read a file basemind already mapped. Same discipline beyond code: use the git \
+             re-read a file hacienda-mcp already mapped. Same discipline beyond code: use the git \
              tools (`recent_changes` / `blame_*` / `diff_*` / `commits_touching`) instead of \
              shelling out to `git log`/`git blame`; `search_documents` and the documents \
              pipeline for extraction, RAG, keyword + entity (NER), and summary instead of \
@@ -948,7 +948,7 @@ impl ServerHandler for BasemindServer {
              `thread_archive`, `thread_post`, `thread_history`, `message_get`, `inbox_read`, \
              `inbox_ack`, `agent_register`, `agent_list`. \
              All paths are repository-relative with forward-slash separators. \
-             If a tool reports \"no indexed files\", run `basemind scan` in the repo first.",
+             If a tool reports \"no indexed files\", run `hacienda-mcp scan` in the repo first.",
         )
     }
 }

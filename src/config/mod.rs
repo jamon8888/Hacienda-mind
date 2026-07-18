@@ -29,8 +29,13 @@ pub use v1::{CodeIntelConfig, ConfigV1, CrawlConfig};
 
 pub type Config = ConfigV1;
 
-pub const CONFIG_FILE_NAME: &str = "basemind.toml";
-pub const BASEMIND_DIR: &str = ".basemind";
+pub const CONFIG_FILE_NAME: &str = "hacienda-mcp.toml";
+/// Legacy config filename, still honored for back-compat when the new
+/// `hacienda-mcp.toml` is absent (pre-rebrand repos).
+pub const LEGACY_CONFIG_FILE_NAME: &str = "basemind.toml";
+pub const HACIENDA_MCP_DIR: &str = ".hacienda-mcp";
+/// Legacy on-disk cache/marker dir, honored for back-compat.
+pub const LEGACY_HACIENDA_MCP_DIR: &str = ".hacienda-mcp";
 
 #[derive(Debug, Error)]
 pub enum ConfigError {
@@ -77,7 +82,7 @@ pub fn load(root: &Path) -> Result<Config, ConfigError> {
 /// produce a fully-resolved `LoadedConfig` with provenance.
 ///
 /// `env_overrides` and `cli_overrides` are accepted separately so future
-/// tooling can report "this came from `BASEMIND_*`" vs "this came from
+/// tooling can report "this came from `HACIENDA_MCP_*`" vs "this came from
 /// `--flag`" distinctly. Today clap collapses both into a single
 /// `DocumentsCliOverrides` per command — callers typically pass the parsed
 /// `args.documents` as `cli_overrides` and `None` as `env_overrides`.
@@ -103,11 +108,11 @@ pub fn load_with_overrides(
 
 /// Resolve the repository root by walking UP from `start` to the nearest ancestor that carries a
 /// committed `basemind.toml` config marker (monorepo/nested-git support), falling back to git
-/// discovery, then to `start` unchanged. Lets basemind commands run from a monorepo subfolder
+/// discovery, then to `start` unchanged. Lets hacienda-mcp commands run from a monorepo subfolder
 /// attach to the configured root.
 ///
 /// The cache moved out of the repo (it is a machine-global XDG store now), so there is no longer a
-/// `.basemind/` directory in the tree to anchor on — the committed `basemind.toml` is the durable
+/// `.hacienda-mcp/` directory in the tree to anchor on — the committed `basemind.toml` is the durable
 /// in-repo marker of "this is a basemind-managed root".
 ///
 /// The upward `basemind.toml` search is **bounded by the closest enclosing git repository**: it
@@ -123,7 +128,7 @@ pub fn load_with_overrides(
 /// 3. Else `start` unchanged.
 ///
 /// Assumes `start` is already canonicalized by the caller.
-pub fn discover_root_with_basemind(start: &Path) -> PathBuf {
+pub fn discover_root_with_hacienda_mcp(start: &Path) -> PathBuf {
     // Closest enclosing git repo workdir — the ceiling for the config-marker walk. Canonicalized so
     // it compares equal to the canonical `current` path as we ascend. `None` when `start` is not
     // inside any git repo: then there is no repo boundary to respect and the walk runs to the
@@ -136,7 +141,8 @@ pub fn discover_root_with_basemind(start: &Path) -> PathBuf {
 
     let mut current = start;
     loop {
-        if current.join(CONFIG_FILE_NAME).is_file() {
+        if current.join(CONFIG_FILE_NAME).is_file() || current.join(LEGACY_CONFIG_FILE_NAME).is_file()
+        {
             return current.to_path_buf();
         }
         // Stop after checking the enclosing git root — do not ascend past it into a parent repo.
@@ -151,11 +157,11 @@ pub fn discover_root_with_basemind(start: &Path) -> PathBuf {
     git_root.unwrap_or_else(|| start.to_path_buf())
 }
 
-/// Root for `basemind init`: the project you are initializing, never a parent that merely already
-/// holds a `.basemind/`.
+/// Root for `hacienda-mcp init`: the project you are initializing, never a parent that merely already
+/// holds a `.hacienda-mcp/`.
 ///
-/// This is deliberately NOT [`discover_root_with_basemind`]. That function *attaches* to an existing
-/// index and so walks up to an ancestor `.basemind/`; using it for `init` makes `init` "travel" to a
+/// This is deliberately NOT [`discover_root_with_hacienda_mcp`]. That function *attaches* to an existing
+/// index and so walks up to an ancestor `.hacienda-mcp/`; using it for `init` makes `init` "travel" to a
 /// parent polyrepo's root and scaffold there instead of in the current repo. `init` *creates* config,
 /// so it anchors to the closest enclosing git repository (the committed repo root the scaffold is
 /// meant for), falling back to `start` (typically the cwd) when not inside a git repo.
@@ -170,32 +176,40 @@ pub fn init_root(start: &Path) -> PathBuf {
 
 /// Canonical (write) location of the config: `<root>/basemind.toml`.
 ///
-/// The config moved from inside `.basemind/` to the repo root so it can be committed — the
-/// `.basemind/` cache is wiped on every schema-version bump and is gitignored, which made an
-/// in-cache config non-durable. `basemind init` writes here; [`resolve_config_path`] still reads
+/// The config moved from inside `.hacienda-mcp/` to the repo root so it can be committed — the
+/// `.hacienda-mcp/` cache is wiped on every schema-version bump and is gitignored, which made an
+/// in-cache config non-durable. `hacienda-mcp init` writes here; [`resolve_config_path`] still reads
 /// the legacy in-cache location for back-compat.
 pub fn config_path(root: &Path) -> PathBuf {
     root.join(CONFIG_FILE_NAME)
 }
 
-/// Legacy config location: `<root>/.basemind/basemind.toml`. Read-only fallback kept so existing
+/// Legacy config location: `<root>/.hacienda-mcp/basemind.toml`. Read-only fallback kept so existing
 /// checkouts that still carry an in-cache config keep loading it until the user re-runs
-/// `basemind init` (which writes the root location).
+/// `hacienda-mcp init` (which writes the root location).
 pub fn legacy_config_path(root: &Path) -> PathBuf {
-    root.join(BASEMIND_DIR).join(CONFIG_FILE_NAME)
+    root.join(HACIENDA_MCP_DIR).join(CONFIG_FILE_NAME)
 }
 
-/// Resolve which config file to read: prefer the canonical root `basemind.toml`, else the legacy
-/// in-cache path, else the root path (so a not-found error names the location we tell users to
-/// create). The root file always wins when both exist.
+/// Resolve which config file to read: prefer the canonical root `hacienda-mcp.toml`, then the
+/// legacy root `basemind.toml`, then the in-cache paths (new then legacy), else the canonical root
+/// path (so a not-found error names the location we tell users to create). Newer + root always win.
 pub fn resolve_config_path(root: &Path) -> PathBuf {
     let root_path = config_path(root);
     if root_path.exists() {
         return root_path;
     }
+    let legacy_root = root.join(LEGACY_CONFIG_FILE_NAME);
+    if legacy_root.exists() {
+        return legacy_root;
+    }
     let legacy = legacy_config_path(root);
     if legacy.exists() {
         return legacy;
+    }
+    let legacy_dir = root.join(LEGACY_HACIENDA_MCP_DIR).join(LEGACY_CONFIG_FILE_NAME);
+    if legacy_dir.exists() {
+        return legacy_dir;
     }
     root_path
 }
@@ -279,13 +293,13 @@ mod tests {
         std::fs::write(root.join(CONFIG_FILE_NAME), "\"$schema\" = \"v1\"\n").expect("write basemind.toml");
         let sub = root.join("a").join("b");
         std::fs::create_dir_all(&sub).expect("mkdir sub");
-        assert_eq!(discover_root_with_basemind(&sub), root);
+        assert_eq!(discover_root_with_hacienda_mcp(&sub), root);
     }
 
     #[test]
-    fn discover_root_returns_start_when_no_basemind_or_git() {
+    fn discover_root_returns_start_when_no_hacienda_mcp_or_git() {
         let tmp = tempfile::tempdir().expect("tempdir");
         let start = tmp.path().canonicalize().expect("canonicalize");
-        assert_eq!(discover_root_with_basemind(&start), start);
+        assert_eq!(discover_root_with_hacienda_mcp(&start), start);
     }
 }

@@ -1,7 +1,7 @@
 ---
-name: basemind
+name: hacienda-mcp
 description: >-
-  Navigate large or unfamiliar codebases via the basemind MCP server — outlines,
+  Navigate large or unfamiliar codebases via the hacienda-mcp MCP server — outlines,
   symbol search, reference/caller lookups, commit history, blame, and diffs without
   reading source files. Reach for it whenever the user asks "where is X defined",
   "what calls Y", "what changed recently in Z", or whenever you're about to grep
@@ -15,9 +15,9 @@ Source-Hash: blake3:960affce8e7d6c8efa32c93ebdd7ca85100e78044731248bd9b44189655e
 Schema-Version: v1
 -->
 
-# basemind — the indexed context layer
+# hacienda-mcp — the indexed context layer
 
-basemind is the full context layer for this repository, served over MCP. It pre-indexes the
+hacienda-mcp is the full context layer for this repository, served over MCP. It pre-indexes the
 repo into a content-addressed blob store + Fjall inverted index (and, when enabled, a LanceDB
 vector store) so structural, historical, and semantic questions resolve in milliseconds —
 without you reading whole files.
@@ -46,7 +46,7 @@ This umbrella skill covers the whole surface. For focused workflows, reach for t
 
 ## When to reach for it (instead of `grep` / `read_file`)
 
-Use basemind for:
+Use hacienda-mcp for:
 
 - **Locating a symbol**: "where is `Foo` defined?", "find the constructor for `Bar`", "show me every type ending in `Service`".
 - **Following call graphs**: "what calls `process_file`?", "who depends on this module?".
@@ -56,12 +56,12 @@ Use basemind for:
 - **Diffing across revisions**: "what symbols did this branch add?", "show the hunks for `foo.rs` between HEAD~5 and HEAD".
 
 If you are about to open more than two or three files just to learn structure, stop
-and use basemind first. The tools return paths + line numbers; you only `read_file`
+and use hacienda-mcp first. The tools return paths + line numbers; you only `read_file`
 once you know exactly which span you need.
 
 ## Context economy — the operating discipline
 
-basemind tools return **paths, line numbers, and signatures — not file bodies**, so a
+hacienda-mcp tools return **paths, line numbers, and signatures — not file bodies**, so a
 structural answer costs a fraction of the tokens of reading source. Treat that as the
 default workflow, not an optimization:
 
@@ -75,17 +75,17 @@ default workflow, not an optimization:
   content — it runs over the in-RAM index and returns capped, structured hits.
 - **`rescan` after you edit code**, not a server reconnect. Pass `paths: [...]` to limit it to
   the files you touched.
-- **Do not re-read a file basemind already mapped.** If the outline answered the question, stop.
+- **Do not re-read a file hacienda-mcp already mapped.** If the outline answered the question, stop.
 
 Rule of thumb: if a question is about _where_, _what calls_, _what shape_, _who changed_, or
-_what's indexed_, a basemind tool answers it cheaper than reading files. Reach for `read_file`
+_what's indexed_, a hacienda-mcp tool answers it cheaper than reading files. Reach for `read_file`
 only to see the actual implementation of a span you have already located.
 
-**basemind first, shell/grep/git fallback.** Prefer basemind over reading files, over `grep`/`rg`,
+**hacienda-mcp first, shell/grep/git fallback.** Prefer hacienda-mcp over reading files, over `grep`/`rg`,
 and over naked `git`: use it for code parsing (outlines, references, callers), git history / blame /
 diffs, document extraction / RAG / keyword + entity (NER) / summary (`search_documents`), and web
 scraping / crawling / sitemaps (`web_scrape` / `web_crawl` / `web_map`). Drop to raw shell, grep, or
-git only when no basemind tool covers the question.
+git only when no hacienda-mcp tool covers the question.
 
 ## Tool routing (copy this into your mental model)
 
@@ -115,26 +115,26 @@ git only when no basemind tool covers the question.
 | "Pull this URL into RAG?" | `web_scrape` (requires `--features crawl`) — single page, robots-aware |
 | "Ingest a docs site section?" | `web_crawl` — link-following from a seed URL |
 | "What URLs exist on this site?" | `web_map` — sitemap + link discovery, no bodies fetched |
-| "How much has basemind helped today?" | `telemetry_summary` — per-tool histogram + estimated tokens saved |
+| "How much has hacienda-mcp helped today?" | `telemetry_summary` — per-tool histogram + estimated tokens saved |
 
 ## Setup (one-time per repo)
 
-basemind needs an index at `.basemind/` before it can answer queries. From the repo root:
+hacienda-mcp needs an index at `.hacienda-mcp/` before it can answer queries. From the repo root:
 
 ```sh
-basemind scan
+hacienda-mcp scan
 ```
 
 This walks the tree, parses with tree-sitter, and writes a content-addressed blob
-store + Fjall inverted index under `.basemind/`. A few seconds for small repos,
+store + Fjall inverted index under `.hacienda-mcp/`. A few seconds for small repos,
 ~22 s for an ~80k-file TypeScript monorepo.
 
-The MCP server is launched by the host (`basemind serve` — wired up in
+The MCP server is launched by the host (`hacienda-mcp serve` — wired up in
 `.claude-plugin/plugin.json` for you). You do not start it manually.
 
-Re-run `basemind scan` after large changes, or run `basemind watch` to keep the index fresh on file save.
+Re-run `hacienda-mcp scan` after large changes, or run `hacienda-mcp watch` to keep the index fresh on file save.
 
-If a tool returns "no indexed files", that means `basemind scan` hasn't been run in this repo yet.
+If a tool returns "no indexed files", that means `hacienda-mcp scan` hasn't been run in this repo yet.
 
 ## Examples
 
@@ -178,8 +178,8 @@ A 1000-line file becomes a 30-line table of contents.
 - Matching is substring on names — `find_references("bar")` matches `Foo::bar()`
   and `bar()` alike. There is no scope resolution; cross-check with `outline` if
   disambiguation matters.
-- Git tools require `basemind serve` to be running inside a git repository. Outside a git repo they return a clear error.
-- Intelligence tools (`search_documents`, `memory_*`) require basemind to be built with
+- Git tools require `hacienda-mcp serve` to be running inside a git repository. Outside a git repo they return a clear error.
+- Intelligence tools (`search_documents`, `memory_*`) require hacienda-mcp to be built with
   `--features full` (or the individual `documents` / `memory` flags). Without them the
   tools dispatch but return an MCP error.
   Memory is scoped by the normalised `origin` remote URL (`git@github.com:Foo/bar.git` and
@@ -192,4 +192,4 @@ A 1000-line file becomes a 30-line table of contents.
   document. It searches across ALL documents and has **no `scope` parameter** — you cannot
   filter results to a single host at query time.
   robots.txt is honoured by default; only `[crawl].respect_robots_txt = false` in
-  `.basemind/basemind.toml` (config-file-only) disables it.
+  `.hacienda-mcp/basemind.toml` (config-file-only) disables it.

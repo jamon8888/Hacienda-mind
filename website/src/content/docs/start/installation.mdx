@@ -1,17 +1,17 @@
 ---
 title: Installation
 description: >-
-  Three ways to run basemind — as a plugin (recommended), as an MCP server, or as
+  Three ways to run hacienda-mcp — as a plugin (recommended), as an MCP server, or as
   a standalone CLI.
 ---
 
 import { Aside, Tabs, TabItem, Code, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
-Three ways to run basemind, easiest first. All three share the same local index
+Three ways to run hacienda-mcp, easiest first. All three share the same local index
 and are safe to run side by side.
 
 <Aside type="tip">
-The plugin downloads the basemind program for you on first use. The MCP server
+The plugin downloads the hacienda-mcp program for you on first use. The MCP server
 and CLI paths need it installed yourself — see [Install the program](#install-the-program).
 </Aside>
 
@@ -24,40 +24,40 @@ agent-comms features, and the slash commands. Pick your coding tool.
   <TabItem label="Claude Code">
     In the session (not your shell), run in order:
 
-    <Code code={`/plugin marketplace add Goldziher/basemind\n/plugin install basemind@basemind`} lang="text" />
+    <Code code={`/plugin marketplace add jamon8888/Hacienda-mind\n/plugin install hacienda-mcp@hacienda-mcp`} lang="text" />
 
     Restart, then run `/bm-statusline` once to turn on the live statusline (a
     one-time step — see [Statusline](#statusline-claude-code)). Recommended:
-    turn on auto-update for the `basemind` marketplace in Claude Code's plugin
+    turn on auto-update for the `hacienda-mcp` marketplace in Claude Code's plugin
     manager, so you always get the current index format and tool set — or
     update it regularly by hand if you'd rather control timing.
   </TabItem>
 
   <TabItem label="Codex">
-    <Code code={`codex plugin marketplace add Goldziher/basemind\ncodex plugin add basemind@basemind`} lang="bash" />
+    <Code code={`codex plugin marketplace add jamon8888/Hacienda-mind\ncodex plugin add hacienda-mcp@hacienda-mcp`} lang="bash" />
 
-    In the app: open the **Plugins** sidebar and add basemind. The CLI and IDE
+    In the app: open the **Plugins** sidebar and add hacienda-mcp. The CLI and IDE
     share one config file.
   </TabItem>
 
   <TabItem label="Cursor">
-    In Agent chat: `/add-plugin basemind` (once listed), or go to **Dashboard →
+    In Agent chat: `/add-plugin hacienda-mcp` (once listed), or go to **Dashboard →
     Settings → Plugins → Team Marketplaces → Import from Repo** and point it at
-    `https://github.com/Goldziher/basemind`.
+    `https://github.com/jamon8888/Hacienda-mind`.
   </TabItem>
 
   <TabItem label="Gemini CLI">
-    <Code code={`gemini extensions install https://github.com/Goldziher/basemind`} lang="bash" />
+    <Code code={`gemini extensions install https://github.com/jamon8888/Hacienda-mind`} lang="bash" />
 
-    Update later with `gemini extensions update basemind`.
+    Update later with `gemini extensions update hacienda-mcp`.
   </TabItem>
 
   <TabItem label="Factory Droid">
-    <Code code={`droid plugin marketplace add https://github.com/Goldziher/basemind\ndroid plugin install basemind@basemind`} lang="bash" />
+    <Code code={`droid plugin marketplace add https://github.com/jamon8888/Hacienda-mind\ndroid plugin install hacienda-mcp@hacienda-mcp`} lang="bash" />
   </TabItem>
 
   <TabItem label="GitHub Copilot CLI">
-    <Code code={`copilot plugin marketplace add Goldziher/basemind\ncopilot plugin install basemind@basemind`} lang="bash" />
+    <Code code={`copilot plugin marketplace add jamon8888/Hacienda-mind\ncopilot plugin install hacienda-mcp@hacienda-mcp`} lang="bash" />
   </TabItem>
 
   <TabItem label="OpenCode">
@@ -68,22 +68,22 @@ agent-comms features, and the slash commands. Pick your coding tool.
   </TabItem>
 
   <TabItem label="Kimi Code">
-    <Code code={`/plugins install https://github.com/Goldziher/basemind`} lang="text" />
+    <Code code={`/plugins install https://github.com/jamon8888/Hacienda-mind`} lang="text" />
 
     Kimi doesn't support the comms auto-notifications, but the chat tools still
     work.
   </TabItem>
 
   <TabItem label="Hermes">
-    <Code code={`pip install basemind`} lang="bash" />
+    <Code code={`pip install hacienda-mcp`} lang="bash" />
 
     That ships a native Hermes plugin (the helper skills, slash commands, and
     comms notifications), auto-discovered via the `hermes_agent.plugins` entry
-    point. Hermes wires tools through config, so add basemind's tools with the
-    [MCP block](#2-as-an-mcp-server) (`mcp_servers.basemind` in
+    point. Hermes wires tools through config, so add hacienda-mcp's tools with the
+    [MCP block](#2-as-an-mcp-server) (`mcp_servers.hacienda-mcp` in
     `~/.hermes/config.yaml`), then enable the plugin:
 
-    <Code code={`hermes plugins enable basemind`} lang="bash" />
+    <Code code={`hermes plugins enable hacienda-mcp`} lang="bash" />
 
     Comms auto-notifications are best-effort; the chat tools work regardless.
   </TabItem>
@@ -93,8 +93,8 @@ agent-comms features, and the slash commands. Pick your coding tool.
     then add the [generic MCP block](#2-as-an-mcp-server). If you already use the
     Gemini extension, `agy plugin import gemini` brings it across.
 
-    **pi**: `pi install git:github.com/Goldziher/basemind`. pi has no MCP support,
-    so basemind runs through its [CLI](#3-as-a-cli) here.
+    **pi**: `pi install git:github.com/jamon8888/Hacienda-mind`. pi has no MCP support,
+    so hacienda-mcp runs through its [CLI](#3-as-a-cli) here.
   </TabItem>
 </Tabs>
 
@@ -105,19 +105,19 @@ If your tool speaks MCP but you're not using the plugin,
 
 <Code code={`{
   "mcpServers": {
-    "basemind": { "command": "basemind", "args": ["serve"] }
+    "hacienda-mcp": { "command": "hacienda-mcp", "args": ["serve"] }
   }
 }`} lang="json" />
 
 Each tool says whether it only reads or can change things, so your client can
-auto-approve the safe ones and ask before the rest. If `basemind` isn't found,
-use the full path from `which basemind`.
+auto-approve the safe ones and ask before the rest. If `hacienda-mcp` isn't found,
+use the full path from `which hacienda-mcp`.
 
 ### Per-tool specifics
 
 <Tabs syncKey="mcp">
   <TabItem label="Claude Code">
-    <Code code={`claude mcp add basemind -- basemind serve`} lang="bash" />
+    <Code code={`claude mcp add hacienda-mcp -- hacienda-mcp serve`} lang="bash" />
 
     Add `--scope user` for all projects; the `--` is required. Or commit a
     `.mcp.json` at the repo root with the block above.
@@ -134,13 +134,13 @@ use the full path from `which basemind`.
   </TabItem>
 
   <TabItem label="Codex">
-    <Code code={`codex mcp add basemind -- basemind serve`} lang="bash" />
+    <Code code={`codex mcp add hacienda-mcp -- hacienda-mcp serve`} lang="bash" />
 
     Shared by the CLI and IDE.
   </TabItem>
 
   <TabItem label="Gemini CLI">
-    <Code code={`gemini mcp add basemind basemind serve`} lang="bash" />
+    <Code code={`gemini mcp add hacienda-mcp hacienda-mcp serve`} lang="bash" />
 
     Or the block above in `~/.gemini/settings.json`.
   </TabItem>
@@ -151,7 +151,7 @@ use the full path from `which basemind`.
   </TabItem>
 
   <TabItem label="Factory Droid">
-    <Code code={`droid mcp add basemind "basemind serve"`} lang="bash" />
+    <Code code={`droid mcp add hacienda-mcp "hacienda-mcp serve"`} lang="bash" />
 
     Or `~/.factory/mcp.json`.
   </TabItem>
@@ -161,25 +161,25 @@ use the full path from `which basemind`.
   </TabItem>
 
   <TabItem label="Continue">
-    `.continue/mcpServers/basemind.yaml` with `command: basemind`, `args: [serve]`.
+    `.continue/mcpServers/hacienda-mcp.yaml` with `command: hacienda-mcp`, `args: [serve]`.
   </TabItem>
 
   <TabItem label="Hermes">
-    `mcp_servers.basemind` in `~/.hermes/config.yaml` (YAML, not JSON):
+    `mcp_servers.hacienda-mcp` in `~/.hermes/config.yaml` (YAML, not JSON):
 
-    <Code code={`mcp_servers:\n  basemind:\n    command: basemind\n    args: [serve]`} lang="yaml" />
+    <Code code={`mcp_servers:\n  hacienda-mcp:\n    command: hacienda-mcp\n    args: [serve]`} lang="yaml" />
 
-    Then `hermes plugins enable basemind`. `pip install basemind` also ships a
+    Then `hermes plugins enable hacienda-mcp`. `pip install hacienda-mcp` also ships a
     native Hermes plugin with the helper skills and comms notifications.
   </TabItem>
 
   <TabItem label="OpenCode (without plugin)">
     `opencode.json` under key `mcp`, with `command` as an array
-    `["basemind", "serve"]`.
+    `["hacienda-mcp", "serve"]`.
   </TabItem>
 
   <TabItem label="Other tools">
-    Point it at the command `basemind` with the argument `serve`.
+    Point it at the command `hacienda-mcp` with the argument `serve`.
   </TabItem>
 </Tabs>
 
@@ -188,27 +188,27 @@ use the full path from `which basemind`.
 The standalone program, for scripts, headless runs, and CI.
 [Install it](#install-the-program), then:
 
-<Code code={`basemind scan                          # index the project once
-basemind query symbol "parseQuery"     # find a symbol by name
-basemind query references "processFile" # find everywhere it's called
-basemind git blame-file src/main.rs    # who last changed each line
-basemind watch                         # keep the index fresh as files change`} lang="bash" />
+<Code code={`hacienda-mcp scan                          # index the project once
+hacienda-mcp query symbol "parseQuery"     # find a symbol by name
+hacienda-mcp query references "processFile" # find everywhere it's called
+hacienda-mcp git blame-file src/main.rs    # who last changed each line
+hacienda-mcp watch                         # keep the index fresh as files change`} lang="bash" />
 
 Full command list in the [CLI reference](/reference/cli/).
 
 ## Install the program
 
-The MCP and CLI paths need `basemind` available on your system. (The plugin does
+The MCP and CLI paths need `hacienda-mcp` available on your system. (The plugin does
 this for you.)
 
 | Channel | Command | Includes |
 |---|---|---|
-| Homebrew | `brew install Goldziher/tap/basemind` | everything |
-| npm | `npm install -g basemind` | everything |
-| pip | `pip install basemind` | everything |
-| cargo | `cargo install basemind --locked` | code + git only |
-| cargo (full) | `cargo install basemind --features full --locked` | everything |
-| GitHub releases | [Download a binary](https://github.com/Goldziher/basemind/releases) | everything |
+| Homebrew | `brew install Goldziher/tap/hacienda-mcp` | everything |
+| npm | `npm install -g hacienda-mcp` | everything |
+| pip | `pip install hacienda-mcp` | everything |
+| cargo | `cargo install hacienda-mcp --locked` | code + git only |
+| cargo (full) | `cargo install hacienda-mcp --features full --locked` | everything |
+| GitHub releases | [Download a binary](https://github.com/jamon8888/Hacienda-mind/releases) | everything |
 
 The Homebrew / npm / pip / GitHub downloads include the full feature set —
 documents, OCR, search, web crawl, shared memory, agent comms, and agent shells
@@ -217,7 +217,7 @@ builds the code-map and git tools only.
 
 ## Get started
 
-After installing, run **`basemind init`** (CLI) — or **`/bm-init`** if your
+After installing, run **`hacienda-mcp init`** (CLI) — or **`/bm-init`** if your
 tool supports slash commands — from the repo root. It's re-runnable and safe
 to call again later:
 
@@ -228,11 +228,11 @@ to call again later:
   `--without <capability>`). Capability slugs: `code-search-navigation`,
   `code-mapping-architecture`, `git-history`, `agent-comms`, `documents-rag`,
   `semantic-search`.
-- Injects a "prefer basemind over grep/read/git" rules block into your repo's
+- Injects a "prefer hacienda-mcp over grep/read/git" rules block into your repo's
   agent-instructions file — `.ai-rulez/rules/basemind-usage.md` if
   `.ai-rulez/config.toml` is present (run `ai-rulez generate` afterward), else
   `CLAUDE.md`, else `AGENTS.md`, else a new `CLAUDE.md`. The block is delimited
-  (`<!-- BEGIN basemind ... -->` / `<!-- END basemind -->`) so re-running
+  (`<!-- BEGIN hacienda-mcp ... -->` / `<!-- END hacienda-mcp -->`) so re-running
   replaces it in place instead of duplicating it.
 
 Preview changes without writing with `--print`; skip the rules step with
@@ -242,17 +242,17 @@ Preview changes without writing with `--print`; skip the rules step with
 ### Statusline (Claude Code)
 
 Run `/bm-statusline` once. This is a one-time step because Claude Code doesn't
-let plugins set the main statusline themselves — so basemind asks the assistant
+let plugins set the main statusline themselves — so hacienda-mcp asks the assistant
 to make the one-line settings change on your behalf, and it sticks from then on.
 
 It shows two lines:
 
 ```text
-Opus · basemind · ⎇ main · 12% ctx
-◆ basemind  ●  1,247 files · 23m ago  │  312 calls · 180 srch · 44 git · 12 docs  │  1.4M saved  │  ✉ 3 @reviewer
+Opus · hacienda-mcp · ⎇ main · 12% ctx
+◆ hacienda-mcp  ●  1,247 files · 23m ago  │  312 calls · 180 srch · 44 git · 12 docs  │  1.4M saved  │  ✉ 3 @reviewer
 ```
 
-The dot is green when basemind is live and fresh, amber when idle, red when
+The dot is green when hacienda-mcp is live and fresh, amber when idle, red when
 stale. The middle shows activity by type, then tokens saved, then unread
-messages. Adjust with `BASEMIND_STATUSLINE=full|compact|minimal`, or hide the
-top line with `BASEMIND_STATUSLINE_CONTEXT=0`.
+messages. Adjust with `HACIENDA_MCP_STATUSLINE=full|compact|minimal`, or hide the
+top line with `HACIENDA_MCP_STATUSLINE_CONTEXT=0`.

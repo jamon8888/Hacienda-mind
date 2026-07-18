@@ -78,7 +78,7 @@ jobs:
         run: cargo test --workspace --features "${{ matrix.features }}" --quiet
 
       - name: cargo build --release
-        run: cargo build --release --quiet --bin basemind --features "${{ matrix.features }}"
+        run: cargo build --release --quiet --bin hacienda-mcp --features "${{ matrix.features }}"
 
   deny:
     name: cargo-deny

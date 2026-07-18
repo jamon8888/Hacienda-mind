@@ -60,7 +60,7 @@ pub(super) async fn lance_store(state: &ServerState) -> Result<Arc<crate::lance:
                 .map_err(|e| format!("embedder init: {e}"))?;
             let dim = embedder.dim();
             let model = embedder.model().to_string();
-            let lance_dir = state.store.read().await.basemind_dir.join(crate::store::LANCE_DIR);
+            let lance_dir = state.store.read().await.hacienda_mcp_dir.join(crate::store::LANCE_DIR);
             let model_for_open = model.clone();
             tokio::task::spawn_blocking(move || crate::lance::LanceStore::open(&lance_dir, dim, &model_for_open))
                 .await

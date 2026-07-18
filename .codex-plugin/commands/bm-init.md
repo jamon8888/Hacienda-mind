@@ -1,19 +1,19 @@
 ---
 name: bm-init
-description: Onboard (or refresh) basemind in this repo — write basemind.toml, gitignore the cache, and inject a "prefer basemind over grep/read/git" rules block into CLAUDE.md / AGENTS.md / ai-rulez.
+description: Onboard (or refresh) hacienda-mcp in this repo — write basemind.toml, gitignore the cache, and inject a "prefer hacienda-mcp over grep/read/git" rules block into CLAUDE.md / AGENTS.md / ai-rulez.
 argument-hint: [capabilities…]
 ---
 
-# bm-init — onboard basemind into this repo
+# bm-init — onboard hacienda-mcp into this repo
 
-Run `basemind init` so the repo has a committed `basemind.toml`, a gitignored `.basemind/` cache,
-and a rules block that tells every agent to prefer basemind's MCP tools over grep, file reads, and
-naked `git`. CLI and slash command share ONE implementation — this just drives `basemind init`
+Run `hacienda-mcp init` so the repo has a committed `basemind.toml`, a gitignored `.hacienda-mcp/` cache,
+and a rules block that tells every agent to prefer hacienda-mcp's MCP tools over grep, file reads, and
+naked `git`. CLI and slash command share ONE implementation — this just drives `hacienda-mcp init`
 with the right non-interactive flags.
 
 ## When to use
 
-First time setting up basemind in a repo, or to refresh the rules block after enabling new
+First time setting up hacienda-mcp in a repo, or to refresh the rules block after enabling new
 capabilities (documents/RAG, agent-comms, semantic search). Safe to re-run: it's idempotent.
 
 ## How to use
@@ -22,16 +22,16 @@ capabilities (documents/RAG, agent-comms, semantic search). Safe to re-run: it's
    `code-search-navigation`, `code-mapping-architecture`, `git-history`, `agent-comms`,
    `documents-rag`, `semantic-search`. If the user has no preference, enable all.
 
-2. **Run `basemind init` non-interactively** with the matching flags. Enable everything:
+2. **Run `hacienda-mcp init` non-interactively** with the matching flags. Enable everything:
 
    ```sh
-   basemind init --yes
+   hacienda-mcp init --yes
    ```
 
    Narrow to a subset with repeatable `--with` (allow-list) or `--without` (subtract):
 
    ```sh
-   basemind init --yes --with code-search-navigation --with git-history
+   hacienda-mcp init --yes --with code-search-navigation --with git-history
    ```
 
    Steer where the rules land with `--rules-target <auto|claude|agents|ai-rulez|none>` (default
@@ -45,13 +45,13 @@ capabilities (documents/RAG, agent-comms, semantic search). Safe to re-run: it's
 - Source-of-truth detection (auto): `.ai-rulez/config.toml` present → writes
   `.ai-rulez/rules/basemind-usage.md` (then tell the user to run `ai-rulez generate`; do NOT run
   it for them). Else CLAUDE.md → AGENTS.md → create CLAUDE.md, wrapping the content in an
-  idempotent `<!-- BEGIN basemind … -->` … `<!-- END basemind -->` block that is replaced in
+  idempotent `<!-- BEGIN hacienda-mcp … -->` … `<!-- END hacienda-mcp -->` block that is replaced in
   place on re-run, never duplicated. Content outside the markers is never touched.
 - An existing `basemind.toml` is kept verbatim, never clobbered.
-- If `basemind` isn't on `PATH`: use the plugin-managed cache binary or build a dev binary with
-  `cargo build --release` and use `./target/release/basemind`.
+- If `hacienda-mcp` isn't on `PATH`: use the plugin-managed cache binary or build a dev binary with
+  `cargo build --release` and use `./target/release/hacienda-mcp`.
 
 ## See also
 
-The `bm-scan` command to build the index next, and the `basemind` skill for the full MCP tool
+The `bm-scan` command to build the index next, and the `hacienda-mcp` skill for the full MCP tool
 surface the rules block advertises.

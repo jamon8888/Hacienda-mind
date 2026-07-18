@@ -148,7 +148,7 @@ pub(super) fn commit_to_view(c: crate::git::CommitInfo, include_files: bool) -> 
 pub(super) fn require_git_repo(state: &ServerState) -> Result<&Arc<crate::git::Repo>, McpError> {
     state.repo.as_ref().ok_or_else(|| {
         McpError::invalid_request(
-            "this tool requires `basemind serve` to be run inside a git repository",
+            "this tool requires `hacienda-mcp serve` to be run inside a git repository",
             None,
         )
     })
@@ -696,7 +696,7 @@ pub(super) async fn scan_and_refresh(
 ) -> Result<crate::scanner::ScanReport, McpError> {
     if state.read_only {
         return Err(McpError::invalid_request(
-            "this basemind serve is read-only: another serve process holds the write lock for \
+            "this hacienda-mcp serve is read-only: another serve process holds the write lock for \
              this repo, so it owns index refresh. Reads are served from the shared index; run \
              rescans from the lock-holding serve (or close it and retry).",
             None,

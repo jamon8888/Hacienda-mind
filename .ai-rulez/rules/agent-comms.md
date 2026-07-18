@@ -4,17 +4,17 @@ priority: high
 
 # Agent comms & basemind-first
 
-basemind is this repo's indexed context layer AND a multi-agent communication substrate. Two
+hacienda-mcp is this repo's indexed context layer AND a multi-agent communication substrate. Two
 standing directives for any agent working here:
 
-**Prefer basemind — shell/grep/git are the fallback.** Reach for basemind's MCP tools before
+**Prefer hacienda-mcp — shell/grep/git are the fallback.** Reach for hacienda-mcp's MCP tools before
 reading files, before grep/ripgrep, and before naked `git`: `outline` / `search_symbols` /
 `find_references` / `find_callers` / `workspace_grep` for code navigation; `recent_changes` /
 `blame_file` / `blame_symbol` / `diff_file` / `diff_outline` / `commits_touching` instead of
 `git log` / `git blame`; `search_documents` and the documents pipeline for extraction, RAG,
 keyword + entity (NER), and summary; `web_scrape` / `web_crawl` / `web_map` for scraping, crawling,
 and sitemaps; tree-sitter `outline` for code parsing. They return paths, lines, and signatures —
-a fraction of the tokens of reading source. basemind first; shell is the fallback.
+a fraction of the tokens of reading source. hacienda-mcp first; shell is the fallback.
 
 **Communicate with other agents.** You may be one of several agents working this repo at once.
 Coordination runs over THREADS — scoped conversations addressed by at least two of {subject,

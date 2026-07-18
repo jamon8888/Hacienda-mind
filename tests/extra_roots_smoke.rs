@@ -10,14 +10,14 @@
 use std::fs;
 use std::path::PathBuf;
 
-use basemind::config::ConfigV1;
-use basemind::scanner::{ScanSource, scan};
-use basemind::store::{Store, VIEW_WORKING};
+use hacienda_mcp::config::ConfigV1;
+use hacienda_mcp::scanner::{ScanSource, scan};
+use hacienda_mcp::store::{Store, VIEW_WORKING};
 use tempfile::TempDir;
 
 /// A repo tempdir plus a *sibling* external dir (outside the repo root), wired into config.
 fn repo_with_external() -> (TempDir, TempDir, ConfigV1) {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let repo = tempfile::tempdir().expect("repo tempdir");
     let ext = tempfile::tempdir().expect("external tempdir");
 
@@ -56,7 +56,7 @@ fn extra_root_files_indexed_under_absolute_keys() {
         &mut store,
         &cfg,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
@@ -86,11 +86,11 @@ fn search_symbols_returns_external_symbol_with_absolute_path() {
         &mut store,
         &cfg,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
-    let hits = basemind::query::search_symbols(&store, "external_greet", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "external_greet", None).unwrap();
     assert_eq!(hits.len(), 1, "external_greet found exactly once");
     assert_eq!(
         hits[0].path.as_str(),
@@ -108,17 +108,17 @@ fn outline_and_calls_resolve_for_external_file() {
         &mut store,
         &cfg,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
     let ext_key = abs_key(&ext, "pkg/lib.rs");
 
-    let l1 = basemind::query::file_outline(&store, ext_key.as_bytes()).unwrap();
+    let l1 = hacienda_mcp::query::file_outline(&store, ext_key.as_bytes()).unwrap();
     let names: Vec<&str> = l1.symbols.iter().map(|s| s.name.as_str()).collect();
     assert!(names.contains(&"external_greet") && names.contains(&"shared_helper"));
 
-    let l2 = basemind::query::file_outline_l2(&store, ext_key.as_bytes(), repo.path()).unwrap();
+    let l2 = hacienda_mcp::query::file_outline_l2(&store, ext_key.as_bytes(), repo.path()).unwrap();
     assert!(
         l2.calls.iter().any(|c| c.callee == "shared_helper"),
         "external file's call to shared_helper is indexed (feeds cross-root find_references)"
@@ -134,7 +134,7 @@ fn removing_extra_root_prunes_external_files() {
         &mut store,
         &cfg,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     let ext_key = abs_key(&ext, "pkg/lib.rs");
@@ -147,7 +147,7 @@ fn removing_extra_root_prunes_external_files() {
         &mut store,
         &cfg2,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     assert!(
@@ -175,7 +175,7 @@ fn missing_and_inside_repo_extra_roots_are_skipped_without_failing() {
         &mut store,
         &cfg,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 

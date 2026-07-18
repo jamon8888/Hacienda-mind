@@ -1,6 +1,6 @@
 //! Concurrent-serve lock contention — regressions for issues #26 and #27.
 //!
-//! The editor plugin spawns one `basemind serve` per session against the same repo, but the store
+//! The editor plugin spawns one `hacienda-mcp serve` per session against the same repo, but the store
 //! write lock is single-holder. Two behaviors are pinned here:
 //!
 //! * **#26** — a second writer must *fail fast* with a lock-contention error, never busy-spin to
@@ -13,14 +13,14 @@ use std::fs;
 use std::process::Command;
 use std::time::{Duration, Instant};
 
-use basemind::config::ConfigV1;
-use basemind::scanner::{ScanSource, scan};
-use basemind::store::{LockHolder, Store, VIEW_WORKING};
+use hacienda_mcp::config::ConfigV1;
+use hacienda_mcp::scanner::{ScanSource, scan};
+use hacienda_mcp::store::{LockHolder, Store, VIEW_WORKING};
 
 /// Build a temp repo with one indexed file, then release the lock used for the initial scan so the
-/// tests below start from a clean, unlocked, already-scanned `.basemind/`.
+/// tests below start from a clean, unlocked, already-scanned `.hacienda-mcp/`.
 fn scanned_repo() -> tempfile::TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     fs::write(root.join("a.rs"), b"pub fn alpha() {}\npub fn beta() { alpha(); }\n").expect("write source");
@@ -31,7 +31,7 @@ fn scanned_repo() -> tempfile::TempDir {
         &mut store,
         &cfg,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .expect("initial scan");
     drop(store);
@@ -69,7 +69,7 @@ fn read_only_serve_coexists_with_live_writer() {
     let _writer = Store::open_with_holder(root, VIEW_WORKING, LockHolder::Serve).expect("writer holds lock");
 
     let reader = Store::open_read_only(root, VIEW_WORKING).expect("read-only open alongside live writer");
-    let hits = basemind::query::search_symbols(&reader, "alpha", None).expect("search");
+    let hits = hacienda_mcp::query::search_symbols(&reader, "alpha", None).expect("search");
     assert_eq!(
         hits.len(),
         1,
@@ -85,11 +85,11 @@ fn cli_scan_exits_cleanly_when_a_writer_holds_the_lock() {
     let _writer = Store::open_with_holder(root, VIEW_WORKING, LockHolder::Serve).expect("writer holds lock");
 
     let started = Instant::now();
-    let output = Command::new(env!("CARGO_BIN_EXE_basemind"))
+    let output = Command::new(env!("CARGO_BIN_EXE_hacienda-mcp"))
         .args(["scan"])
         .current_dir(root)
         .output()
-        .expect("run basemind scan");
+        .expect("run hacienda-mcp scan");
     let elapsed = started.elapsed();
 
     assert!(
@@ -104,8 +104,8 @@ fn cli_scan_exits_cleanly_when_a_writer_holds_the_lock() {
         String::from_utf8_lossy(&output.stderr)
     );
     assert!(
-        combined.contains("basemind serve") && combined.contains("rescan"),
-        "notice must name the `basemind serve` holder and point at its `rescan` tool, got:\n{combined}"
+        combined.contains("hacienda-mcp serve") && combined.contains("rescan"),
+        "notice must name the `hacienda-mcp serve` holder and point at its `rescan` tool, got:\n{combined}"
     );
     assert!(
         elapsed < Duration::from_secs(10),

@@ -10,15 +10,15 @@
 
 use std::fs;
 
-use basemind::config::ConfigV1;
-use basemind::path::RelPath;
-use basemind::scanner::{ScanSource, scan};
-use basemind::store::{Store, VIEW_WORKING};
+use hacienda_mcp::config::ConfigV1;
+use hacienda_mcp::path::RelPath;
+use hacienda_mcp::scanner::{ScanSource, scan};
+use hacienda_mcp::store::{Store, VIEW_WORKING};
 
 /// Scan a set of `(relative_path, source)` files into an isolated store. Creates parent dirs so
 /// package layouts (`pkg/query.py`) work.
 fn scan_repo(files: &[(&str, &str)]) -> (tempfile::TempDir, Store) {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path();
     for (name, src) in files {
@@ -35,7 +35,7 @@ fn scan_repo(files: &[(&str, &str)]) -> (tempfile::TempDir, Store) {
         &mut store,
         &cfg,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     (dir, store)
@@ -56,12 +56,12 @@ fn python_resolves_cross_file_function_and_class_on_direct_import() {
     let foo_def = (lib.find("def foo").unwrap() + "def ".len()) as u32;
     let bar_def = (lib.find("class Bar").unwrap() + "class ".len()) as u32;
 
-    let foo_uses = basemind::query::resolved_references(&store, &lib_rel, foo_def);
+    let foo_uses = hacienda_mcp::query::resolved_references(&store, &lib_rel, foo_def);
     assert!(
         foo_uses.iter().any(|(p, _)| p.as_str() == Some("main.py")),
         "the Python function `foo` must resolve cross-file to main.py; got {foo_uses:?}"
     );
-    let bar_uses = basemind::query::resolved_references(&store, &lib_rel, bar_def);
+    let bar_uses = hacienda_mcp::query::resolved_references(&store, &lib_rel, bar_def);
     assert!(
         bar_uses.iter().any(|(p, _)| p.as_str() == Some("main.py")),
         "the Python class `Bar` must resolve cross-file to main.py; got {bar_uses:?}"
@@ -85,7 +85,7 @@ fn python_resolves_cross_file_through_package_reexport() {
     }
     let query_rel = RelPath::from("pkg/query.py");
     let qs_def = (query.find("class QuerySet").unwrap() + "class ".len()) as u32;
-    let uses = basemind::query::resolved_references(&store, &query_rel, qs_def);
+    let uses = hacienda_mcp::query::resolved_references(&store, &query_rel, qs_def);
     assert!(
         uses.iter().any(|(p, _)| p.as_str() == Some("app.py")),
         "QuerySet must resolve to the package-importing caller app.py via the __init__ re-export; got {uses:?}"
@@ -107,7 +107,7 @@ fn java_resolves_cross_file_class_via_import() {
     }
     let lib_rel = RelPath::from("app/Lib.java");
     let class_def = (lib.find("class Lib").unwrap() + "class ".len()) as u32;
-    let uses = basemind::query::resolved_references(&store, &lib_rel, class_def);
+    let uses = hacienda_mcp::query::resolved_references(&store, &lib_rel, class_def);
     assert!(
         uses.iter().any(|(p, _)| p.as_str() == Some("other/Main.java")),
         "the Java class `Lib` must resolve cross-file to the importing Main.java; got {uses:?}"

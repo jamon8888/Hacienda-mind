@@ -1,4 +1,4 @@
-//! CLI surface for the behavioral output compressor (`basemind compress-output`).
+//! CLI surface for the behavioral output compressor (`hacienda-mcp compress-output`).
 //!
 //! Kept out of `main.rs` so the binary entry point stays under the 1000-line cap;
 //! the clap args and the stdin→compress→stdout runner live next to the module
@@ -13,7 +13,7 @@ use super::compress_output;
 use super::delta::delta;
 use super::waste::{detect_waste, parse_calls};
 
-/// Arguments for `basemind compress-output`.
+/// Arguments for `hacienda-mcp compress-output`.
 #[derive(clap::Args, Debug)]
 pub struct CompressOutputArgs {
     /// Command family to compress for. When omitted, the family is detected
@@ -54,7 +54,7 @@ pub fn run(args: &CompressOutputArgs) -> Result<()> {
     Ok(())
 }
 
-/// Arguments for `basemind delta`.
+/// Arguments for `hacienda-mcp delta`.
 ///
 /// The NEW content is read from stdin; the OLD content is read from the
 /// `--old` file path. The stateless [`delta`] primitive emits a compact
@@ -97,7 +97,7 @@ pub fn run_delta(args: &DeltaArgs) -> Result<()> {
     Ok(())
 }
 
-/// Arguments for `basemind checkpoint`.
+/// Arguments for `hacienda-mcp checkpoint`.
 ///
 /// The session text (a transcript chunk or concatenated tool output) is read
 /// from stdin; the changed-file list is fetched from the git working tree at
@@ -162,7 +162,7 @@ fn changed_files(root: &std::path::Path) -> Vec<String> {
         .collect()
 }
 
-/// Arguments for `basemind detect-waste`.
+/// Arguments for `hacienda-mcp detect-waste`.
 ///
 /// A JSON-Lines log of tool invocations is read from stdin; the analysis is
 /// pure (no repo root needed) and never executes anything.

@@ -9,7 +9,7 @@
 //! reclaims_only_orphans`). What none of them exercise is **durability across the daemon's own
 //! lifecycle**: the registry is an atomic msgpack snapshot, so a repo registration and an advisory
 //! worktree claim must survive the daemon exiting and a fresh daemon reloading the same
-//! `BASEMIND_DATA_HOME` — and the reload must not clobber a live claim when a new session's Hello
+//! `HACIENDA_MCP_DATA_HOME` — and the reload must not clobber a live claim when a new session's Hello
 //! re-enumerates the repo (`populate_git` preserves `claimed_by`). This test pins that path end to
 //! end against a real detached daemon.
 
@@ -19,14 +19,14 @@ use std::path::{Path, PathBuf};
 use std::process::{Child, Command};
 use std::time::{Duration, Instant};
 
-use basemind::comms::client::CommsClient;
-use basemind::comms::ids::AgentId;
-use basemind::comms::singleton::{CommsPaths, comms_socket_path, probe_alive};
+use hacienda_mcp::comms::client::CommsClient;
+use hacienda_mcp::comms::ids::AgentId;
+use hacienda_mcp::comms::singleton::{CommsPaths, comms_socket_path, probe_alive};
 
-const BIN: &str = env!("CARGO_BIN_EXE_basemind");
+const BIN: &str = env!("CARGO_BIN_EXE_hacienda-mcp");
 
 /// Owns a spawned daemon process so it is always reaped. Constructed twice per test to exercise a
-/// restart on the same `comms_dir` / `BASEMIND_DATA_HOME`.
+/// restart on the same `comms_dir` / `HACIENDA_MCP_DATA_HOME`.
 struct Daemon {
     child: Child,
     comms_dir: PathBuf,
@@ -38,10 +38,10 @@ impl Daemon {
         let socket = comms_socket_path(comms_dir);
         let child = Command::new(BIN)
             .args(["comms", "daemon"])
-            .env("BASEMIND_COMMS_DIR", comms_dir)
+            .env("HACIENDA_MCP_COMMS_DIR", comms_dir)
             // Isolate the daemon's registry snapshot + index writes to the same tempdir so this ~keep
             // test never touches the real XDG cache, and a restart reloads the same state. ~keep
-            .env("BASEMIND_DATA_HOME", comms_dir)
+            .env("HACIENDA_MCP_DATA_HOME", comms_dir)
             .stdin(std::process::Stdio::null())
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
@@ -86,7 +86,7 @@ impl Drop for Daemon {
     fn drop(&mut self) {
         let _ = Command::new(BIN)
             .args(["comms", "stop"])
-            .env("BASEMIND_COMMS_DIR", &self.comms_dir)
+            .env("HACIENDA_MCP_COMMS_DIR", &self.comms_dir)
             .output();
         if self.child.try_wait().ok().flatten().is_none() {
             std::thread::sleep(Duration::from_millis(200));
@@ -158,7 +158,7 @@ fn init_bulk_git_repo(main: &Path, n_files: usize) {
 }
 
 /// Read a positive-integer stress knob from the environment, defaulting when unset or unparseable.
-/// Lets the concurrency stress be cranked far harder on a big machine (`BASEMIND_STRESS_CLIENTS=64`).
+/// Lets the concurrency stress be cranked far harder on a big machine (`HACIENDA_MCP_STRESS_CLIENTS=64`).
 fn stress_knob(var: &str, default: usize) -> usize {
     std::env::var(var)
         .ok()
@@ -170,7 +170,7 @@ fn stress_knob(var: &str, default: usize) -> usize {
 /// Regression: concurrent FIRST-touch rescans of the same COLD workspace must all succeed. The
 /// daemon's workspace pool opens each cold store under fjall's exclusive index lock; before the open
 /// was serialized, two rescans racing that cold open left the loser ERRORing on the lock ("another
-/// basemind process holds the lock") instead of sharing the winner's pooled entry — the post-open
+/// hacienda-mcp process holds the lock") instead of sharing the winner's pooled entry — the post-open
 /// reconciliation never ran because the loser failed inside `Store::open`. Two agents auto-scanning
 /// the same repo at the same instant is exactly this race. Surfaced by the concurrency stress below.
 #[tokio::test(flavor = "multi_thread")]
@@ -216,13 +216,13 @@ async fn concurrent_cold_rescans_open_the_workspace_once_and_all_succeed() {
 /// through the daemon's sole-writer workspace pool (the whole rearchitecture's promise — N sessions
 /// on one repo all read AND write with no fjall lock downgrade). Asserts the daemon serves every
 /// request with no torn index, no deadlock, and no panic, then stays responsive and consistent
-/// afterward. `#[ignore]` (heavy); tune with `BASEMIND_STRESS_{CLIENTS,ITERS,FILES}`.
+/// afterward. `#[ignore]` (heavy); tune with `HACIENDA_MCP_STRESS_{CLIENTS,ITERS,FILES}`.
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 #[ignore = "stress: many concurrent clients hammer one daemon; run with --ignored"]
 async fn stress_many_concurrent_sessions_read_and_write_through_one_daemon() {
-    let clients = stress_knob("BASEMIND_STRESS_CLIENTS", 8);
-    let iters = stress_knob("BASEMIND_STRESS_ITERS", 8);
-    let files = stress_knob("BASEMIND_STRESS_FILES", 150);
+    let clients = stress_knob("HACIENDA_MCP_STRESS_CLIENTS", 8);
+    let iters = stress_knob("HACIENDA_MCP_STRESS_ITERS", 8);
+    let files = stress_knob("HACIENDA_MCP_STRESS_FILES", 150);
 
     let tmp = tempfile::tempdir().expect("tempdir");
     let comms_dir = tmp.path().join("comms");
@@ -314,7 +314,7 @@ async fn stress_many_concurrent_sessions_read_and_write_through_one_daemon() {
 /// Regression for the `comms stop` no-op (#34): a `Stop` RPC must actually terminate the daemon by
 /// firing the accept-loop shutdown signal — not merely ack while the process lingers, which left
 /// orphaned daemons piling up across sessions, reaped only by an external kill. This spawns a real
-/// daemon, sends `basemind comms stop`, and asserts the process exits ON ITS OWN within a tight
+/// daemon, sends `hacienda-mcp comms stop`, and asserts the process exits ON ITS OWN within a tight
 /// window, WITHOUT the test ever killing it. Before the fix the broker held no shutdown sender, so
 /// `begin_drain` set `Draining` but never broke the accept loop and this would time out.
 #[test]
@@ -326,8 +326,8 @@ fn comms_stop_terminates_the_daemon_without_an_external_kill() {
 
     let mut child = Command::new(BIN)
         .args(["comms", "daemon"])
-        .env("BASEMIND_COMMS_DIR", &comms_dir)
-        .env("BASEMIND_DATA_HOME", &comms_dir)
+        .env("HACIENDA_MCP_COMMS_DIR", &comms_dir)
+        .env("HACIENDA_MCP_DATA_HOME", &comms_dir)
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
@@ -343,7 +343,7 @@ fn comms_stop_terminates_the_daemon_without_an_external_kill() {
     // Issue the Stop RPC over the CLI (connect-only; it never respawns a daemon).
     let stop = Command::new(BIN)
         .args(["comms", "stop"])
-        .env("BASEMIND_COMMS_DIR", &comms_dir)
+        .env("HACIENDA_MCP_COMMS_DIR", &comms_dir)
         .output()
         .expect("run comms stop");
     assert!(
@@ -376,7 +376,7 @@ fn comms_stop_terminates_the_daemon_without_an_external_kill() {
 }
 
 /// The machine registry and an advisory worktree claim are a durable msgpack snapshot: both must
-/// survive the daemon exiting and a fresh daemon reloading the same `BASEMIND_DATA_HOME`, and the
+/// survive the daemon exiting and a fresh daemon reloading the same `HACIENDA_MCP_DATA_HOME`, and the
 /// reload must not clobber the live claim when a new session's Hello re-enumerates the repo.
 #[tokio::test(flavor = "multi_thread")]
 async fn registry_and_worktree_claim_survive_a_daemon_restart() {
@@ -464,7 +464,7 @@ async fn registry_and_worktree_claim_survive_a_daemon_restart() {
     daemon.stop();
 }
 
-/// Two `basemind comms daemon` processes racing a cold `comms_dir` converge on exactly one live
+/// Two `hacienda-mcp comms daemon` processes racing a cold `comms_dir` converge on exactly one live
 /// daemon: the bind-as-lock in `singleton::bind_listener` means the loser's bind fails
 /// (`AddrInUse`), it probes the winner's socket, finds it alive, and exits cleanly rather than
 /// unlinking and rebinding. Both children are reaped regardless of who won.
@@ -477,8 +477,8 @@ async fn should_converge_on_one_live_daemon_when_two_processes_race_a_cold_bind(
     let spawn_one = || {
         Command::new(BIN)
             .args(["comms", "daemon"])
-            .env("BASEMIND_COMMS_DIR", &comms_dir)
-            .env("BASEMIND_DATA_HOME", &comms_dir)
+            .env("HACIENDA_MCP_COMMS_DIR", &comms_dir)
+            .env("HACIENDA_MCP_DATA_HOME", &comms_dir)
             .stdin(std::process::Stdio::null())
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
@@ -519,7 +519,7 @@ async fn should_converge_on_one_live_daemon_when_two_processes_race_a_cold_bind(
     // socket is released cleanly, then both processes are waited on unconditionally.
     let _ = Command::new(BIN)
         .args(["comms", "stop"])
-        .env("BASEMIND_COMMS_DIR", &comms_dir)
+        .env("HACIENDA_MCP_COMMS_DIR", &comms_dir)
         .output();
 
     for child in [&mut child_a, &mut child_b] {
@@ -648,8 +648,8 @@ async fn should_self_terminate_when_its_socket_is_reclaimed_by_another_daemon() 
     // `try_wait()` on it directly instead of it being moved into a `Daemon` that reaps on drop.
     let mut child_a = Command::new(BIN)
         .args(["comms", "daemon"])
-        .env("BASEMIND_COMMS_DIR", &comms_dir)
-        .env("BASEMIND_DATA_HOME", &comms_dir)
+        .env("HACIENDA_MCP_COMMS_DIR", &comms_dir)
+        .env("HACIENDA_MCP_DATA_HOME", &comms_dir)
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
@@ -668,8 +668,8 @@ async fn should_self_terminate_when_its_socket_is_reclaimed_by_another_daemon() 
 
     let mut child_b = Command::new(BIN)
         .args(["comms", "daemon"])
-        .env("BASEMIND_COMMS_DIR", &comms_dir)
-        .env("BASEMIND_DATA_HOME", &comms_dir)
+        .env("HACIENDA_MCP_COMMS_DIR", &comms_dir)
+        .env("HACIENDA_MCP_DATA_HOME", &comms_dir)
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
@@ -702,7 +702,7 @@ async fn should_self_terminate_when_its_socket_is_reclaimed_by_another_daemon() 
     let _ = child_a.wait();
     let _ = Command::new(BIN)
         .args(["comms", "stop"])
-        .env("BASEMIND_COMMS_DIR", &comms_dir)
+        .env("HACIENDA_MCP_COMMS_DIR", &comms_dir)
         .output();
     if child_b.try_wait().ok().flatten().is_none() {
         std::thread::sleep(Duration::from_millis(300));
@@ -713,9 +713,9 @@ async fn should_self_terminate_when_its_socket_is_reclaimed_by_another_daemon() 
     let _ = child_b.wait();
 }
 
-/// A pre-0.22 install left a legacy IN-REPO `.basemind/index.msgpack` (stale `schema_ver`) at the
+/// A pre-0.22 install left a legacy IN-REPO `.hacienda-mcp/index.msgpack` (stale `schema_ver`) at the
 /// old location. Since the global-cache re-root, the daemon's rescan never reads or writes that
-/// file — all state lives under `BASEMIND_DATA_HOME/cache/workspaces/<key>/` — so a `rescan`
+/// file — all state lives under `HACIENDA_MCP_DATA_HOME/cache/workspaces/<key>/` — so a `rescan`
 /// against such a repo must succeed, leave the legacy file untouched, and populate the global
 /// cache for that workspace key.
 #[tokio::test(flavor = "multi_thread")]
@@ -725,10 +725,10 @@ async fn should_rescan_successfully_and_ignore_a_stale_legacy_in_repo_index() {
     let repo = tmp.path().join("repo");
     init_git_repo(&repo);
 
-    // Plant a legacy in-repo `.basemind/index.msgpack` with a stale (pre-0.22) schema_ver. This
+    // Plant a legacy in-repo `.hacienda-mcp/index.msgpack` with a stale (pre-0.22) schema_ver. This
     // mirrors the real on-disk shape (`store::Index`) closely enough for `check_schema` to reject
     // it as stale (`schema_ver == 21` vs. today's `SCHEMA_VER`), which is all this test needs: a
-    // file basemind recognizes as "present but stale" that the global-cache re-root must never
+    // file hacienda-mcp recognizes as "present but stale" that the global-cache re-root must never
     // touch during a rescan.
     #[derive(serde::Serialize)]
     struct LegacyIndex {
@@ -736,8 +736,8 @@ async fn should_rescan_successfully_and_ignore_a_stale_legacy_in_repo_index() {
         files: std::collections::BTreeMap<String, ()>,
         doc_files: std::collections::BTreeMap<String, ()>,
     }
-    let legacy_dir = repo.join(".basemind");
-    std::fs::create_dir_all(&legacy_dir).expect("mkdir legacy .basemind");
+    let legacy_dir = repo.join(".hacienda-mcp");
+    std::fs::create_dir_all(&legacy_dir).expect("mkdir legacy .hacienda-mcp");
     let legacy_index = LegacyIndex {
         schema_ver: 21,
         files: std::collections::BTreeMap::new(),
@@ -763,18 +763,18 @@ async fn should_rescan_successfully_and_ignore_a_stale_legacy_in_repo_index() {
     );
 
     // The in-repo legacy file is untouched: the global-cache re-root means rescan never reads or
-    // writes `<repo>/.basemind/` at all.
+    // writes `<repo>/.hacienda-mcp/` at all.
     let legacy_bytes_after = std::fs::read(&legacy_index_path).expect("re-read legacy index.msgpack");
     assert_eq!(
         legacy_bytes_after, legacy_bytes_before,
-        "the in-repo legacy .basemind/index.msgpack must be left byte-for-byte untouched"
+        "the in-repo legacy .hacienda-mcp/index.msgpack must be left byte-for-byte untouched"
     );
 
-    // The global cache under BASEMIND_DATA_HOME got a workspace directory for this repo.
+    // The global cache under HACIENDA_MCP_DATA_HOME got a workspace directory for this repo.
     // NOTE: we assert the workspace directory's existence (the weaker, currently-checkable
     // invariant) rather than inspecting the Fjall view contents directly, since `IndexDb` internals
     // are not part of this test's public surface.
-    let workspace_key = basemind::store::workspace_key(&repo);
+    let workspace_key = hacienda_mcp::store::workspace_key(&repo);
     let workspace_dir = comms_dir.join("cache").join("workspaces").join(&workspace_key);
     assert!(
         workspace_dir.exists(),
@@ -824,7 +824,7 @@ async fn should_drain_cleanly_with_an_in_flight_rescan_and_reload_registry_after
     let stop_output = tokio::task::spawn_blocking(move || {
         Command::new(BIN)
             .args(["comms", "stop"])
-            .env("BASEMIND_COMMS_DIR", &comms_dir_for_stop)
+            .env("HACIENDA_MCP_COMMS_DIR", &comms_dir_for_stop)
             .output()
     })
     .await

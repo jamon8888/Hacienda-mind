@@ -14,10 +14,10 @@
 
 use std::fs;
 
-use basemind::config::ConfigV1;
-use basemind::path::RelPath;
-use basemind::scanner::{ScanSource, scan, scan_paths};
-use basemind::store::{Store, VIEW_WORKING};
+use hacienda_mcp::config::ConfigV1;
+use hacienda_mcp::path::RelPath;
+use hacienda_mcp::scanner::{ScanSource, scan, scan_paths};
+use hacienda_mcp::store::{Store, VIEW_WORKING};
 
 /// Byte offset of the `helper` identifier in `export function helper` for a given `a.ts` source.
 fn helper_export_start(src: &str) -> u32 {
@@ -26,7 +26,7 @@ fn helper_export_start(src: &str) -> u32 {
 
 #[test]
 fn scan_paths_restitches_unchanged_importer_when_dependency_export_moves() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path();
 
@@ -43,7 +43,7 @@ fn scan_paths_restitches_unchanged_importer_when_dependency_export_moves() {
         &mut store,
         &cfg,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
@@ -57,7 +57,7 @@ fn scan_paths_restitches_unchanged_importer_when_dependency_export_moves() {
     let import_local_start = b_src.find("helper").unwrap() as u32;
     let export_before = helper_export_start(a_before);
 
-    let baseline = basemind::query::resolved_references(&store, &a, export_before);
+    let baseline = hacienda_mcp::query::resolved_references(&store, &a, export_before);
     assert!(
         baseline
             .iter()
@@ -67,7 +67,7 @@ fn scan_paths_restitches_unchanged_importer_when_dependency_export_moves() {
 
     let a_after = "const pad = 0;\nexport function helper() {\n  return pad + 2;\n}\n";
     fs::write(&a_abs, a_after).unwrap();
-    scan_paths(root, &mut store, &cfg, &[a_abs], basemind::scanner::EmbedMode::Inline).unwrap();
+    scan_paths(root, &mut store, &cfg, &[a_abs], hacienda_mcp::scanner::EmbedMode::Inline).unwrap();
 
     let export_after = helper_export_start(a_after);
     assert_ne!(
@@ -75,22 +75,22 @@ fn scan_paths_restitches_unchanged_importer_when_dependency_export_moves() {
         "the edit must move the export name-site or the test proves nothing"
     );
 
-    let after = basemind::query::resolved_references(&store, &a, export_after);
+    let after = hacienda_mcp::query::resolved_references(&store, &a, export_after);
     assert!(
         after
             .iter()
             .any(|(p, s)| p.as_str() == Some("b.ts") && *s == import_local_start),
-        "scan_paths(a.ts, basemind::scanner::EmbedMode::Inline) must re-stitch b.ts's edge to the new a.ts export at {export_after}; got {after:?}"
+        "scan_paths(a.ts, hacienda_mcp::scanner::EmbedMode::Inline) must re-stitch b.ts's edge to the new a.ts export at {export_after}; got {after:?}"
     );
 
-    let stale = basemind::query::resolved_references(&store, &a, export_before);
+    let stale = hacienda_mcp::query::resolved_references(&store, &a, export_before);
     assert!(
         !stale.iter().any(|(p, _)| p.as_str() == Some("b.ts")),
         "the stale edge at the old export site must be purged; got {stale:?}"
     );
 
     assert_eq!(
-        basemind::query::definition_of(&store, &b, import_local_start),
+        hacienda_mcp::query::definition_of(&store, &b, import_local_start),
         Some((a.clone(), export_after)),
         "cross-file goto-definition must follow the moved export after the incremental re-scan"
     );

@@ -1,5 +1,5 @@
 name: Install system dependencies
-description: Install system dependencies for building basemind with --features full
+description: Install system dependencies for building hacienda-mcp with --features full
 
 runs:
   using: composite

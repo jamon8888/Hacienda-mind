@@ -1,16 +1,16 @@
 //! Cross-platform verification of the global cache path resolution.
 //!
 //! The index/blob cache is machine-global and lives under the platform-NATIVE data directory
-//! (`directories::ProjectDirs::data_dir()`): `~/Library/Application Support/basemind` on macOS,
-//! `%APPDATA%\basemind\data` on Windows, `$XDG_DATA_HOME` (or `~/.local/share/basemind`) on Linux.
+//! (`directories::ProjectDirs::data_dir()`): `~/Library/Application Support/hacienda-mcp` on macOS,
+//! `%APPDATA%\hacienda-mcp\data` on Windows, `$XDG_DATA_HOME` (or `~/.local/share/hacienda-mcp`) on Linux.
 //! Forcing the Linux XDG path on macOS/Windows would be a regression — `dirs`/`directories` returning
 //! the native location there is CORRECT, not a bug to override. This test pins that per-platform, and
-//! that every cache subtree routes through `cache_root()` and honors the `BASEMIND_DATA_HOME` seam.
+//! that every cache subtree routes through `cache_root()` and honors the `HACIENDA_MCP_DATA_HOME` seam.
 //! It runs on the Linux/macOS/Windows CI matrix, on default features, so no heavy stack is required.
 
 use std::path::Path;
 
-use basemind::store::{cache_root, global_blobs_dir, workspace_cache_dir, workspace_key};
+use hacienda_mcp::store::{cache_root, global_blobs_dir, workspace_cache_dir, workspace_key};
 
 /// Deliberately the ONLY test function in this binary. `std::env::{set_var, remove_var}` are unsound
 /// with a concurrent environment reader, and the integration-test harness runs distinct test fns on
@@ -19,13 +19,13 @@ use basemind::store::{cache_root, global_blobs_dir, workspace_cache_dir, workspa
 #[test]
 fn cache_paths_are_platform_native_and_honor_the_data_home_override() {
     let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let saved_data_home = std::env::var_os("BASEMIND_DATA_HOME");
+    let saved_data_home = std::env::var_os("HACIENDA_MCP_DATA_HOME");
 
     // --- Native default: clear the override so we observe the platform dir `directories` returns. ---
     // SAFETY: this is the only test fn in this binary, so no other thread reads or writes the
     // environment concurrently with these mutations.
     unsafe {
-        std::env::remove_var("BASEMIND_DATA_HOME");
+        std::env::remove_var("HACIENDA_MCP_DATA_HOME");
     }
 
     let native = cache_root();
@@ -35,8 +35,8 @@ fn cache_paths_are_platform_native_and_honor_the_data_home_override() {
     );
     let native_str = native.to_string_lossy();
     assert!(
-        native_str.contains("basemind"),
-        "cache_root() must be namespaced under `basemind`, got {native:?}"
+        native_str.contains("hacienda-mcp"),
+        "cache_root() must be namespaced under `hacienda-mcp`, got {native:?}"
     );
 
     #[cfg(target_os = "macos")]
@@ -97,32 +97,32 @@ fn cache_paths_are_platform_native_and_honor_the_data_home_override() {
         "workspace_key must be a non-empty hex digest, got {key_a:?}"
     );
 
-    // --- Override: `BASEMIND_DATA_HOME` redirects the entire cache (the test-isolation + escape seam). ---
+    // --- Override: `HACIENDA_MCP_DATA_HOME` redirects the entire cache (the test-isolation + escape seam). ---
     let temp = tempfile::tempdir().expect("tempdir");
     // SAFETY: as above — this is the sole test fn in this binary.
     unsafe {
-        std::env::set_var("BASEMIND_DATA_HOME", temp.path());
+        std::env::set_var("HACIENDA_MCP_DATA_HOME", temp.path());
     }
     assert_eq!(
         cache_root(),
         temp.path(),
-        "BASEMIND_DATA_HOME must override cache_root() verbatim"
+        "HACIENDA_MCP_DATA_HOME must override cache_root() verbatim"
     );
     assert!(
         global_blobs_dir().starts_with(temp.path()),
-        "the blob store must follow the BASEMIND_DATA_HOME override"
+        "the blob store must follow the HACIENDA_MCP_DATA_HOME override"
     );
     assert!(
         workspace_cache_dir(manifest).starts_with(temp.path()),
-        "the per-workspace cache dir must follow the BASEMIND_DATA_HOME override"
+        "the per-workspace cache dir must follow the HACIENDA_MCP_DATA_HOME override"
     );
 
     // --- Restore the environment for any downstream process inspection. ---
     // SAFETY: as above.
     unsafe {
         match saved_data_home {
-            Some(value) => std::env::set_var("BASEMIND_DATA_HOME", value),
-            None => std::env::remove_var("BASEMIND_DATA_HOME"),
+            Some(value) => std::env::set_var("HACIENDA_MCP_DATA_HOME", value),
+            None => std::env::remove_var("HACIENDA_MCP_DATA_HOME"),
         }
     }
 }

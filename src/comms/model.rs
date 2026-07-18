@@ -122,9 +122,9 @@ pub struct Membership {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AgentKind {
-    /// A `basemind serve` MCP session.
+    /// A `hacienda-mcp serve` MCP session.
     Serve,
-    /// A one-shot `basemind comms`/`basemind <verb>` CLI invocation.
+    /// A one-shot `hacienda-mcp comms`/`hacienda-mcp <verb>` CLI invocation.
     Cli,
     /// A git/editor hook.
     Hook,

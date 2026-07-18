@@ -679,8 +679,8 @@ async fn concurrent_rescan_and_blob_gc_never_reaps_a_referenced_blob() {
     }
 
     // Every blob the surviving index references must still be present — no live blob was reaped.
-    let basemind_dir = crate::store::workspace_cache_dir(&root);
-    let referenced = crate::store_gc::collect_referenced_hashes(&basemind_dir).expect("collect referenced hashes");
+    let hacienda_mcp_dir = crate::store::workspace_cache_dir(&root);
+    let referenced = crate::store_gc::collect_referenced_hashes(&hacienda_mcp_dir).expect("collect referenced hashes");
     assert!(
         !referenced.is_empty(),
         "the scanned workspace must reference at least one blob"

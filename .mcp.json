@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "basemind": {
+    "hacienda-mcp": {
       "command": "./scripts/mcp-launch.sh",
       "args": ["serve"],
       "cwd": "."

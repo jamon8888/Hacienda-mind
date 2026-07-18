@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "basemind"
+name = "hacienda-mcp"
 version = "0.22.0"
 description = "Full AI context layer over MCP — tree-sitter code-map, document RAG (PDF/Office/HTML/email + OCR + reranker), shared agent memory, on-demand web crawl, git history + blame + per-symbol diff. 300+ languages, 10+ coding-agent harnesses, content-addressed Fjall + LanceDB."
 readme = "README.md"
@@ -27,13 +27,13 @@ requires-python = ">=3.10"
 dependencies = ["certifi>=2024.7.4"]
 
 [project.urls]
-Homepage = "https://basemind.ai"
-Documentation = "https://basemind.ai"
-Repository = "https://github.com/Goldziher/basemind.git"
-Issues = "https://github.com/Goldziher/basemind/issues"
+Homepage = "https://github.com/jamon8888/Hacienda-mind"
+Documentation = "https://github.com/jamon8888/Hacienda-mind"
+Repository = "https://github.com/jamon8888/Hacienda-mind.git"
+Issues = "https://github.com/jamon8888/Hacienda-mind/issues"
 
 [project.scripts]
-basemind = "basemind.cli:main"
+hacienda-mcp = "hacienda-mcp.cli:main"
 
 [tool.setuptools]
-packages = ["basemind"]
+packages = ["hacienda-mcp"]

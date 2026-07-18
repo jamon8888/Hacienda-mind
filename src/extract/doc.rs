@@ -1,6 +1,6 @@
 //! Document extraction tier — non-source files (PDFs, Office docs, emails,
 //! images, …) ingested via `xberg::extract` and serialised to
-//! `.basemind/blobs/<hash>.doc.msgpack`.
+//! `.hacienda-mcp/blobs/<hash>.doc.msgpack`.
 //!
 //! Layered on top of the existing `l1` / `l2` blob shape:
 //! - `l1`/`l2`/`l3` cover source code (tree-sitter outlines + calls + body hashes)
@@ -365,7 +365,7 @@ impl DocConfig {
 /// from the synchronous rayon scan path.
 ///
 /// xberg 1.0 dropped its `extract_file_sync` wrapper — `extract` is async-only,
-/// so basemind owns the sync bridge. Built once and never dropped; rayon workers
+/// so hacienda-mcp owns the sync bridge. Built once and never dropped; rayon workers
 /// `block_on` it concurrently (each future is driven to completion on the shared
 /// worker pool).
 fn extraction_runtime() -> &'static tokio::runtime::Runtime {

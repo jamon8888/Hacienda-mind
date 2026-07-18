@@ -1,6 +1,6 @@
 : << 'CMDBLOCK'
 @echo off
-REM Cross-platform polyglot wrapper for basemind hook scripts.
+REM Cross-platform polyglot wrapper for hacienda-mcp hook scripts.
 REM   Windows: cmd.exe runs this batch section, locates bash, and calls the hook.
 REM   Unix:    the leading `:` is a bash no-op, so execution falls through to the
 REM            shell section below.

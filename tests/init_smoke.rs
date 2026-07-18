@@ -1,6 +1,6 @@
-//! End-to-end smoke tests for `basemind init` — the re-runnable onboarding flow.
+//! End-to-end smoke tests for `hacienda-mcp init` — the re-runnable onboarding flow.
 //!
-//! These shell the built binary (`CARGO_BIN_EXE_basemind`) against a tempdir and assert the
+//! These shell the built binary (`CARGO_BIN_EXE_hacienda-mcp`) against a tempdir and assert the
 //! observable filesystem effects: the `basemind.toml` scaffold and the idempotent delimited rules
 //! block injected into CLAUDE.md / AGENTS.md / an ai-rulez rule file. Init no longer writes a
 //! `.gitignore` entry — the index cache is machine-global and out-of-repo.
@@ -8,21 +8,21 @@
 use std::path::Path;
 use std::process::Command;
 
-const BEGIN_MARKER: &str = "<!-- BEGIN basemind (managed by `basemind init`) -->";
-const END_MARKER: &str = "<!-- END basemind -->";
+const BEGIN_MARKER: &str = "<!-- BEGIN hacienda-mcp (managed by `hacienda-mcp init`) -->";
+const END_MARKER: &str = "<!-- END hacienda-mcp -->";
 
 fn tmpdir() -> tempfile::TempDir {
     tempfile::tempdir().expect("create tempdir")
 }
 
-/// Run `basemind --root <root> init <extra args...>` and assert success.
+/// Run `hacienda-mcp --root <root> init <extra args...>` and assert success.
 fn run_init(root: &Path, extra: &[&str]) -> String {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_basemind"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_hacienda-mcp"));
     cmd.arg("--root").arg(root).arg("init");
     for a in extra {
         cmd.arg(a);
     }
-    let output = cmd.output().expect("spawn basemind init");
+    let output = cmd.output().expect("spawn hacienda-mcp init");
     let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
     let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
     assert!(
@@ -57,7 +57,7 @@ fn fresh_dir_writes_config_and_claude_block_without_gitignore() {
     let claude = std::fs::read_to_string(root.join("CLAUDE.md")).expect("CLAUDE.md created");
     assert_eq!(count_markers(&claude), 1, "exactly one managed block");
     assert!(claude.contains(END_MARKER), "END marker present");
-    assert!(claude.contains("basemind"), "block advertises basemind usage");
+    assert!(claude.contains("hacienda-mcp"), "block advertises hacienda-mcp usage");
 }
 
 #[test]
@@ -118,7 +118,7 @@ fn ai_rulez_present_writes_rule_file_and_leaves_claude_untouched() {
     let rule = root.join(".ai-rulez/rules/basemind-usage.md");
     assert!(rule.exists(), "ai-rulez rule file should be written");
     let rule_text = std::fs::read_to_string(&rule).expect("read rule");
-    assert!(rule_text.contains("basemind"), "rule advertises basemind");
+    assert!(rule_text.contains("hacienda-mcp"), "rule advertises hacienda-mcp");
 
     let claude = std::fs::read_to_string(root.join("CLAUDE.md")).expect("read CLAUDE.md");
     assert!(
@@ -193,13 +193,13 @@ fn init_refuses_to_corrupt_a_file_with_a_broken_marker() {
     let broken = format!("# My Project\n\nkeep me\n\n{BEGIN_MARKER}\nstale rules\n\ntrailing user content\n");
     std::fs::write(root.join("CLAUDE.md"), &broken).expect("seed broken CLAUDE.md");
 
-    let output = Command::new(env!("CARGO_BIN_EXE_basemind"))
+    let output = Command::new(env!("CARGO_BIN_EXE_hacienda-mcp"))
         .arg("--root")
         .arg(root)
         .arg("init")
         .arg("--yes")
         .output()
-        .expect("spawn basemind init");
+        .expect("spawn hacienda-mcp init");
     assert!(!output.status.success(), "init must fail on a malformed marker");
 
     let after = std::fs::read_to_string(root.join("CLAUDE.md")).expect("read CLAUDE.md");

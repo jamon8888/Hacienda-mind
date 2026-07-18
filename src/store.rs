@@ -23,8 +23,8 @@ pub const LOCK_FILE: &str = ".lock";
 /// Environment override for the global cache root. When set, [`cache_root`] returns it verbatim
 /// instead of the XDG data dir — the single seam the test-isolation helper uses to redirect every
 /// workspace's cache into a per-process temp dir.
-pub const DATA_HOME_ENV: &str = "BASEMIND_DATA_HOME";
-/// Sub-directory of [`cache_root`] that holds all basemind cache state (`blobs/` + `workspaces/`).
+pub const DATA_HOME_ENV: &str = "HACIENDA_MCP_DATA_HOME";
+/// Sub-directory of [`cache_root`] that holds all hacienda-mcp cache state (`blobs/` + `workspaces/`).
 pub const CACHE_DIR: &str = "cache";
 /// Sub-directory of the cache holding per-workspace state, keyed by [`workspace_key`].
 pub const WORKSPACES_DIR: &str = "workspaces";
@@ -33,11 +33,11 @@ pub const WORKSPACES_DIR: &str = "workspaces";
 /// hardcoded guess. Best-effort: a missing/corrupt sidecar degrades to a generic message.
 pub const LOCK_META_FILE: &str = ".lock.meta";
 pub const VIEWS_DIR: &str = "views";
-/// Lazy-opened LanceDB store directory under `.basemind/`. Created on first use.
+/// Lazy-opened LanceDB store directory under `.hacienda-mcp/`. Created on first use.
 #[cfg(feature = "intelligence")]
 pub const LANCE_DIR: &str = "lance";
 
-/// View name used for the working-tree index. Also the default for `basemind serve`.
+/// View name used for the working-tree index. Also the default for `hacienda-mcp serve`.
 pub const VIEW_WORKING: &str = "working";
 /// View name used when scanning the staging index.
 pub const VIEW_STAGED: &str = "staged";
@@ -47,13 +47,13 @@ pub fn view_name_for_rev(short_sha: &str) -> String {
     format!("rev-{short_sha}")
 }
 
-/// Root of basemind's GLOBAL on-disk cache, shared across every workspace on the machine.
+/// Root of hacienda-mcp's GLOBAL on-disk cache, shared across every workspace on the machine.
 ///
 /// Resolution order:
-/// 1. `$BASEMIND_DATA_HOME` when set (the test-isolation seam; also a user escape hatch).
-/// 2. Else `directories::ProjectDirs::from("", "", "basemind").data_dir()` — the platform XDG
-///    data dir (`~/.local/share/basemind` on Linux, `~/Library/Application Support/basemind` on
-///    macOS, `%APPDATA%\basemind\data` on Windows).
+/// 1. `$HACIENDA_MCP_DATA_HOME` when set (the test-isolation seam; also a user escape hatch).
+/// 2. Else `directories::ProjectDirs::from("", "", "hacienda-mcp").data_dir()` — the platform XDG
+///    data dir (`~/.local/share/hacienda-mcp` on Linux, `~/Library/Application Support/hacienda-mcp` on
+///    macOS, `%APPDATA%\hacienda-mcp\data` on Windows).
 /// 3. Else the current directory (only when `ProjectDirs` cannot resolve a home dir — no `HOME`).
 ///
 /// The cache lives under `cache_root()/cache/`: a global `blobs/` (content-addressed, shared by
@@ -62,7 +62,7 @@ pub fn cache_root() -> PathBuf {
     if let Some(explicit) = std::env::var_os(DATA_HOME_ENV) {
         return PathBuf::from(explicit);
     }
-    directories::ProjectDirs::from("", "", "basemind")
+    directories::ProjectDirs::from("", "", "hacienda-mcp")
         .map(|dirs| dirs.data_dir().to_path_buf())
         .unwrap_or_else(|| PathBuf::from("."))
 }
@@ -97,13 +97,13 @@ pub fn global_blobs_dir() -> PathBuf {
 
 /// Redirect [`cache_root`] at a per-process temp dir for the whole test binary.
 ///
-/// Sets `$BASEMIND_DATA_HOME` exactly once (via [`std::sync::Once`]) to a leaked [`tempfile::TempDir`]
+/// Sets `$HACIENDA_MCP_DATA_HOME` exactly once (via [`std::sync::Once`]) to a leaked [`tempfile::TempDir`]
 /// so it outlives every test in the binary, and is idempotent across the many fixture constructors
 /// that call it. Workspace-keying + content-addressed blobs keep tests mutually isolated even
 /// though they share this one cache root, so all tests in a binary can safely share it — no
 /// per-test env churn, no races on `set_var`.
 ///
-/// Also pins `$BASEMIND_COMMS_DIR` under the same tempdir. On a `comms` build the real `basemind
+/// Also pins `$HACIENDA_MCP_COMMS_DIR` under the same tempdir. On a `comms` build the real `hacienda-mcp
 /// serve` binary is a `daemon_writer` that forwards every write to the machine daemon (auto-spawned
 /// on first use); a test that spawns `serve` inherits this env, so its daemon binds an ISOLATED
 /// socket under the tempdir instead of touching the user's real machine daemon.
@@ -119,26 +119,26 @@ pub fn init_isolated_cache() {
         // SAFETY: set exactly once, inside `Once::call_once`, before any test thread reads
         // `cache_root()` (every fixture constructor calls this first). Rust 2024 marks `set_var`
         // unsafe because concurrent get/set is UB; the single-write-before-any-read discipline
-        // here upholds that invariant. `BASEMIND_COMMS_DIR` is inert on non-comms builds.
+        // here upholds that invariant. `HACIENDA_MCP_COMMS_DIR` is inert on non-comms builds.
         unsafe {
             std::env::set_var(DATA_HOME_ENV, dir.path());
-            std::env::set_var("BASEMIND_COMMS_DIR", comms_dir);
+            std::env::set_var("HACIENDA_MCP_COMMS_DIR", comms_dir);
         }
     });
 }
 
-/// Which basemind command is taking the exclusive store lock. Threaded from the caller
+/// Which hacienda-mcp command is taking the exclusive store lock. Threaded from the caller
 /// (`scan` / `rescan` / `watch` / `serve`) into [`Store::open_with_holder`] so a lock
 /// contention error can name the *actual* holder rather than a hardcoded guess.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LockHolder {
-    /// `basemind serve` — the long-running MCP server (the common holder; an editor plugin).
+    /// `hacienda-mcp serve` — the long-running MCP server (the common holder; an editor plugin).
     Serve,
-    /// `basemind watch` — the filesystem watcher / incremental re-indexer.
+    /// `hacienda-mcp watch` — the filesystem watcher / incremental re-indexer.
     Watch,
-    /// `basemind scan` — a one-shot full index.
+    /// `hacienda-mcp scan` — a one-shot full index.
     Scan,
-    /// `basemind rescan` — an incremental re-index.
+    /// `hacienda-mcp rescan` — an incremental re-index.
     Rescan,
     /// GC / cache maintenance or any caller that did not specify a more precise identity.
     Maintenance,
@@ -146,14 +146,14 @@ pub enum LockHolder {
 
 impl LockHolder {
     /// The exact CLI command a user would run for this holder, used verbatim in the error
-    /// message so the guidance is actionable ("stop `basemind serve`").
+    /// message so the guidance is actionable ("stop `hacienda-mcp serve`").
     pub fn command(self) -> &'static str {
         match self {
-            LockHolder::Serve => "basemind serve",
-            LockHolder::Watch => "basemind watch",
-            LockHolder::Scan => "basemind scan",
-            LockHolder::Rescan => "basemind rescan",
-            LockHolder::Maintenance => "a basemind cache/maintenance task",
+            LockHolder::Serve => "hacienda-mcp serve",
+            LockHolder::Watch => "hacienda-mcp watch",
+            LockHolder::Scan => "hacienda-mcp scan",
+            LockHolder::Rescan => "hacienda-mcp rescan",
+            LockHolder::Maintenance => "a hacienda-mcp cache/maintenance task",
         }
     }
 }
@@ -164,7 +164,7 @@ impl LockHolder {
 /// trips schema wipe-on-mismatch (it lives outside the versioned index/blob stores).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LockMeta {
-    /// The CLI command of the holder (`basemind serve`, etc.).
+    /// The CLI command of the holder (`hacienda-mcp serve`, etc.).
     pub command: String,
     /// OS process id of the holder.
     pub pid: u32,
@@ -201,17 +201,17 @@ pub enum StoreError {
     #[error("inverted index error: {0}")]
     Index(#[from] IndexError),
     #[error(
-        "view {view:?} has not been scanned; run `basemind scan --view {view}` \
+        "view {view:?} has not been scanned; run `hacienda-mcp scan --view {view}` \
          (or omit --view to use the working view)"
     )]
     ViewNotScanned { view: String },
 }
 
 impl StoreError {
-    /// True when this error is lock contention from another live basemind process,
+    /// True when this error is lock contention from another live hacienda-mcp process,
     /// not a corrupt store or a logic bug. Two distinct holders surface here:
     ///
-    /// - [`StoreError::Locked`]: our own `fs2` advisory lock on `.basemind/.lock`,
+    /// - [`StoreError::Locked`]: our own `fs2` advisory lock on `.hacienda-mcp/.lock`,
     ///   taken by every writer (`scan` / `rescan` / `watch` / `serve`).
     /// - [`StoreError::Index`] wrapping [`fjall::Error::Locked`]: Fjall's *own*
     ///   exclusive lock taken when it opens the `index.fjall/` database. A reader can
@@ -231,25 +231,25 @@ impl StoreError {
 fn lock_contention_message(path: &Path, holder: &Option<LockMeta>) -> String {
     match holder {
         Some(meta) => format!(
-            "another basemind process holds the lock on {} (`{}`, pid {})",
+            "another hacienda-mcp process holds the lock on {} (`{}`, pid {})",
             path.display(),
             meta.command,
             meta.pid
         ),
         None => format!(
-            "another basemind process holds the lock on {} (usually the `basemind serve` MCP \
-             server from your editor plugin, or `basemind watch`)",
+            "another hacienda-mcp process holds the lock on {} (usually the `hacienda-mcp serve` MCP \
+             server from your editor plugin, or `hacienda-mcp watch`)",
             path.display()
         ),
     }
 }
 
 /// Actionable guidance printed when a CLI writer (`scan` / `rescan`) can't acquire the
-/// store lock because another basemind process is holding it. Kept as a constant so the
+/// store lock because another hacienda-mcp process is holding it. Kept as a constant so the
 /// scan and rescan paths emit identical wording and a test can assert the contract.
-pub const LOCK_CONTENTION_HELP: &str = "the basemind index is locked by another process \
+pub const LOCK_CONTENTION_HELP: &str = "the hacienda-mcp index is locked by another process \
 (likely the MCP server). If an editor/plugin is serving this repo, use its `rescan` tool \
-to refresh the index, or stop that server before running `basemind scan`.";
+to refresh the index, or stop that server before running `hacienda-mcp scan`.";
 
 pub use crate::store_lock::{WriterProbe, probe_writer_lock};
 pub(crate) use crate::store_lock::{acquire_lock, acquire_lock_as, writer_lock_is_held};
@@ -309,11 +309,11 @@ pub struct DocEntry {
 
 pub struct Store {
     pub root: PathBuf,
-    pub basemind_dir: PathBuf,
+    pub hacienda_mcp_dir: PathBuf,
     /// Directory holding the content-addressed blob cache (`<hash>.{fm,doc,rref,chunk}.msgpack`).
     /// The GLOBAL blob store at `cache_root()/cache/blobs/`, shared by every workspace on the
     /// machine, so byte-identical files across repositories/worktrees are extracted + embedded
-    /// exactly once. Per-workspace state (views, LanceDB, lock) lives under [`Store::basemind_dir`].
+    /// exactly once. Per-workspace state (views, LanceDB, lock) lives under [`Store::hacienda_mcp_dir`].
     /// See [`global_blobs_dir`].
     pub blobs_dir: PathBuf,
     /// Always `true` since the blob store went global: a standalone Store references only ONE
@@ -340,7 +340,7 @@ pub struct Store {
 impl Store {
     /// Open the store for a specific view. View names are flat strings: `"working"`,
     /// `"staged"`, `"rev-<sha7>"`. Each view has its own `index.msgpack` under
-    /// `.basemind/views/<view>/`; blobs are shared in `.basemind/blobs/`.
+    /// `.hacienda-mcp/views/<view>/`; blobs are shared in `.hacienda-mcp/blobs/`.
     pub fn open(root: &Path, view: &str) -> Result<Self, StoreError> {
         Self::open_with_holder(root, view, LockHolder::Maintenance)
     }
@@ -348,20 +348,20 @@ impl Store {
     /// Like [`Store::open`] but records which command (`serve` / `watch` / `scan` / `rescan`)
     /// is taking the lock, so a concurrent acquirer's contention error names the live holder.
     pub fn open_with_holder(root: &Path, view: &str, holder: LockHolder) -> Result<Self, StoreError> {
-        let basemind_dir = workspace_cache_dir(root);
-        ensure_dir(&basemind_dir)?;
+        let hacienda_mcp_dir = workspace_cache_dir(root);
+        ensure_dir(&hacienda_mcp_dir)?;
         let blobs_dir = global_blobs_dir();
         ensure_dir(&blobs_dir)?;
         // Blobs are global (shared by every workspace), so a standalone Store can never see the
         // full set of live references — auto-GC is disabled here (`blobs_shared = true`); the
         // daemon performs reference-counted GC across all workspaces.
         let blobs_shared = true;
-        ensure_dir(&basemind_dir.join(VIEWS_DIR))?;
-        migrate_legacy_index_into_views(&basemind_dir)?;
+        ensure_dir(&hacienda_mcp_dir.join(VIEWS_DIR))?;
+        migrate_legacy_index_into_views(&hacienda_mcp_dir)?;
 
-        let view_dir = basemind_dir.join(VIEWS_DIR).join(view);
+        let view_dir = hacienda_mcp_dir.join(VIEWS_DIR).join(view);
         ensure_dir(&view_dir)?;
-        let lock = acquire_lock_as(&basemind_dir, holder)?;
+        let lock = acquire_lock_as(&hacienda_mcp_dir, holder)?;
         let index = match read_index(&view_dir) {
             Ok(Some(idx)) => idx,
             Ok(None) => Index::empty(),
@@ -380,7 +380,7 @@ impl Store {
         let index_db = Some(open_index_with_retry(&view_dir)?);
         Ok(Self {
             root: root.to_path_buf(),
-            basemind_dir,
+            hacienda_mcp_dir,
             blobs_dir,
             blobs_shared,
             view_dir,
@@ -414,14 +414,14 @@ impl Store {
     /// Shared body for the read-only opens. `allow_index_db` gates whether the Fjall index is opened
     /// (see [`Store::open_read_only`] vs [`Store::open_read_only_no_index`]).
     fn open_read_only_inner(root: &Path, view: &str, allow_index_db: bool) -> Result<Self, StoreError> {
-        let basemind_dir = workspace_cache_dir(root);
-        if basemind_dir.exists() {
-            let _ = migrate_legacy_index_into_views(&basemind_dir);
+        let hacienda_mcp_dir = workspace_cache_dir(root);
+        if hacienda_mcp_dir.exists() {
+            let _ = migrate_legacy_index_into_views(&hacienda_mcp_dir);
         }
         let blobs_dir = global_blobs_dir();
         // See `open_with_holder`: blobs are global, so auto-GC is disabled in a standalone Store.
         let blobs_shared = true;
-        let view_dir = basemind_dir.join(VIEWS_DIR).join(view);
+        let view_dir = hacienda_mcp_dir.join(VIEWS_DIR).join(view);
         if view != VIEW_WORKING && !view_dir.join(INDEX_FILE).exists() {
             return Err(StoreError::ViewNotScanned { view: view.to_string() });
         }
@@ -432,13 +432,13 @@ impl Store {
                 tracing::warn!(
                     found,
                     expected,
-                    "cache schema mismatch; index reads empty until `basemind scan` refreshes it"
+                    "cache schema mismatch; index reads empty until `hacienda-mcp scan` refreshes it"
                 );
                 (Index::empty(), false)
             }
             Err(e) => return Err(e),
         };
-        let index_db = if allow_index_db && schema_ok && view_dir.exists() && !writer_lock_is_held(&basemind_dir) {
+        let index_db = if allow_index_db && schema_ok && view_dir.exists() && !writer_lock_is_held(&hacienda_mcp_dir) {
             match IndexDb::open(&view_dir) {
                 Ok(db) => Some(db),
                 Err(IndexError::Fjall(fjall::Error::Locked)) => None,
@@ -452,7 +452,7 @@ impl Store {
         };
         Ok(Self {
             root: root.to_path_buf(),
-            basemind_dir,
+            hacienda_mcp_dir,
             blobs_dir,
             blobs_shared,
             view_dir,
@@ -465,16 +465,16 @@ impl Store {
         })
     }
 
-    /// Lazy-open the LanceDB store at `.basemind/lance/`. Subsequent calls return
+    /// Lazy-open the LanceDB store at `.hacienda-mcp/lance/`. Subsequent calls return
     /// the cached handle; the first call pays the connection + table-init cost.
     ///
     /// A mismatch between the stored `(dim, embedding_model)` and the values
-    /// passed here wipes the whole `.basemind/lance/` directory and rebuilds —
+    /// passed here wipes the whole `.hacienda-mcp/lance/` directory and rebuilds —
     /// the standard schema-bump migration story for the vector store.
     #[cfg(feature = "intelligence")]
     pub fn lance_or_open(&mut self, dim: u16, embedding_model: &str) -> Result<&LanceStore, anyhow::Error> {
         if self.lance.is_none() {
-            let dir = self.basemind_dir.join(LANCE_DIR);
+            let dir = self.hacienda_mcp_dir.join(LANCE_DIR);
             let store = LanceStore::open(&dir, dim, embedding_model)?;
             self.lance = Some(store);
         }
@@ -488,7 +488,7 @@ impl Store {
     /// code-search embeddings).
     #[cfg(feature = "intelligence")]
     pub fn lance_dir_exists(&self) -> bool {
-        self.basemind_dir.join(LANCE_DIR).exists()
+        self.hacienda_mcp_dir.join(LANCE_DIR).exists()
     }
 
     pub fn blob_path_fm(&self, hash: &Hash) -> PathBuf {
@@ -764,15 +764,15 @@ pub(crate) fn wipe_blobs_in(blobs_dir: &Path) -> Result<(), StoreError> {
     Ok(())
 }
 
-/// Pre-views installs kept `index.msgpack` at the top of `.basemind/`. After the upgrade,
-/// each view lives under `.basemind/views/<view>/`. If we detect the legacy file AND no
+/// Pre-views installs kept `index.msgpack` at the top of `.hacienda-mcp/`. After the upgrade,
+/// each view lives under `.hacienda-mcp/views/<view>/`. If we detect the legacy file AND no
 /// working-view file exists yet, move it in place. Idempotent: re-runs are no-ops.
-fn migrate_legacy_index_into_views(basemind_dir: &Path) -> Result<(), StoreError> {
-    let legacy = basemind_dir.join(INDEX_FILE);
+fn migrate_legacy_index_into_views(hacienda_mcp_dir: &Path) -> Result<(), StoreError> {
+    let legacy = hacienda_mcp_dir.join(INDEX_FILE);
     if !legacy.exists() {
         return Ok(());
     }
-    let working_dir = basemind_dir.join(VIEWS_DIR).join(VIEW_WORKING);
+    let working_dir = hacienda_mcp_dir.join(VIEWS_DIR).join(VIEW_WORKING);
     let working_index = working_dir.join(INDEX_FILE);
     if working_index.exists() {
         let _ = std::fs::remove_file(&legacy);
@@ -783,7 +783,7 @@ fn migrate_legacy_index_into_views(basemind_dir: &Path) -> Result<(), StoreError
         path: working_index,
         source,
     })?;
-    tracing::info!("migrated .basemind/index.msgpack → .basemind/views/{VIEW_WORKING}/index.msgpack");
+    tracing::info!("migrated .hacienda-mcp/index.msgpack → .hacienda-mcp/views/{VIEW_WORKING}/index.msgpack");
     Ok(())
 }
 
@@ -806,9 +806,9 @@ pub(crate) fn read_index(view_dir: &Path) -> Result<Option<Index>, StoreError> {
 
 /// Acquire the store's advisory `.lock` (exclusive flock, with bounded retry).
 /// Reused by `store_gc::run_gc` so the mark+sweep races neither a concurrent scan
-/// nor a `basemind watch`.
+/// nor a `hacienda-mcp watch`.
 /// Retries a rightful writer performs when opening the Fjall index hits a *transient* fjall
-/// `Locked`. The caller already holds the `.basemind/.lock` advisory lock, so it is the sole
+/// `Locked`. The caller already holds the `.hacienda-mcp/.lock` advisory lock, so it is the sole
 /// legitimate writer — any fjall contention here is a short-lived reader open (a CLI `query` /
 /// `outline`, or another serve's read-only fallback briefly probing the index) that releases
 /// within sub-ms to low-ms. Retrying lets the rightful writer win instead of misfiring the
@@ -818,7 +818,7 @@ const INDEX_OPEN_RETRIES: u32 = 10;
 const INDEX_OPEN_BACKOFF: std::time::Duration = std::time::Duration::from_millis(50);
 
 /// Open the Fjall [`IndexDb`], retrying a transient fjall `Locked` (see [`INDEX_OPEN_RETRIES`]).
-/// ONLY correct for a caller that already holds `.basemind/.lock`; such a caller is the sole
+/// ONLY correct for a caller that already holds `.hacienda-mcp/.lock`; such a caller is the sole
 /// rightful writer, so any `Locked` is transient and clears. Every other [`IndexError`] — and a
 /// lock that never clears within the budget — propagates.
 pub(crate) fn open_index_with_retry(view_dir: &Path) -> Result<IndexDb, IndexError> {
@@ -948,7 +948,7 @@ mod tests {
     #[test]
     fn locked_display_names_the_serve_holder() {
         let err = StoreError::Locked {
-            path: PathBuf::from("/repo/.basemind/.lock"),
+            path: PathBuf::from("/repo/.hacienda-mcp/.lock"),
             holder: None,
         };
         let msg = err.to_string();
@@ -965,16 +965,16 @@ mod tests {
     #[test]
     fn locked_message_names_actual_holder_from_sidecar() {
         let err = StoreError::Locked {
-            path: PathBuf::from("/repo/.basemind/.lock"),
+            path: PathBuf::from("/repo/.hacienda-mcp/.lock"),
             holder: Some(LockMeta {
-                command: "basemind scan".to_string(),
+                command: "hacienda-mcp scan".to_string(),
                 pid: 4321,
                 acquired_unix: 1_700_000_000,
             }),
         };
         let msg = err.to_string();
         assert!(
-            msg.contains("basemind scan"),
+            msg.contains("hacienda-mcp scan"),
             "message should name the actual holder command, got: {msg}"
         );
         assert!(msg.contains("4321"), "message should name the holder pid, got: {msg}");
@@ -983,16 +983,16 @@ mod tests {
     #[test]
     fn second_acquisition_names_first_holders_command() {
         let tmp = tempfile::tempdir().expect("tempdir");
-        let basemind_dir = tmp.path().join(".basemind");
-        std::fs::create_dir_all(&basemind_dir).expect("mkdir");
+        let hacienda_mcp_dir = tmp.path().join(".hacienda-mcp");
+        std::fs::create_dir_all(&hacienda_mcp_dir).expect("mkdir");
 
-        let _held = acquire_lock_as(&basemind_dir, LockHolder::Scan).expect("first lock");
-        let err = acquire_lock_as(&basemind_dir, LockHolder::Serve)
+        let _held = acquire_lock_as(&hacienda_mcp_dir, LockHolder::Scan).expect("first lock");
+        let err = acquire_lock_as(&hacienda_mcp_dir, LockHolder::Serve)
             .expect_err("second acquisition must fail while the first holds the lock");
         assert!(err.is_lock_contention(), "must be a contention error");
         let msg = err.to_string();
         assert!(
-            msg.contains("basemind scan"),
+            msg.contains("hacienda-mcp scan"),
             "second error should name the FIRST holder (scan), got: {msg}"
         );
     }
@@ -1035,7 +1035,7 @@ mod tests {
     #[test]
     fn fs2_advisory_lock_is_lock_contention() {
         let err = StoreError::Locked {
-            path: PathBuf::from("/repo/.basemind/.lock"),
+            path: PathBuf::from("/repo/.hacienda-mcp/.lock"),
             holder: None,
         };
         assert!(err.is_lock_contention());

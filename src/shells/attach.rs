@@ -1,14 +1,14 @@
 //! Embedded visual-attach entry point.
 //!
-//! basemind has no external `rmux` binary, so the visual launcher cannot shell
+//! hacienda-mcp has no external `rmux` binary, so the visual launcher cannot shell
 //! out to `rmux attach`. Instead, the per-OS launchers in [`super::launcher`]
-//! build a command that re-execs basemind itself with the hidden
+//! build a command that re-execs hacienda-mcp itself with the hidden
 //! [`INTERNAL_ATTACH_FLAG`] (`--__internal-attach`), which this module intercepts
 //! at the very top of `main` (before clap parses) and routes to the blocking rmux
 //! attach driver.
 //!
 //! Re-exec shape:
-//! `basemind --__internal-attach <session-name> --socket <abs-path> --size <COLS>x<ROWS>`
+//! `hacienda-mcp --__internal-attach <session-name> --socket <abs-path> --size <COLS>x<ROWS>`
 //!
 //! The driver connects to the daemon socket over the blocking rmux client,
 //! begins an attach to the named session, and hands the upgraded stream to
@@ -21,7 +21,7 @@ use std::ffi::OsString;
 
 use anyhow::{Context, Result, bail};
 
-/// Hidden flag that marks a basemind re-exec as the visual-attach driver.
+/// Hidden flag that marks a hacienda-mcp re-exec as the visual-attach driver.
 ///
 /// Mirrors `rmux_client::INTERNAL_DAEMON_FLAG` for the daemon re-exec. The leading
 /// `--__internal` prefix keeps it out of the documented CLI surface (clap never
@@ -50,10 +50,10 @@ struct AttachArgs {
     rows: u16,
 }
 
-/// Inspect the process arguments and, when basemind was re-execed as the visual
+/// Inspect the process arguments and, when hacienda-mcp was re-execed as the visual
 /// attach driver, run the attach and return its result.
 ///
-/// The launcher starts an attach by re-execing basemind with the hidden
+/// The launcher starts an attach by re-execing hacienda-mcp with the hidden
 /// [`INTERNAL_ATTACH_FLAG`] (`--__internal-attach`) as the first real argument,
 /// followed by `<session-name> --socket <abs-path> --size <COLS>x<ROWS>`. When
 /// that flag is present this returns `Some(run_internal_attach(...))`; otherwise
@@ -61,7 +61,7 @@ struct AttachArgs {
 /// normal CLI parsing).
 ///
 /// Called at the very top of `main`, before clap parses, so the attach process
-/// never sees basemind's CLI surface.
+/// never sees hacienda-mcp's CLI surface.
 #[must_use]
 pub fn intercept_from_env() -> Option<Result<()>> {
     let mut args = std::env::args_os();

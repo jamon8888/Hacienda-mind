@@ -13,14 +13,14 @@ PROMPT_PAUSE="$(awk -v s="$SPEED" 'BEGIN { printf "%.4f", 0.6 * s }')"
 PROMPT="$(printf '\033[1;32m❯\033[0m ')"
 
 resolve_bin() {
-	if [ -n "${BASEMIND_BIN:-}" ] && [ -x "${BASEMIND_BIN}" ]; then
-		(cd "$(dirname "$BASEMIND_BIN")" && printf '%s/%s' "$PWD" "$(basename "$BASEMIND_BIN")")
-	elif [ -x "$REPO_ROOT/target/release/basemind" ]; then
-		printf '%s' "$REPO_ROOT/target/release/basemind"
-	elif command -v basemind >/dev/null 2>&1; then
-		command -v basemind
+	if [ -n "${HACIENDA_MCP_BIN:-}" ] && [ -x "${HACIENDA_MCP_BIN}" ]; then
+		(cd "$(dirname "$HACIENDA_MCP_BIN")" && printf '%s/%s' "$PWD" "$(basename "$HACIENDA_MCP_BIN")")
+	elif [ -x "$REPO_ROOT/target/release/hacienda-mcp" ]; then
+		printf '%s' "$REPO_ROOT/target/release/hacienda-mcp"
+	elif command -v hacienda-mcp >/dev/null 2>&1; then
+		command -v hacienda-mcp
 	else
-		printf 'demo: no basemind binary found — run: cargo build --release (or set BASEMIND_BIN)\n' >&2
+		printf 'demo: no hacienda-mcp binary found — run: cargo build --release (or set HACIENDA_MCP_BIN)\n' >&2
 		exit 1
 	fi
 }
@@ -29,8 +29,8 @@ BIN="$(resolve_bin)"
 WORKDIR="$(mktemp -d)"
 cleanup() { rm -rf "$WORKDIR" 2>/dev/null || true; }
 trap cleanup EXIT
-git clone -q "$REPO_ROOT" "$WORKDIR/basemind"
-cd "$WORKDIR/basemind"
+git clone -q "$REPO_ROOT" "$WORKDIR/hacienda-mcp"
+cd "$WORKDIR/hacienda-mcp"
 
 pe() {
 	printf '%s' "$PROMPT"
@@ -47,11 +47,11 @@ pe() {
 	sleep "$PROMPT_PAUSE"
 }
 
-pe "basemind scan --quiet"
-pe "basemind query outline src/scanner.rs --l2"
-pe "basemind query search scan --limit 10"
-pe "basemind query references record_call --limit 8"
-pe "basemind query call-graph cmd_scan --direction callers --max-depth 3"
-pe "basemind git recent-changes --limit 5"
-pe "basemind git blame-symbol src/main.rs cmd_scan"
-pe "basemind telemetry --window today"
+pe "hacienda-mcp scan --quiet"
+pe "hacienda-mcp query outline src/scanner.rs --l2"
+pe "hacienda-mcp query search scan --limit 10"
+pe "hacienda-mcp query references record_call --limit 8"
+pe "hacienda-mcp query call-graph cmd_scan --direction callers --max-depth 3"
+pe "hacienda-mcp git recent-changes --limit 5"
+pe "hacienda-mcp git blame-symbol src/main.rs cmd_scan"
+pe "hacienda-mcp telemetry --window today"

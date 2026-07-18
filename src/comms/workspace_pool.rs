@@ -1,7 +1,7 @@
 //! The daemon's hot-index pool: the machinery that lets the broker be the machine's **sole fjall
 //! writer**.
 //!
-//! Front-ends (`basemind serve`) open each workspace's store *read-only* and forward every write
+//! Front-ends (`hacienda-mcp serve`) open each workspace's store *read-only* and forward every write
 //! (scan / rescan) to the daemon over the socket. The daemon runs those scans through this pool so
 //! exactly one process ever holds a workspace's exclusive index lock — dissolving the multi-session
 //! single-holder problem where a second read-write session would degrade to read-only.

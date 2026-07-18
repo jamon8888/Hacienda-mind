@@ -4,7 +4,7 @@ const path = require("node:path");
 const os = require("node:os");
 const fs = require("node:fs");
 
-const binaryName = os.type() === "Windows_NT" ? "basemind.exe" : "basemind";
+const binaryName = os.type() === "Windows_NT" ? "hacienda-mcp.exe" : "hacienda-mcp";
 const binaryPath = path.join(__dirname, binaryName);
 const packageJsonPath = path.join(__dirname, "..", "package.json");
 
@@ -13,11 +13,11 @@ function ensureBinaryExists() {
     return true;
   }
 
-  console.error(`basemind: binary not found at ${binaryPath}. Running install...`);
+  console.error(`hacienda-mcp: binary not found at ${binaryPath}. Running install...`);
 
   const installScriptPath = path.join(__dirname, "..", "install.js");
   if (!fs.existsSync(installScriptPath)) {
-    console.error(`basemind: install script not found at ${installScriptPath}`);
+    console.error(`hacienda-mcp: install script not found at ${installScriptPath}`);
     return false;
   }
 
@@ -35,18 +35,18 @@ function ensureBinaryExists() {
 
 if (!ensureBinaryExists()) {
   console.error(
-    `basemind: native binary not found at ${binaryPath}.\n` +
+    `hacienda-mcp: native binary not found at ${binaryPath}.\n` +
       `The postinstall step that downloads the binary from GitHub releases may have failed.\n` +
       `You can try:\n` +
-      `  1. Reinstall: npm install -g basemind\n` +
-      `  2. Use cargo: cargo install basemind`,
+      `  1. Reinstall: npm install -g hacienda-mcp\n` +
+      `  2. Use cargo: cargo install hacienda-mcp`,
   );
   process.exit(1);
 }
 
 const result = spawnSync(binaryPath, process.argv.slice(2), { stdio: "inherit" });
 if (result.error) {
-  console.error(`basemind: failed to spawn binary: ${result.error.message}`);
+  console.error(`hacienda-mcp: failed to spawn binary: ${result.error.message}`);
   process.exit(1);
 }
 process.exit(result.status ?? 0);

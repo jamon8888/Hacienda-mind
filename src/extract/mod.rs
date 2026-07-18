@@ -57,7 +57,7 @@ pub fn extract_l1_l2(
 /// directory shape changes. Stored in every serialized FileMap. Mismatch on read =
 /// auto-wipe + re-scan.
 ///
-/// - v3: per-view index directories under `.basemind/views/`.
+/// - v3: per-view index directories under `.hacienda-mcp/views/`.
 /// - v4: path keys in the index and msgpack store became `RelPath` (BString) — the wire
 ///   format is identical for ASCII/UTF-8 paths but non-UTF-8 paths now round-trip via a
 ///   discriminated `{"bytes": [u8...]}` object.

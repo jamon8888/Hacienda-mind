@@ -1,11 +1,11 @@
 ---
 title: MCP Tools Reference
-description: Complete catalog of basemind tools grouped by capability area.
+description: Complete catalog of hacienda-mcp tools grouped by capability area.
 ---
 
 import { Aside, Badge } from '@astrojs/starlight/components';
 
-basemind exposes all tools over stdio MCP, making them available to any compatible agent. All paths are byte-precise repo-relative (`RelPath`). Lists are capped at 1000 items; by default 100. Tool descriptions state matching semantics (substring, prefix, scope-aware) and what's indexed (name-only vs scope-resolved).
+hacienda-mcp exposes all tools over stdio MCP, making them available to any compatible agent. All paths are byte-precise repo-relative (`RelPath`). Lists are capped at 1000 items; by default 100. Tool descriptions state matching semantics (substring, prefix, scope-aware) and what's indexed (name-only vs scope-resolved).
 
 ## Code Intelligence
 
@@ -141,7 +141,7 @@ Coordinate across multiple repos and worktrees on the same machine. The registry
 | `worktree_claim` | Advisory claim on a worktree for the current agent. No locking; collision detection is cooperative. |
 | `worktree_release` | Release a claim. |
 
-See CLI: `basemind registry` (worktree/branch listing), `basemind statusline` (current status).
+See CLI: `hacienda-mcp registry` (worktree/branch listing), `hacienda-mcp statusline` (current status).
 
 ## Agent Shells
 
@@ -166,7 +166,7 @@ Compression, expansion, and delta utilities for keeping context window efficient
 | `expand` | Fetch a symbol's full body (inverse of outline). |
 | `delta` | Show only what changed when re-reading a file. |
 | `checkpoint` | Summarize a session: what was queried, tokens saved. |
-| `detect_waste` | Flag wasteful tool use (e.g., re-reading files basemind already mapped). |
+| `detect_waste` | Flag wasteful tool use (e.g., re-reading files hacienda-mcp already mapped). |
 
 ## Admin
 
@@ -190,7 +190,7 @@ All list-returning tools:
 - **`cursor`** for pagination: opaque token returned in response; pass back to continue.
 - **`any_truncated` flag**: set to `true` if the result hit the limit and more results exist.
 
-For index scans (symbol + reference tools), basemind internally uses `scan_cap = limit * 8` to bound work on common names.
+For index scans (symbol + reference tools), hacienda-mcp internally uses `scan_cap = limit * 8` to bound work on common names.
 
 <Aside>
 Tool descriptions are the routing surface for agents. Read them carefully — they describe matching semantics (substring vs. prefix), scope resolution (name-only vs. scope-aware), and what each tool trades off. This helps agents pick the right tool for the question.
@@ -198,7 +198,7 @@ Tool descriptions are the routing surface for agents. Read them carefully — th
 
 ## Lifecycle notices
 
-`basemind serve` warms the code map in the background after answering the MCP handshake. While
+`hacienda-mcp serve` warms the code map in the background after answering the MCP handshake. While
 it isn't fully ready, `status` and every code-map read tool may include a `notice` object instead
 of, or alongside, their normal result:
 

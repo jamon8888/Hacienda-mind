@@ -142,7 +142,7 @@ mod tests {
     #[test]
     fn default_scope_distinguishes_subdomains() {
         let a = Url::parse("https://docs.rs/rmcp/").unwrap();
-        let b = Url::parse("https://github.com/Goldziher/basemind").unwrap();
+        let b = Url::parse("https://github.com/Goldziher/hacienda-mcp").unwrap();
         assert_eq!(default_scope(&a), "web:docs.rs");
         assert_eq!(default_scope(&b), "web:github.com");
         assert_ne!(default_scope(&a), default_scope(&b));
@@ -162,7 +162,7 @@ mod tests {
         assert_eq!(default_scope(&u), "web:example.com");
     }
 
-    const ALLOW_ENV: &str = "BASEMIND_ALLOW_PRIVATE_HOSTS";
+    const ALLOW_ENV: &str = "HACIENDA_MCP_ALLOW_PRIVATE_HOSTS";
 
     fn env_lock() -> std::sync::MutexGuard<'static, ()> {
         crate::url::PRIVATE_HOSTS_ENV_LOCK

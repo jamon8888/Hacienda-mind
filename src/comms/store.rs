@@ -68,7 +68,7 @@ pub enum CommsStoreError {
     #[error("msgpack decode error: {0}")]
     Decode(#[from] rmp_serde::decode::Error),
     /// Another daemon already holds the store lock.
-    #[error("another basemind comms daemon holds the lock on {0}")]
+    #[error("another hacienda-mcp comms daemon holds the lock on {0}")]
     Locked(PathBuf),
 }
 

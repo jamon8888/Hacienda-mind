@@ -23,13 +23,13 @@ model="$(json '.model.display_name' '')"
 out_style="$(json '.output_style.name' '')"
 vim_mode="$(json '.vim.mode' '')"
 ctx_pct="$(json '.context_window.used_percentage' '')"
-bm_dir="${cwd}/.basemind"
+bm_dir="${cwd}/.hacienda-mcp"
 
 cols="${COLUMNS:-0}"
 [[ "$cols" -le 0 ]] && cols="$(tput cols 2>/dev/null || echo 120)"
 [[ -z "$cols" || "$cols" -le 0 ]] && cols=120
 
-tier="${BASEMIND_STATUSLINE:-auto}"
+tier="${HACIENDA_MCP_STATUSLINE:-auto}"
 if [[ "$tier" == "auto" ]]; then
 	if [[ "$cols" -ge 120 ]]; then
 		tier="full"
@@ -79,7 +79,7 @@ fmt_kb() {
 }
 
 comms_state() {
-	command -v basemind >/dev/null 2>&1 || return 1
+	command -v hacienda-mcp >/dev/null 2>&1 || return 1
 	command -v pgrep >/dev/null 2>&1 && pgrep -f "comms daemon" >/dev/null 2>&1 || return 1
 	[[ $have_jq -eq 1 ]] || return 1
 
@@ -94,18 +94,18 @@ comms_state() {
 		fi
 	fi
 
-	json="$(timeout 2 basemind comms inbox --root "$cwd" --json --limit 1 2>/dev/null || true)"
+	json="$(timeout 2 hacienda-mcp comms inbox --root "$cwd" --json --limit 1 2>/dev/null || true)"
 	[[ -n "$json" ]] || return 1
 	unread="$(printf '%s' "$json" | jq -r '((.messages | length) + (.unread // 0))' 2>/dev/null | tr -cd '0-9' || true)"
 	[[ -n "$unread" ]] || unread=0
-	agent="${BASEMIND_AGENT_ID:-}"
+	agent="${HACIENDA_MCP_AGENT_ID:-}"
 	[[ -z "$agent" ]] && agent="$(tr -d '[:space:]' <"${bm_dir}/agent-id" 2>/dev/null || true)"
 	printf '%s %s %s\n' "$now" "$unread" "${agent:-}" >"$cache" 2>/dev/null || true
 	printf '%s %s' "$unread" "${agent:-}"
 }
 
 build_context_line() {
-	[[ "${BASEMIND_STATUSLINE_CONTEXT:-1}" == "0" ]] && return 1
+	[[ "${HACIENDA_MCP_STATUSLINE_CONTEXT:-1}" == "0" ]] && return 1
 	[[ -z "$model" && -z "$out_style" ]] && return 1
 
 	local dir branch="" head_file parts=()
@@ -136,10 +136,10 @@ build_context_line() {
 	printf '%s' "$line"
 }
 
-mark() { printf '%s%s%s %s%sbasemind%s' "$brand" "$glyph" "$reset" "$bold" "$brand" "$reset"; }
+mark() { printf '%s%s%s %s%shacienda-mcp%s' "$brand" "$glyph" "$reset" "$bold" "$brand" "$reset"; }
 
 bm_version() {
-	[[ "${BASEMIND_STATUSLINE_VERSION:-1}" == "0" ]] && return 0
+	[[ "${HACIENDA_MCP_STATUSLINE_VERSION:-1}" == "0" ]] && return 0
 	local dir ver="" parent
 	dir="$(cd "$(dirname "$0")" 2>/dev/null && pwd)" || return 0
 	if [[ $have_jq -eq 1 && -f "$dir/plugin.json" ]]; then
@@ -152,9 +152,9 @@ bm_version() {
 	[[ -n "$ver" ]] && printf 'v%s' "$ver"
 }
 
-build_basemind_line() {
+build_hacienda_mcp_line() {
 	if [[ ! -d "$bm_dir" ]]; then
-		printf '%s %s│%s %sno index — run:%s %s%sbasemind scan%s' \
+		printf '%s %s│%s %sno index — run:%s %s%shacienda-mcp scan%s' \
 			"$(mark)" "$sep" "$reset" "$label" "$reset" "$bold" "$cyan" "$reset"
 		return
 	fi
@@ -219,7 +219,7 @@ build_basemind_line() {
 	local now2 tel_age dot_color serve_running=0
 	now2="$(date +%s)"
 	tel_age=$((now2 - tel_mtime))
-	command -v pgrep >/dev/null 2>&1 && pgrep -f "basemind serve" >/dev/null 2>&1 && serve_running=1
+	command -v pgrep >/dev/null 2>&1 && pgrep -f "hacienda-mcp serve" >/dev/null 2>&1 && serve_running=1
 	if [[ "$tel_mtime" -gt 0 && "$tel_age" -lt 60 ]]; then
 		dot_color=$'\033[38;5;46m'
 	elif [[ $scan_delta -lt 3600 && "$calls" -eq 0 ]]; then
@@ -286,7 +286,7 @@ build_basemind_line() {
 		[[ -n "$disk_kb" ]] && res_add "${bold}${cyan}$(fmt_kb "$disk_kb")${reset} ${label}disk${reset}"
 		if [[ $serve_running -eq 1 ]] && command -v ps >/dev/null 2>&1; then
 			local serve_pid
-			serve_pid="$(pgrep -f "basemind serve" 2>/dev/null | head -1)"
+			serve_pid="$(pgrep -f "hacienda-mcp serve" 2>/dev/null | head -1)"
 			[[ -n "$serve_pid" ]] && rss_kb="$(ps -o rss= -p "$serve_pid" 2>/dev/null | tr -d ' ')"
 			[[ -n "$rss_kb" && "$rss_kb" -gt 0 ]] 2>/dev/null &&
 				res_add "${bold}${cyan}$(fmt_kb "$rss_kb")${reset} ${label}rss${reset}"
@@ -307,7 +307,7 @@ build_basemind_line() {
 }
 
 ctx="$(build_context_line || true)"
-bm="$(build_basemind_line)"
+bm="$(build_hacienda_mcp_line)"
 if [[ -n "$ctx" ]]; then
 	printf '%s\n%s' "$ctx" "$bm"
 else

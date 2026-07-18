@@ -1,0 +1,67 @@
+---
+title: PII Redaction
+description: In-process GLiNER2 + Candle (PEFT LoRA) redaction of PERSON / ORGANIZATION / LOCATION from indexed documents.
+---
+
+import { Aside, Badge } from '@astrojs/starlight/components';
+
+hacienda-mcp can redact **personally identifiable information** from the documents it indexes, using an
+**in-process GLiNER2 model backed by Candle** (a pure-Rust ML runtime — no Python, no external service)
+with an optional **PEFT LoRA adapter** for domain tuning. It runs as a pass over extracted document text,
+catching **PERSON / ORGANIZATION / LOCATION** mentions that xberg's pure-Rust pattern redaction engine
+cannot catch.
+
+<Badge text="--features pii" />
+
+## Requirements
+
+- PII redaction needs a build with `--features pii`. The `pii-candle` crate (a vendored GLiNER2 + Candle
+  implementation) is compiled in and run in-process.
+- A model must be present: set `[pii].model_dir` to a directory containing `tokenizer.json` and
+  `model.safetensors`. Without it the pass is **skipped gracefully** — the scan still completes, it just
+  doesn't redact.
+- Documents must be scanned first: `hacienda-mcp scan` with the `pii` feature runs the redaction pass and
+  stores the redacted text.
+
+## Configuration
+
+```toml
+# hacienda-mcp.toml
+[pii]
+enabled = true
+model_dir = "/path/to/gliner2-model"   # tokenizer.json + model.safetensors
+# lora_adapter_dir = "/path/to/adapter"  # optional PEFT LoRA adapter
+strategy = "mask"                       # mask | hash | token_replace | drop
+categories = ["person", "organization", "location"]
+threshold = 0.5
+```
+
+| Key | Type | Default | Notes |
+|---|---|---|---|
+| `enabled` | bool | `false` | Master switch for the pass. |
+| `model_dir` | path | unset | Required to actually redact. Unset → pass is skipped. |
+| `lora_adapter_dir` | path | unset | Optional PEFT LoRA adapter (`adapter_config.json` + `adapter_model.safetensors`). |
+| `strategy` | enum | `mask` | `mask` · `hash` · `token_replace` · `drop`. |
+| `categories` | list | all three | Subset of `person` / `organization` / `location`. |
+| `threshold` | f32 | `0.5` | Detection confidence cutoff (0.0–1.0). |
+
+## Strategies
+
+- **`mask`** — replace each span with `[REDACTED]`.
+- **`hash`** — replace each span with a stable hash of its text. Reversible only with the secret; preserves
+  uniqueness for grouping without leaking content.
+- **`token_replace`** — replace each span with a per-category token (`«PERSON»`, `«ORGANIZATION»`, `«LOCATION»`),
+  preserving structure while fully removing the original text.
+- **`drop`** — remove the span entirely (whitespace collapsed).
+
+## Privacy
+
+Everything runs **locally**. The model loads from `model_dir` on your own machine and inference happens in the
+same process that serves the index — nothing is sent to an external service. If the model is missing, the
+feature degrades to a no-op rather than failing the scan.
+
+## How it fits
+
+The PII pass is independent of the `[documents]` RAG pipeline and of xberg's own `[redaction]` block. It is a
+separate, model-driven layer that runs after text extraction and before the text is stored — so downstream
+tools (`search_documents`, etc.) only ever see the redacted form.

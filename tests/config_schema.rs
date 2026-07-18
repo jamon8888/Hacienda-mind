@@ -1,7 +1,7 @@
-use basemind::config::{self, ConfigError, ConfigLayers, ConfigSource, ConfigV1, DocumentsCliOverrides, merge_layers};
+use hacienda_mcp::config::{self, ConfigError, ConfigLayers, ConfigSource, ConfigV1, DocumentsCliOverrides, merge_layers};
 
 #[cfg(feature = "full")]
-const SCHEMA_PATH: &str = "schema/basemind-config-v1.schema.json";
+const SCHEMA_PATH: &str = "schema/hacienda-mcp-config-v1.schema.json";
 
 #[cfg(feature = "full")]
 fn generate_schema_text() -> String {
@@ -30,7 +30,7 @@ fn schema_snapshot_matches_derived() {
             eprintln!("{line}");
         }
         panic!(
-            "schema/basemind-config-v1.schema.json is out of sync with `schemars::schema_for!(ConfigV1)`. \
+            "schema/hacienda-mcp-config-v1.schema.json is out of sync with `schemars::schema_for!(ConfigV1)`. \
              Run `cargo test --test config_schema -- --ignored regenerate_schema` to update the snapshot."
         );
     }

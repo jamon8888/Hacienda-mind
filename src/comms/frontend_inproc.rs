@@ -1,6 +1,6 @@
 //! In-process front-end + link over tokio mpsc channels.
 //!
-//! Used for same-process embedding (a future `basemind serve` that hosts the broker inline)
+//! Used for same-process embedding (a future `hacienda-mcp serve` that hosts the broker inline)
 //! and for tests, which need an end-to-end client↔broker round-trip without a real socket.
 //! The link skips framing entirely and moves owned [`CommsRequest`] / [`CommsOut`] values.
 

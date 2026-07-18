@@ -32,7 +32,7 @@ pub struct CommsConfig {
     #[serde(default = "CommsConfig::default_enabled")]
     pub enabled: bool,
     /// Stable identity this process presents to the broker. When unset, the identity resolver
-    /// falls back to `BASEMIND_AGENT_ID`, then a generated-and-persisted per-session id, then
+    /// falls back to `HACIENDA_MCP_AGENT_ID`, then a generated-and-persisted per-session id, then
     /// `"anon"`. Validated through [`crate::comms::ids::AgentId`] at resolution time.
     #[serde(default)]
     pub agent_id: Option<String>,

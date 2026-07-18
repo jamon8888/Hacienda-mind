@@ -1,6 +1,6 @@
 ---
 title: CLI Reference
-description: Complete command list for the basemind command-line interface.
+description: Complete command list for the hacienda-mcp command-line interface.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
@@ -10,22 +10,22 @@ CLI commands mirror the MCP tools 1:1 (enforced by `tests/cli_parity.rs`). Add `
 ## Query Commands
 
 ```bash
-basemind query outline <path> [--l2]
-basemind query symbol <needle> [--kind]
-basemind query search <needle>
-basemind query references <name>
-basemind query callers <path> <name> [--kind]
-basemind query goto-definition <path> <line> [--column]
-basemind query implementations <trait>
-basemind query call-graph <name> [--direction --max-depth]
-basemind query grep <pattern> [--language --path-contains]
-basemind query list-files [--path-contains --language]
-basemind query status
-basemind query repo-info
-basemind query dependents <module>
-basemind query search-code <query> [--limit --format]
-basemind query get-chunk <path> [--chunk-id --byte-start]
-basemind query expand <path> <name> [--kind]
+hacienda-mcp query outline <path> [--l2]
+hacienda-mcp query symbol <needle> [--kind]
+hacienda-mcp query search <needle>
+hacienda-mcp query references <name>
+hacienda-mcp query callers <path> <name> [--kind]
+hacienda-mcp query goto-definition <path> <line> [--column]
+hacienda-mcp query implementations <trait>
+hacienda-mcp query call-graph <name> [--direction --max-depth]
+hacienda-mcp query grep <pattern> [--language --path-contains]
+hacienda-mcp query list-files [--path-contains --language]
+hacienda-mcp query status
+hacienda-mcp query repo-info
+hacienda-mcp query dependents <module>
+hacienda-mcp query search-code <query> [--limit --format]
+hacienda-mcp query get-chunk <path> [--chunk-id --byte-start]
+hacienda-mcp query expand <path> <name> [--kind]
 ```
 
 | Command | Purpose |
@@ -49,17 +49,17 @@ basemind query expand <path> <name> [--kind]
 ## Git Commands
 
 ```bash
-basemind git working-tree-status
-basemind git recent-changes [--limit]
-basemind git search <pattern> [--field author|message|all] [--limit]
-basemind git commits-touching <path>
-basemind git find-commits-by-path <pattern>
-basemind git hot-files [--limit]
-basemind git diff-file <path> <old> <new>
-basemind git diff-outline <path> [--rev]
-basemind git blame-file <path>
-basemind git blame-symbol <path> <name>
-basemind git symbol-history <path> <name>
+hacienda-mcp git working-tree-status
+hacienda-mcp git recent-changes [--limit]
+hacienda-mcp git search <pattern> [--field author|message|all] [--limit]
+hacienda-mcp git commits-touching <path>
+hacienda-mcp git find-commits-by-path <pattern>
+hacienda-mcp git hot-files [--limit]
+hacienda-mcp git diff-file <path> <old> <new>
+hacienda-mcp git diff-outline <path> [--rev]
+hacienda-mcp git blame-file <path>
+hacienda-mcp git blame-symbol <path> <name>
+hacienda-mcp git symbol-history <path> <name>
 ```
 
 | Command | Purpose |
@@ -79,12 +79,12 @@ basemind git symbol-history <path> <name>
 ## Memory Commands
 
 ```bash
-basemind memory put <key> <value>
-basemind memory get <key>
-basemind memory delete <key>
-basemind memory list [--prefix]
-basemind memory search <query>
-basemind memory search-documents <query>
+hacienda-mcp memory put <key> <value>
+hacienda-mcp memory get <key>
+hacienda-mcp memory delete <key>
+hacienda-mcp memory list [--prefix]
+hacienda-mcp memory search <query>
+hacienda-mcp memory search-documents <query>
 ```
 
 | Command | Purpose |
@@ -99,11 +99,11 @@ basemind memory search-documents <query>
 ## Suggestions Commands
 
 ```bash
-basemind governance mine [--commits --min-count --min-confidence --max-files-per-commit]
-basemind governance proposals [--kind --limit]
-basemind governance accept <id> [--key]
-basemind governance reject <id> [--reason]
-basemind governance audit [--key --individual --dry-run --include-archived]
+hacienda-mcp governance mine [--commits --min-count --min-confidence --max-files-per-commit]
+hacienda-mcp governance proposals [--kind --limit]
+hacienda-mcp governance accept <id> [--key]
+hacienda-mcp governance reject <id> [--reason]
+hacienda-mcp governance audit [--key --individual --dry-run --include-archived]
 ```
 
 | Command | Purpose |
@@ -117,9 +117,9 @@ basemind governance audit [--key --individual --dry-run --include-archived]
 ## Cache Commands
 
 ```bash
-basemind cache stats
-basemind cache gc
-basemind cache clear --component <comp>
+hacienda-mcp cache stats
+hacienda-mcp cache gc
+hacienda-mcp cache clear --component <comp>
 ```
 
 | Command | Purpose |
@@ -131,9 +131,9 @@ basemind cache clear --component <comp>
 ## Web Commands
 
 ```bash
-basemind web scrape <url>
-basemind web crawl <seed-url>
-basemind web map <url>
+hacienda-mcp web scrape <url>
+hacienda-mcp web crawl <seed-url>
+hacienda-mcp web map <url>
 ```
 
 | Command | Purpose |
@@ -145,19 +145,19 @@ basemind web map <url>
 ## Comms Commands
 
 ```bash
-basemind comms rooms
-basemind comms join <room>
-basemind comms leave <room>
-basemind comms room-create <room>
-basemind comms post <room> <subject> [--body --reply-to --tag]
-basemind comms history <room>
-basemind comms inbox [--mark-read]
-basemind comms read <id>
-basemind comms register --name <handle>
-basemind comms agents
-basemind comms status
-basemind comms start
-basemind comms stop
+hacienda-mcp comms rooms
+hacienda-mcp comms join <room>
+hacienda-mcp comms leave <room>
+hacienda-mcp comms room-create <room>
+hacienda-mcp comms post <room> <subject> [--body --reply-to --tag]
+hacienda-mcp comms history <room>
+hacienda-mcp comms inbox [--mark-read]
+hacienda-mcp comms read <id>
+hacienda-mcp comms register --name <handle>
+hacienda-mcp comms agents
+hacienda-mcp comms status
+hacienda-mcp comms start
+hacienda-mcp comms stop
 ```
 
 | Command | Purpose |
@@ -179,12 +179,12 @@ basemind comms stop
 Requires `--features shells`.
 
 ```bash
-basemind shells spawn <command> [--cwd --env --title]
-basemind shells send <session-id> <text> [--no-enter]
-basemind shells capture <session-id> [--lines]
-basemind shells kill <session-id>
-basemind shells list
-basemind shells broadcast <text> --session <id>…
+hacienda-mcp shells spawn <command> [--cwd --env --title]
+hacienda-mcp shells send <session-id> <text> [--no-enter]
+hacienda-mcp shells capture <session-id> [--lines]
+hacienda-mcp shells kill <session-id>
+hacienda-mcp shells list
+hacienda-mcp shells broadcast <text> --session <id>…
 ```
 
 | Command | Purpose |
@@ -199,18 +199,18 @@ basemind shells broadcast <text> --session <id>…
 ## Core Commands
 
 ```bash
-basemind scan
-basemind rescan <path>
-basemind watch
-basemind serve [--no-watch]
-basemind init
-basemind lang <list|install|clean>
-basemind hook install
-basemind compress-output
-basemind delta --old <path>
-basemind checkpoint
-basemind detect-waste
-basemind telemetry
+hacienda-mcp scan
+hacienda-mcp rescan <path>
+hacienda-mcp watch
+hacienda-mcp serve [--no-watch]
+hacienda-mcp init
+hacienda-mcp lang <list|install|clean>
+hacienda-mcp hook install
+hacienda-mcp compress-output
+hacienda-mcp delta --old <path>
+hacienda-mcp checkpoint
+hacienda-mcp detect-waste
+hacienda-mcp telemetry
 ```
 
 | Command | Purpose |

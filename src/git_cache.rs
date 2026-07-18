@@ -9,9 +9,9 @@
 //! Two layers:
 //! - **RAM** — `lru::LruCache` per category, behind a `Mutex`. Bounded by
 //!   capacity from `ServeArgs`.
-//! - **Disk** — sha-keyed `.msgpack` files under `.basemind/git-cache/`. Optional;
+//! - **Disk** — sha-keyed `.msgpack` files under `.hacienda-mcp/git-cache/`. Optional;
 //!   `GitCache::open(.., persist=false)` skips disk altogether for ephemeral
-//!   `basemind cache` operations.
+//!   `hacienda-mcp cache` operations.
 //!
 //! Both layers are content-addressed by the inputs the agent passed; we never
 //! invalidate, only roll off via LRU. The schema version is baked into every
@@ -118,11 +118,11 @@ pub struct GitCache {
 }
 
 impl GitCache {
-    /// Open the cache. When `persist=true`, the disk dir is created under `basemind_dir`;
+    /// Open the cache. When `persist=true`, the disk dir is created under `hacienda_mcp_dir`;
     /// when `false`, only the RAM layer is used.
-    pub fn open(basemind_dir: &Path, mem_capacity: usize, persist: bool) -> Result<Self, CacheError> {
+    pub fn open(hacienda_mcp_dir: &Path, mem_capacity: usize, persist: bool) -> Result<Self, CacheError> {
         let disk = if persist {
-            let root = basemind_dir.join(GIT_CACHE_DIR);
+            let root = hacienda_mcp_dir.join(GIT_CACHE_DIR);
             ensure_subdir(&root, "commit_files")?;
             ensure_subdir(&root, "log")?;
             ensure_subdir(&root, "blame")?;
@@ -397,11 +397,11 @@ fn count_files(dir: &Path) -> usize {
 }
 
 /// Default disk budget for the HEAD-keyed log subdirectory (256 MiB). Tuneable via
-/// `BASEMIND_GIT_CACHE_LOG_MAX_BYTES`; setting it to 0 disables eviction.
+/// `HACIENDA_MCP_GIT_CACHE_LOG_MAX_BYTES`; setting it to 0 disables eviction.
 const LOG_CACHE_DEFAULT_MAX_BYTES: u64 = 256 * 1024 * 1024;
 
 fn log_cache_max_bytes_from_env() -> u64 {
-    std::env::var("BASEMIND_GIT_CACHE_LOG_MAX_BYTES")
+    std::env::var("HACIENDA_MCP_GIT_CACHE_LOG_MAX_BYTES")
         .ok()
         .and_then(|s| s.parse::<u64>().ok())
         .unwrap_or(LOG_CACHE_DEFAULT_MAX_BYTES)

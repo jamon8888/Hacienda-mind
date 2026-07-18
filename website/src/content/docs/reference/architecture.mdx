@@ -1,27 +1,27 @@
 ---
 title: Architecture
-description: How basemind is built — from scanning to serving to indexing.
+description: How hacienda-mcp is built — from scanning to serving to indexing.
 ---
 
 import { Aside, FileTree } from '@astrojs/starlight/components';
 
-basemind is a single Rust crate with one binary (`basemind`) serving three roles: **`basemind scan`** indexes a workspace, **`basemind serve`** runs the MCP stdio server, and the **daemon** (`basemind comms daemon`, auto-spawned; singleton per user) is the sole writer managing the global cache.
+hacienda-mcp is a single Rust crate with one binary (`hacienda-mcp`) serving three roles: **`hacienda-mcp scan`** indexes a workspace, **`hacienda-mcp serve`** runs the MCP stdio server, and the **daemon** (`hacienda-mcp comms daemon`, auto-spawned; singleton per user) is the sole writer managing the global cache.
 
 ## High-Level Pipeline
 
 ```
 Your project (code + documents + git history)
   ↓
-basemind scan (or incremental watch)
+hacienda-mcp scan (or incremental watch)
   ├─ Tree-sitter parser pool (300+ languages)
   ├─ Extract L1 (outlines: symbols, signatures, imports)
   ├─ Extract L2 (calls: callee, byte offset, line/col) [if eager_l2=true]
   ├─ Extract L3 (structural hash of symbol bodies)
-  └─ Forward writes to basemind daemon (IPC over UDS)
+  └─ Forward writes to hacienda-mcp daemon (IPC over UDS)
       ├─ Daemon writes content-addressed msgpack blobs
       └─ Daemon writes Fjall LSM index (sole Fjall writer per machine)
   ↓
-basemind serve (MCP stdio)
+hacienda-mcp serve (MCP stdio)
   ├─ Load index + blobs from global cache
   ├─ Read index concurrently (N sessions per repo, all read-only to Fjall)
   ├─ Forward writes back to daemon
@@ -31,11 +31,11 @@ basemind serve (MCP stdio)
 
 ## Storage: Global Cache
 
-basemind persists project state in a machine-global cache under `~/.local/share/basemind/` (or `$BASEMIND_DATA_HOME`), keyed by workspace root. All repos/worktrees on one machine share a single content-addressed blob store and a daemon-managed Fjall writer.
+hacienda-mcp persists project state in a machine-global cache under `~/.local/share/hacienda-mcp/` (or `$HACIENDA_MCP_DATA_HOME`), keyed by workspace root. All repos/worktrees on one machine share a single content-addressed blob store and a daemon-managed Fjall writer.
 
 ### Content-Addressed Msgpack Blobs
 
-Location: `~/.local/share/basemind/blobs/<hash>.{l1,l2,l3}.msgpack`
+Location: `~/.local/share/hacienda-mcp/blobs/<hash>.{l1,l2,l3}.msgpack`
 
 Each extraction tier is a separate msgpack blob, keyed by content hash. This enables deduplication across files with identical bodies.
 
@@ -47,10 +47,10 @@ Blobs are immutable and content-addressed, so they can be safely shared across m
 
 ### Fjall LSM Inverted Index
 
-Location: `~/.local/share/basemind/views/<workspace_hash>/<view>/index.fjall/`
+Location: `~/.local/share/hacienda-mcp/views/<workspace_hash>/<view>/index.fjall/`
 
 A disk-backed, append-only LSM tree (Fjall) provides lightning-fast lookups. The daemon is the sole
-writer; all `basemind serve` sessions read concurrently from the same index via a read-only handle:
+writer; all `hacienda-mcp serve` sessions read concurrently from the same index via a read-only handle:
 
 | Keyspace | Purpose |
 |---|---|
@@ -68,17 +68,17 @@ writer; all `basemind serve` sessions read concurrently from the same index via 
 
 All composite keys are **length-prefixed** (`u16:len ‖ bytes`), ensuring a prefix like `Foo` never spills into `Foobar`.
 
-Schema version is stamped in `meta`. On version mismatch, the next `basemind scan` auto-wipes and rebuilds.
+Schema version is stamped in `meta`. On version mismatch, the next `hacienda-mcp scan` auto-wipes and rebuilds.
 
 ### LanceDB Vector Store
 
-Location: `~/.local/share/basemind/lancedb/`
+Location: `~/.local/share/hacienda-mcp/lancedb/`
 
 Powers semantic search (code search, document search, memory search). Vectors are indexed for fast KNN queries; on-disk format is LanceDB's columnar structure. Writes go through the daemon.
 
 ## Scan Pipeline
 
-`basemind scan` and `basemind watch` (incremental) share the same per-file pipeline:
+`hacienda-mcp scan` and `hacienda-mcp watch` (incremental) share the same per-file pipeline:
 
 ```
 Walker (gitignore-aware) → filter by glob + size cap
@@ -146,7 +146,7 @@ When `[documents] enabled = true`, `scanner_docs.rs` runs a separate pass:
 
 ## Language Support
 
-basemind uses the **tree-sitter language pack** (TSLP) to detect and parse 300+ languages. Language detection is dynamic:
+hacienda-mcp uses the **tree-sitter language pack** (TSLP) to detect and parse 300+ languages. Language detection is dynamic:
 
 ```
 File extension → tree_sitter_language_pack::detect_language
@@ -164,15 +164,15 @@ All languages with a `tags.scm` query in TSLP (~100) work out of the box. For ri
 
 ## Git Layer
 
-`basemind git` commands are powered by `gix` (a pure-Rust Git implementation) with a **git-history index** for microsecond latency:
+`hacienda-mcp git` commands are powered by `gix` (a pure-Rust Git implementation) with a **git-history index** for microsecond latency:
 
 ### Git-History Index
 
-Location: `~/.local/share/basemind/git-cache/<workspace_hash>/`
+Location: `~/.local/share/hacienda-mcp/git-cache/<workspace_hash>/`
 
 Two-tier caching:
 
-- **In-process LRU** (1024 entries per category by default; tune via `basemind serve --git-cache-mem`)
+- **In-process LRU** (1024 entries per category by default; tune via `hacienda-mcp serve --git-cache-mem`)
 - **Disk store** (SHA-keyed):
   - `commit_files/<sha>.msgpack` — file list for a commit (immutable, never stales)
   - `log/<head_sha>__<scope>.msgpack` — commit log (keyed by HEAD, rolls off naturally)
@@ -193,16 +193,16 @@ Two persistent schemas, both tracking `RELEASE_MINOR` from `src/version.rs`:
 
 **Patch release** (`0.1.0` → `0.1.1`): `RELEASE_MINOR` unchanged. Blobs + index must stay compatible — no format changes.
 
-**Minor release** (`0.1.x` → `0.2.0`): `RELEASE_MINOR` increments. On next `basemind scan`, `.basemind/` is auto-wiped and rebuilt from source. Users are notified in release notes.
+**Minor release** (`0.1.x` → `0.2.0`): `RELEASE_MINOR` increments. On next `hacienda-mcp scan`, `.hacienda-mcp/` is auto-wiped and rebuilt from source. Users are notified in release notes.
 
-**Wipe-on-mismatch** is the explicit migration story. No manual steps — `basemind scan` handles it.
+**Wipe-on-mismatch** is the explicit migration story. No manual steps — `hacienda-mcp scan` handles it.
 
 ## Directory Layout
 
-Global cache at `~/.local/share/basemind/` (or `$BASEMIND_DATA_HOME`):
+Global cache at `~/.local/share/hacienda-mcp/` (or `$HACIENDA_MCP_DATA_HOME`):
 
 ```
-~/.local/share/basemind/
+~/.local/share/hacienda-mcp/
 ├── blobs/
 │   ├── abc123….l1.msgpack  # Outline: symbols, signatures, imports
 │   ├── abc123….l2.msgpack  # Calls (if eager_l2=true)
@@ -222,14 +222,14 @@ Global cache at `~/.local/share/basemind/` (or `$BASEMIND_DATA_HOME`):
 └── agent-registry/             # Daemon-managed room/thread registry
 
 Per-repo configuration (repo-local):
-repo/.basemind/basemind.toml    # Configuration
+repo/.hacienda-mcp/basemind.toml    # Configuration
 ```
 
-The daemon manages the global cache; individual repos share no per-repo `.basemind/` directory.
+The daemon manages the global cache; individual repos share no per-repo `.hacienda-mcp/` directory.
 
 ## MCP Surface
 
-`basemind serve` exposes a stdio MCP server. All paths are byte-precise repo-relative (`RelPath`).
+`hacienda-mcp serve` exposes a stdio MCP server. All paths are byte-precise repo-relative (`RelPath`).
 
 Tool conventions:
 

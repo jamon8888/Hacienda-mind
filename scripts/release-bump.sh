@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Atomically bump the basemind version across every shipped surface.
+# Atomically bump the hacienda-mcp version across every shipped surface.
 # Usage: ./scripts/release-bump.sh <version>
 #   Cargo.toml                            [package] version
 #   npm-package/package.json              "version"
@@ -130,8 +130,8 @@ if [ -f .hermes/package/pyproject.toml ]; then
 	fi
 fi
 
-if [ -f .hermes/package/src/basemind_hermes_plugin/plugin.yaml ]; then
-	hermes_plugin_version="$(grep -E '^version: ' .hermes/package/src/basemind_hermes_plugin/plugin.yaml | head -1 | sed -E 's/^version: "?([^"]+)"?/\1/')"
+if [ -f .hermes/package/src/hacienda_mcp_hermes_plugin/plugin.yaml ]; then
+	hermes_plugin_version="$(grep -E '^version: ' .hermes/package/src/hacienda_mcp_hermes_plugin/plugin.yaml | head -1 | sed -E 's/^version: "?([^"]+)"?/\1/')"
 	if [ "$hermes_plugin_version" != "$VERSION" ]; then
 		echo "✗ Hermes plugin.yaml: expected $VERSION, got $hermes_plugin_version"
 		validation_failed=1

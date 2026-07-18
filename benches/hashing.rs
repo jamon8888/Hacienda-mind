@@ -1,11 +1,11 @@
 //! Content-hashing microbenchmark.
 //!
-//! `basemind::hashing::hash_bytes` (blake3) runs once per file on the scanner hot
+//! `hacienda_mcp::hashing::hash_bytes` (blake3) runs once per file on the scanner hot
 //! path, so its throughput gates the I/O-bound portion of a scan. Bench across a
 //! few buffer sizes representative of real source files (1 KiB → 256 KiB) plus the
 //! zero-alloc hex round-trip used to key the content-addressed blob store.
 
-use basemind::hashing::{from_hex, hash_bytes, hex_buf, hex_str};
+use hacienda_mcp::hashing::{from_hex, hash_bytes, hex_buf, hex_str};
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
 
@@ -23,7 +23,7 @@ fn bench_hash(c: &mut Criterion) {
     }
     group.finish();
 
-    let hash = hash_bytes(b"basemind blob key sample");
+    let hash = hash_bytes(b"hacienda-mcp blob key sample");
     c.bench_function("hashing/hex_roundtrip", |b| {
         b.iter(|| {
             let buf = hex_buf(black_box(&hash));

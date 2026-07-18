@@ -3,7 +3,7 @@
 ;;   Source: languages/tree-sitter-stack-graphs-python/src/stack-graphs.tsg
 ;;   Upstream commit: fcb7705d5b38ae13b3665a9b2c882e5a97243d44
 ;;   License: MIT OR Apache-2.0 (see LICENSE-MIT / LICENSE-APACHE in the upstream repo).
-;;   Written against tree-sitter-python =0.23.5; basemind parses via tree-sitter-language-pack
+;;   Written against tree-sitter-python =0.23.5; hacienda-mcp parses via tree-sitter-language-pack
 ;;   1.12.5 (tree-sitter-python rev 26855eab). See src/intel/tsg drift notes.
 ;; Copied verbatim below; the upstream copyright header is preserved.
 ;; ================================================================================================

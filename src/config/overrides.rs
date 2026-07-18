@@ -5,7 +5,7 @@
 //! reset to default".
 //!
 //! clap flags follow `--documents-<section>-<field>`; env vars follow
-//! `BASEMIND_DOCUMENTS_<SECTION>_<FIELD>`. The naming scheme is mechanical
+//! `HACIENDA_MCP_DOCUMENTS_<SECTION>_<FIELD>`. The naming scheme is mechanical
 //! so a new field added here lights up in all four surfaces (TOML / CLI /
 //! MCP / env) without any further wiring.
 
@@ -20,130 +20,130 @@ use serde::{Deserialize, Serialize};
 #[serde(default, deny_unknown_fields)]
 pub struct DocumentsCliOverrides {
     /// Override `documents.enabled` (master switch).
-    #[arg(long = "documents-enabled", env = "BASEMIND_DOCUMENTS_ENABLED")]
+    #[arg(long = "documents-enabled", env = "HACIENDA_MCP_DOCUMENTS_ENABLED")]
     pub enabled: Option<bool>,
 
     /// Override `documents.max_characters` (chunk size).
-    #[arg(long = "documents-max-characters", env = "BASEMIND_DOCUMENTS_MAX_CHARACTERS")]
+    #[arg(long = "documents-max-characters", env = "HACIENDA_MCP_DOCUMENTS_MAX_CHARACTERS")]
     pub max_characters: Option<usize>,
 
     /// Override `documents.overlap` (chunk overlap).
-    #[arg(long = "documents-overlap", env = "BASEMIND_DOCUMENTS_OVERLAP")]
+    #[arg(long = "documents-overlap", env = "HACIENDA_MCP_DOCUMENTS_OVERLAP")]
     pub overlap: Option<usize>,
 
     /// Override `documents.embedding_preset`.
-    #[arg(long = "documents-embedding-preset", env = "BASEMIND_DOCUMENTS_EMBEDDING_PRESET")]
+    #[arg(long = "documents-embedding-preset", env = "HACIENDA_MCP_DOCUMENTS_EMBEDDING_PRESET")]
     pub embedding_preset: Option<String>,
 
     /// Override `documents.embed` (write embeddings to LanceDB).
-    #[arg(long = "documents-embed", env = "BASEMIND_DOCUMENTS_EMBED")]
+    #[arg(long = "documents-embed", env = "HACIENDA_MCP_DOCUMENTS_EMBED")]
     pub embed: Option<bool>,
 
     /// Override `documents.language.auto_detect`.
     #[arg(
         long = "documents-language-auto-detect",
-        env = "BASEMIND_DOCUMENTS_LANGUAGE_AUTO_DETECT"
+        env = "HACIENDA_MCP_DOCUMENTS_LANGUAGE_AUTO_DETECT"
     )]
     pub language_auto_detect: Option<bool>,
 
     /// Override `documents.language.min_confidence` (0.0–1.0).
     #[arg(
         long = "documents-language-min-confidence",
-        env = "BASEMIND_DOCUMENTS_LANGUAGE_MIN_CONFIDENCE"
+        env = "HACIENDA_MCP_DOCUMENTS_LANGUAGE_MIN_CONFIDENCE"
     )]
     pub language_min_confidence: Option<f64>,
 
     /// Override `documents.language.detect_multiple`.
     #[arg(
         long = "documents-language-detect-multiple",
-        env = "BASEMIND_DOCUMENTS_LANGUAGE_DETECT_MULTIPLE"
+        env = "HACIENDA_MCP_DOCUMENTS_LANGUAGE_DETECT_MULTIPLE"
     )]
     pub language_detect_multiple: Option<bool>,
 
     /// Override `documents.reranker.enabled`.
-    #[arg(long = "documents-reranker-enabled", env = "BASEMIND_DOCUMENTS_RERANKER_ENABLED")]
+    #[arg(long = "documents-reranker-enabled", env = "HACIENDA_MCP_DOCUMENTS_RERANKER_ENABLED")]
     pub reranker_enabled: Option<bool>,
 
     /// Override `documents.reranker.preset`.
-    #[arg(long = "documents-reranker-preset", env = "BASEMIND_DOCUMENTS_RERANKER_PRESET")]
+    #[arg(long = "documents-reranker-preset", env = "HACIENDA_MCP_DOCUMENTS_RERANKER_PRESET")]
     pub reranker_preset: Option<String>,
 
     /// Override `documents.reranker.top_k`.
-    #[arg(long = "documents-reranker-top-k", env = "BASEMIND_DOCUMENTS_RERANKER_TOP_K")]
+    #[arg(long = "documents-reranker-top-k", env = "HACIENDA_MCP_DOCUMENTS_RERANKER_TOP_K")]
     pub reranker_top_k: Option<usize>,
 
     /// Override `documents.keywords.enabled`.
-    #[arg(long = "documents-keywords-enabled", env = "BASEMIND_DOCUMENTS_KEYWORDS_ENABLED")]
+    #[arg(long = "documents-keywords-enabled", env = "HACIENDA_MCP_DOCUMENTS_KEYWORDS_ENABLED")]
     pub keywords_enabled: Option<bool>,
 
     /// Override `documents.keywords.max_keywords` (maximum keywords per document).
     #[arg(
         long = "documents-keywords-max-keywords",
-        env = "BASEMIND_DOCUMENTS_KEYWORDS_MAX_KEYWORDS"
+        env = "HACIENDA_MCP_DOCUMENTS_KEYWORDS_MAX_KEYWORDS"
     )]
     pub keywords_max_keywords: Option<usize>,
 
     /// Override `documents.keywords.min_score`.
-    #[arg(long = "documents-keywords-min-score", env = "BASEMIND_DOCUMENTS_KEYWORDS_MIN_SCORE")]
+    #[arg(long = "documents-keywords-min-score", env = "HACIENDA_MCP_DOCUMENTS_KEYWORDS_MIN_SCORE")]
     pub keywords_min_score: Option<f32>,
 
     /// Override `documents.ner.enabled`.
-    #[arg(long = "documents-ner-enabled", env = "BASEMIND_DOCUMENTS_NER_ENABLED")]
+    #[arg(long = "documents-ner-enabled", env = "HACIENDA_MCP_DOCUMENTS_NER_ENABLED")]
     pub ner_enabled: Option<bool>,
 
     /// Override `documents.summarization.enabled`.
     #[arg(
         long = "documents-summarization-enabled",
-        env = "BASEMIND_DOCUMENTS_SUMMARIZATION_ENABLED"
+        env = "HACIENDA_MCP_DOCUMENTS_SUMMARIZATION_ENABLED"
     )]
     pub summarization_enabled: Option<bool>,
 
     /// Override `documents.summarization.strategy` (`extractive` / `abstractive`).
     #[arg(
         long = "documents-summarization-strategy",
-        env = "BASEMIND_DOCUMENTS_SUMMARIZATION_STRATEGY"
+        env = "HACIENDA_MCP_DOCUMENTS_SUMMARIZATION_STRATEGY"
     )]
     pub summarization_strategy: Option<String>,
 
     /// Override `documents.summarization.max_tokens`.
     #[arg(
         long = "documents-summarization-max-tokens",
-        env = "BASEMIND_DOCUMENTS_SUMMARIZATION_MAX_TOKENS"
+        env = "HACIENDA_MCP_DOCUMENTS_SUMMARIZATION_MAX_TOKENS"
     )]
     pub summarization_max_tokens: Option<u32>,
 
     /// Override `documents.output.format` (json / toon).
-    #[arg(long = "documents-output-format", env = "BASEMIND_DOCUMENTS_OUTPUT_FORMAT")]
+    #[arg(long = "documents-output-format", env = "HACIENDA_MCP_DOCUMENTS_OUTPUT_FORMAT")]
     pub output_format: Option<String>,
 
     /// Override `llm.model` (liter-llm routing format, e.g. `openai/gpt-4o`).
-    #[arg(long = "llm-model", env = "BASEMIND_LLM_MODEL")]
+    #[arg(long = "llm-model", env = "HACIENDA_MCP_LLM_MODEL")]
     pub llm_model: Option<String>,
 
     /// Override `llm.api_key` (literal). Use a shell expansion against an env var
     /// (`--llm-api-key "$OPENAI_API_KEY"`) rather than a hard-coded literal.
     /// `hide_env_values = true` keeps the resolved value out of `--help` output.
-    #[arg(long = "llm-api-key", env = "BASEMIND_LLM_API_KEY", hide_env_values = true)]
+    #[arg(long = "llm-api-key", env = "HACIENDA_MCP_LLM_API_KEY", hide_env_values = true)]
     pub llm_api_key: Option<String>,
 
     /// Override `llm.base_url` (for self-hosted vLLM, Azure OpenAI, …).
-    #[arg(long = "llm-base-url", env = "BASEMIND_LLM_BASE_URL")]
+    #[arg(long = "llm-base-url", env = "HACIENDA_MCP_LLM_BASE_URL")]
     pub llm_base_url: Option<String>,
 
     /// Override `llm.temperature` (sampling temperature, provider-default when unset).
-    #[arg(long = "llm-temperature", env = "BASEMIND_LLM_TEMPERATURE")]
+    #[arg(long = "llm-temperature", env = "HACIENDA_MCP_LLM_TEMPERATURE")]
     pub llm_temperature: Option<f64>,
 
     /// Override `llm.timeout_secs` (per-request timeout in seconds).
-    #[arg(long = "llm-timeout-secs", env = "BASEMIND_LLM_TIMEOUT_SECS")]
+    #[arg(long = "llm-timeout-secs", env = "HACIENDA_MCP_LLM_TIMEOUT_SECS")]
     pub llm_timeout_secs: Option<u64>,
 
     /// Override `llm.max_retries` (retry budget on transient failures).
-    #[arg(long = "llm-max-retries", env = "BASEMIND_LLM_MAX_RETRIES")]
+    #[arg(long = "llm-max-retries", env = "HACIENDA_MCP_LLM_MAX_RETRIES")]
     pub llm_max_retries: Option<u32>,
 
     /// Override `llm.max_tokens` (maximum tokens to generate).
-    #[arg(long = "llm-max-tokens", env = "BASEMIND_LLM_MAX_TOKENS")]
+    #[arg(long = "llm-max-tokens", env = "HACIENDA_MCP_LLM_MAX_TOKENS")]
     pub llm_max_tokens: Option<u64>,
 }
 

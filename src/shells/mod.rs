@@ -1,10 +1,10 @@
 //! Embedded rmux-backed headless agent shells.
 //!
 //! This feature lets an agent spawn a real headless shell session, drive its
-//! stdin, capture its output, and kill it — all over the rmux SDK, with basemind
+//! stdin, capture its output, and kill it — all over the rmux SDK, with hacienda-mcp
 //! itself acting as the embedded rmux daemon (see [`daemon`]). No external `rmux`
 //! binary is required: [`ShellRuntime`] points the SDK's daemon-binary discovery
-//! at `current_exe()`, so `connect_or_start` re-execs basemind with the hidden
+//! at `current_exe()`, so `connect_or_start` re-execs hacienda-mcp with the hidden
 //! `--__internal-daemon` flag, which `main` intercepts and routes to
 //! [`daemon::run_internal_daemon`].
 //!
@@ -40,7 +40,7 @@ use tokio::sync::{Mutex, OnceCell};
 
 use self::session::{ShellCommand, SpawnSpec};
 
-/// Stable, opaque identifier minted by basemind for one spawned shell session.
+/// Stable, opaque identifier minted by hacienda-mcp for one spawned shell session.
 ///
 /// Deterministic by construction: a monotonic per-process counter combined with
 /// the process id, formatted as `bmsh-<pid>-<counter>`. No randomness and no
@@ -102,9 +102,9 @@ fn next_session_id() -> SessionId {
 /// Lazily connects to (or starts) the embedded rmux daemon on first use and
 /// caches the [`Rmux`] handle. Holds the basemind-owned `session_id ->
 /// SessionName` map so MCP tools address sessions by the stable [`SessionId`]
-/// basemind minted rather than the raw rmux name.
+/// hacienda-mcp minted rather than the raw rmux name.
 pub struct ShellRuntime {
-    /// Unix socket the embedded daemon binds. Owned by basemind; defaults to a
+    /// Unix socket the embedded daemon binds. Owned by hacienda-mcp; defaults to a
     /// per-user private path under the data dir, overridable for test isolation.
     socket_path: PathBuf,
     /// Lazily-initialized rmux handle. The first call to [`Self::rmux`] runs
@@ -119,7 +119,7 @@ pub struct ShellRuntime {
 /// non-empty value, [`ShellRuntime::new`] binds the daemon there instead of the
 /// default per-user temp path. Used by integration tests to sandbox each `serve`
 /// instance on its own socket; not part of the documented public config.
-pub const SHELLS_SOCKET_ENV: &str = "BASEMIND_SHELLS_SOCKET";
+pub const SHELLS_SOCKET_ENV: &str = "HACIENDA_MCP_SHELLS_SOCKET";
 
 impl ShellRuntime {
     /// Construct a runtime that binds the embedded daemon at the default
@@ -136,7 +136,7 @@ impl ShellRuntime {
                     tracing::warn!(
                         error = %error,
                         path = %path.display(),
-                        "BASEMIND_SHELLS_SOCKET rejected; falling back to the default socket path"
+                        "HACIENDA_MCP_SHELLS_SOCKET rejected; falling back to the default socket path"
                     );
                     false
                 }
@@ -159,7 +159,7 @@ impl ShellRuntime {
     /// Borrow the Unix socket path this runtime's embedded daemon binds.
     ///
     /// Exposed so the MCP spawn path can build the visual attach command (which
-    /// re-execs basemind with `--socket <this path>`) against the same socket the
+    /// re-execs hacienda-mcp with `--socket <this path>`) against the same socket the
     /// daemon is bound to.
     #[must_use]
     pub fn socket_path(&self) -> &std::path::Path {
@@ -169,9 +169,9 @@ impl ShellRuntime {
     /// Resolve the rmux handle, connecting to (or starting) the embedded daemon
     /// on first call and caching it thereafter.
     ///
-    /// The SDK's daemon binary is pointed at basemind's own executable once at
+    /// The SDK's daemon binary is pointed at hacienda-mcp's own executable once at
     /// startup (`daemon::intercept_from_env`, single-threaded), so
-    /// `connect_or_start` re-execs basemind (not a missing `rmux`) as the daemon.
+    /// `connect_or_start` re-execs hacienda-mcp (not a missing `rmux`) as the daemon.
     /// The endpoint is the explicit basemind-owned socket, which bypasses the
     /// SDK's `Default`-endpoint allowlist.
     pub async fn rmux(&self) -> Result<&Rmux> {
@@ -378,7 +378,7 @@ fn default_socket_path() -> PathBuf {
 /// a named pipe with no parent dir.
 #[cfg(not(windows))]
 fn project_dirs_socket_path() -> Option<PathBuf> {
-    let dirs = directories::ProjectDirs::from("", "", "basemind")?;
+    let dirs = directories::ProjectDirs::from("", "", "hacienda-mcp")?;
     let shells_dir = dirs.data_dir().join(SHELLS_SUBDIR);
     if std::fs::create_dir_all(&shells_dir).is_err() {
         return None;

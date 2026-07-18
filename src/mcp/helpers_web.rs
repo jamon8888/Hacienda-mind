@@ -56,7 +56,7 @@ fn reject_redirected_private_url(context: &str, fetched_url: &str) -> Result<(),
         Err(crate::url::UrlError::PrivateHost(host)) => Err(McpError::invalid_params(
             format!(
                 "{context}: refusing to index private/loopback host reached via redirect: {host} \
-                 (set BASEMIND_ALLOW_PRIVATE_HOSTS=1 to allow)"
+                 (set HACIENDA_MCP_ALLOW_PRIVATE_HOSTS=1 to allow)"
             ),
             None,
         )),
@@ -135,7 +135,7 @@ async fn embedder(state: &ServerState) -> Result<Arc<SharedEmbedder>, McpError> 
 
 fn engine(state: &ServerState) -> Result<&crawlberg::CrawlEngineHandle, McpError> {
     state.crawl_engine.as_ref().ok_or_else(|| {
-        McpError::internal_error("crawl engine not initialised; check basemind serve startup logs", None)
+        McpError::internal_error("crawl engine not initialised; check hacienda-mcp serve startup logs", None)
     })
 }
 
@@ -404,7 +404,7 @@ mod tests {
     #[test]
     fn rejects_private_redirect_target() {
         let _g = env_lock();
-        unsafe { std::env::remove_var("BASEMIND_ALLOW_PRIVATE_HOSTS") };
+        unsafe { std::env::remove_var("HACIENDA_MCP_ALLOW_PRIVATE_HOSTS") };
         let err = reject_redirected_private_url("web_scrape", "http://169.254.169.254/latest/meta-data/")
             .expect_err("link-local redirect target must be rejected");
         assert!(
@@ -417,7 +417,7 @@ mod tests {
     #[test]
     fn rejects_loopback_redirect_target() {
         let _g = env_lock();
-        unsafe { std::env::remove_var("BASEMIND_ALLOW_PRIVATE_HOSTS") };
+        unsafe { std::env::remove_var("HACIENDA_MCP_ALLOW_PRIVATE_HOSTS") };
         assert!(reject_redirected_private_url("web_crawl", "http://127.0.0.1:9000/").is_err());
         assert!(reject_redirected_private_url("web_crawl", "http://localhost/admin").is_err());
     }
@@ -425,7 +425,7 @@ mod tests {
     #[test]
     fn allows_public_redirect_target() {
         let _g = env_lock();
-        unsafe { std::env::remove_var("BASEMIND_ALLOW_PRIVATE_HOSTS") };
+        unsafe { std::env::remove_var("HACIENDA_MCP_ALLOW_PRIVATE_HOSTS") };
         assert!(reject_redirected_private_url("web_scrape", "https://example.com/landing").is_ok());
     }
 }

@@ -13,7 +13,7 @@ use std::process::Command;
 use tempfile::TempDir;
 
 fn bin() -> &'static str {
-    env!("CARGO_BIN_EXE_basemind")
+    env!("CARGO_BIN_EXE_hacienda-mcp")
 }
 
 fn git(repo: &Path, args: &[&str]) {
@@ -32,7 +32,7 @@ fn git(repo: &Path, args: &[&str]) {
 /// Repo with one readable file (updates the index) and one unreadable file (read fail).
 fn build_repo() -> TempDir {
     use std::os::unix::fs::PermissionsExt;
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     git(root, &["init", "-q"]);
@@ -53,7 +53,7 @@ fn should_exit_zero_when_read_failed_but_index_updated() {
     let output = Command::new(bin())
         .args(["--root", root.to_str().unwrap(), "scan"])
         .output()
-        .expect("run basemind scan");
+        .expect("run hacienda-mcp scan");
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
     let combined = format!("{stdout}{stderr}");

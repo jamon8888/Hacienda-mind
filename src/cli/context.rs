@@ -3,8 +3,8 @@
 //! Builds a [`BasemindServer`] with every background facility disabled
 //! ([`BasemindServer::new_oneshot`]) so a single CLI tool call runs the identical
 //! code path an MCP client would, then the process exits. The store is opened
-//! read-only so the CLI never contends for the `.basemind/.lock` flock a running
-//! `basemind serve` may already hold.
+//! read-only so the CLI never contends for the `.hacienda-mcp/.lock` flock a running
+//! `hacienda-mcp serve` may already hold.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -31,10 +31,10 @@ pub fn build_server(root: &Path, view: &str, documents: DocumentsCliOverrides) -
     let store = Store::open_read_only(root, view).context("open store (read-only)")?;
     // Reuse the workspace cache dir the store already resolved (global XDG root, keyed on `root`)
     // so the git cache lands alongside the same workspace's views.
-    let basemind_dir = store.basemind_dir.clone();
+    let hacienda_mcp_dir = store.hacienda_mcp_dir.clone();
     let cfg = Arc::new(load_config(root, documents)?);
     let repo = Repo::discover(root).ok().map(Arc::new);
-    let git_cache = Arc::new(GitCache::open(&basemind_dir, CLI_GIT_CACHE_MEM, false).context("open git cache")?);
+    let git_cache = Arc::new(GitCache::open(&hacienda_mcp_dir, CLI_GIT_CACHE_MEM, false).context("open git cache")?);
     Ok(BasemindServer::new_oneshot(
         store,
         root.to_path_buf(),
@@ -45,7 +45,7 @@ pub fn build_server(root: &Path, view: &str, documents: DocumentsCliOverrides) -
 }
 
 /// Load the resolved config, applying the document CLI override layer. Falls back
-/// to defaults when no `.basemind/basemind.toml` exists.
+/// to defaults when no `.hacienda-mcp/basemind.toml` exists.
 fn load_config(root: &Path, documents: DocumentsCliOverrides) -> Result<Config> {
     match config::load_with_overrides(root, None, Some(documents)) {
         Ok(loaded) => Ok(loaded.config),

@@ -11,16 +11,16 @@ STATUSLINE="$REPO_ROOT/.claude-plugin/statusline.sh"
 FIXTURE="$(mktemp -d)"
 trap 'rm -rf "$FIXTURE"' EXIT
 
-mkdir -p "$FIXTURE/.basemind/blobs"
-mkdir -p "$FIXTURE/.basemind/views/working"
+mkdir -p "$FIXTURE/.hacienda-mcp/blobs"
+mkdir -p "$FIXTURE/.hacienda-mcp/views/working"
 for i in 0 1 2 3 4 5 6; do
-	: >"$FIXTURE/.basemind/blobs/${i}aaaaaaaa.fm.msgpack"
+	: >"$FIXTURE/.hacienda-mcp/blobs/${i}aaaaaaaa.fm.msgpack"
 done
-: >"$FIXTURE/.basemind/views/working/index.msgpack"
+: >"$FIXTURE/.hacienda-mcp/views/working/index.msgpack"
 
 now_us="$(($(date +%s) * 1000000))"
 printf '{"ts_micros": %d, "tool": "outline", "est_tokens_saved": 500}\n' "$now_us" \
-	>"$FIXTURE/.basemind/telemetry.jsonl"
+	>"$FIXTURE/.hacienda-mcp/telemetry.jsonl"
 
 payload="$(printf '{"workspace":{"current_dir":"%s"}}' "$FIXTURE")"
 output="$(printf '%s' "$payload" | "$STATUSLINE")"
@@ -48,7 +48,7 @@ fi
 assert_contains $'\033[' 'ANSI escape present'
 assert_contains $'\033[38;2;249;115;22m' 'true-color brand orange #F97316 present'
 assert_contains '◆' 'brand glyph ◆ present'
-assert_contains 'basemind' 'name present'
+assert_contains 'hacienda-mcp' 'name present'
 assert_contains '●' 'liveness dot present'
 assert_contains '7' 'file count 7 from blob fixture'
 
@@ -58,18 +58,18 @@ if command -v jq >/dev/null 2>&1; then
 fi
 if [[ -n "$plugin_version" ]]; then
 	assert_contains "v$plugin_version" "version v$plugin_version shown (full tier)"
-	min_output="$(printf '%s' "$payload" | BASEMIND_STATUSLINE=minimal "$STATUSLINE")"
+	min_output="$(printf '%s' "$payload" | HACIENDA_MCP_STATUSLINE=minimal "$STATUSLINE")"
 	if [[ "$min_output" != *"v$plugin_version"* ]]; then
 		printf '  ok  version omitted in minimal tier\n'
 	else
 		printf '  FAIL minimal tier should omit version v%s; got: %q\n' "$plugin_version" "$min_output" >&2
 		fail=1
 	fi
-	nover_output="$(printf '%s' "$payload" | BASEMIND_STATUSLINE_VERSION=0 "$STATUSLINE")"
+	nover_output="$(printf '%s' "$payload" | HACIENDA_MCP_STATUSLINE_VERSION=0 "$STATUSLINE")"
 	if [[ "$nover_output" != *"v$plugin_version"* ]]; then
-		printf '  ok  BASEMIND_STATUSLINE_VERSION=0 hides version\n'
+		printf '  ok  HACIENDA_MCP_STATUSLINE_VERSION=0 hides version\n'
 	else
-		printf '  FAIL BASEMIND_STATUSLINE_VERSION=0 should hide version; got: %q\n' "$nover_output" >&2
+		printf '  FAIL HACIENDA_MCP_STATUSLINE_VERSION=0 should hide version; got: %q\n' "$nover_output" >&2
 		fail=1
 	fi
 else
@@ -77,12 +77,12 @@ else
 fi
 
 legacy_dir="$(mktemp -d)"
-mkdir -p "$legacy_dir/.basemind/blobs" "$legacy_dir/.basemind/views/working"
+mkdir -p "$legacy_dir/.hacienda-mcp/blobs" "$legacy_dir/.hacienda-mcp/views/working"
 for i in 0 1 2 3; do
-	: >"$legacy_dir/.basemind/blobs/${i}bbbbbbbb.l1.msgpack"
-	: >"$legacy_dir/.basemind/blobs/${i}bbbbbbbb.l2.msgpack"
+	: >"$legacy_dir/.hacienda-mcp/blobs/${i}bbbbbbbb.l1.msgpack"
+	: >"$legacy_dir/.hacienda-mcp/blobs/${i}bbbbbbbb.l2.msgpack"
 done
-: >"$legacy_dir/.basemind/views/working/index.msgpack"
+: >"$legacy_dir/.hacienda-mcp/views/working/index.msgpack"
 legacy_payload="$(printf '{"workspace":{"current_dir":"%s"}}' "$legacy_dir")"
 legacy_output="$(printf '%s' "$legacy_payload" | "$STATUSLINE")"
 legacy_clean="$(printf '%s' "$legacy_output" | sed -E $'s/\033\\[[0-9;:]*m//g')"
@@ -95,7 +95,7 @@ else
 fi
 
 unscanned_dir="$(mktemp -d)"
-mkdir -p "$unscanned_dir/.basemind"
+mkdir -p "$unscanned_dir/.hacienda-mcp"
 trap 'rm -rf "$FIXTURE" "$empty_dir" "$unscanned_dir"' EXIT
 unscanned_payload="$(printf '{"workspace":{"current_dir":"%s"}}' "$unscanned_dir")"
 unscanned_output="$(printf '%s' "$unscanned_payload" | "$STATUSLINE")"
@@ -110,8 +110,8 @@ empty_dir="$(mktemp -d)"
 trap 'rm -rf "$FIXTURE" "$empty_dir"' EXIT
 empty_payload="$(printf '{"workspace":{"current_dir":"%s"}}' "$empty_dir")"
 empty_output="$(printf '%s' "$empty_payload" | "$STATUSLINE")"
-if [[ "$empty_output" == *'no index'* ]] && [[ "$empty_output" == *'basemind scan'* ]]; then
-	printf '  ok  missing .basemind/ shows actionable hint\n'
+if [[ "$empty_output" == *'no index'* ]] && [[ "$empty_output" == *'hacienda-mcp scan'* ]]; then
+	printf '  ok  missing .hacienda-mcp/ shows actionable hint\n'
 else
 	printf '  FAIL expected actionable hint, got: %q\n' "$empty_output" >&2
 	fail=1

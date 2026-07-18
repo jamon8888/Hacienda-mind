@@ -1,4 +1,4 @@
-//! End-to-end smoke test for the `basemind comms` CLI (thread model) against a REAL detached
+//! End-to-end smoke test for the `hacienda-mcp comms` CLI (thread model) against a REAL detached
 //! broker daemon.
 //!
 //! This exercises the actual `comms daemon` process path. It is the regression guard for the
@@ -13,17 +13,17 @@
 use std::path::Path;
 use std::process::Command;
 
-const BIN: &str = env!("CARGO_BIN_EXE_basemind");
+const BIN: &str = env!("CARGO_BIN_EXE_hacienda-mcp");
 
-/// Run `basemind comms <args...>` as `agent` against the isolated `comms_dir`.
+/// Run `hacienda-mcp comms <args...>` as `agent` against the isolated `comms_dir`.
 fn comms(comms_dir: &Path, agent: &str, args: &[&str]) -> (bool, String, String) {
     let out = Command::new(BIN)
         .arg("comms")
         .args(args)
-        .env("BASEMIND_COMMS_DIR", comms_dir)
-        .env("BASEMIND_AGENT_ID", agent)
+        .env("HACIENDA_MCP_COMMS_DIR", comms_dir)
+        .env("HACIENDA_MCP_AGENT_ID", agent)
         .output()
-        .expect("spawn basemind comms");
+        .expect("spawn hacienda-mcp comms");
     (
         out.status.success(),
         String::from_utf8_lossy(&out.stdout).into_owned(),
@@ -37,7 +37,7 @@ impl Drop for Stop<'_> {
     fn drop(&mut self) {
         let _ = Command::new(BIN)
             .args(["comms", "stop"])
-            .env("BASEMIND_COMMS_DIR", self.0)
+            .env("HACIENDA_MCP_COMMS_DIR", self.0)
             .output();
     }
 }

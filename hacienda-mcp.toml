@@ -1,6 +1,6 @@
-# basemind configuration — https://github.com/Goldziher/basemind
+# hacienda-mcp configuration — https://github.com/jamon8888/Hacienda-mind
 # Lives at the repo root and is meant to be committed. The index (blobs + Fjall) is derived state
-# kept in the machine-global cache under ~/.local/share/basemind/ (override BASEMIND_DATA_HOME),
+# kept in the machine-global cache under ~/.local/share/hacienda-mcp/ (override HACIENDA_MCP_DATA_HOME),
 # keyed by workspace and wiped on schema bumps — nothing is written into the repo, so there is
 # nothing to gitignore. Never put durable config in the cache.
 # Every value below is the built-in default; uncomment and edit only what you want to change.
@@ -11,7 +11,7 @@
 # filter the long tail. Narrow it if you only care about specific languages.
 # include = ["**/*"]
 # Extra exclude globs, ADDED ON TOP of the always-on floor (node_modules, target, dist, .venv,
-# __pycache__, .git, .basemind, bazel-*, .idea, .DS_Store, …). You cannot remove a floor entry.
+# __pycache__, .git, .hacienda-mcp, bazel-*, .idea, .DS_Store, …). You cannot remove a floor entry.
 # exclude = []
 # Honor .gitignore / .git/info/exclude while walking. Leave on unless you deliberately want
 # ignored files indexed.
@@ -65,7 +65,7 @@
 [pii]
 # In-process GLiNER2 + Candle PII redaction (vendored xberg-gliner-candle).
 # Redacts PERSON / ORGANIZATION / LOCATION from extracted document text using a
-# local model. Requires a `pii` build of basemind. When model_dir is missing or
+# local model. Requires a `pii` build of hacienda-mcp. When model_dir is missing or
 # the model fails to load, the pass is skipped (graceful) — the scan still runs.
 enabled = true
 model_dir = "E:/basemind-pii-model"

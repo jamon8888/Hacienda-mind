@@ -105,7 +105,7 @@ impl BasemindServer {
                         );
                     }
                     Ok(None) => {
-                        r.l2_status = Some("missing — run `basemind query outline <path> --l2` to materialize");
+                        r.l2_status = Some("missing — run `hacienda-mcp query outline <path> --l2` to materialize");
                     }
                     Err(e) => {
                         r.l2_status = Some("error");
@@ -410,7 +410,7 @@ impl BasemindServer {
                         file_count: 0,
                         blob_count: count_fm_blobs(),
                         note: Some(
-                            "a rebuild is in progress (another basemind process holds the store \
+                            "a rebuild is in progress (another hacienda-mcp process holds the store \
                              lock); index counts are unavailable until it completes"
                                 .to_string(),
                         ),
@@ -759,7 +759,7 @@ pub(super) fn blob_divergence_note(file_count: usize, blob_count: usize) -> Opti
     if file_count == 0 && blob_count > 0 {
         Some(format!(
             "index for this view is empty but {blob_count} blob file(s) exist on disk; \
-             the view index was lost or wiped — run `basemind scan` to rebuild it"
+             the view index was lost or wiped — run `hacienda-mcp scan` to rebuild it"
         ))
     } else {
         None

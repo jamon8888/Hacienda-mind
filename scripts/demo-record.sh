@@ -17,7 +17,7 @@ need() {
 need asciinema
 need agg
 
-if [ ! -x "target/release/basemind" ] && [ -z "${BASEMIND_BIN:-}" ]; then
+if [ ! -x "target/release/hacienda-mcp" ] && [ -z "${HACIENDA_MCP_BIN:-}" ]; then
 	printf 'demo-record: building release binary ...\n' >&2
 	cargo build --release
 fi

@@ -16,11 +16,11 @@ the workflow's per-registry skip detection breaks on a partial bump.
 |---|---|---|
 | `Cargo.toml` `[package] version` | `X.Y.Z` or `X.Y.Z-rc.N` | Source of truth. |
 | `npm-package/package.json` `"version"` | `X.Y.Z` or `X.Y.Z-rc.N` | Same shape as Cargo. |
-| `pip-package/pyproject.toml` `version` | `X.Y.Z` or `X.Y.ZrcN` | PyPI canonical form (`basemind`, binary wrapper). |
+| `pip-package/pyproject.toml` `version` | `X.Y.Z` or `X.Y.ZrcN` | PyPI canonical form (`hacienda-mcp`, binary wrapper). |
 | `pip-package/basemind/__init__.py` `__version__` | matches `pyproject.toml` | Used by `downloader.py` to compute the GH release URL. |
 | `pip-package-hermes/pyproject.toml` `version` | `X.Y.Z` or `X.Y.ZrcN` | PyPI canonical form (`basemind-hermes-plugin`, standalone Hermes plugin). |
-| `pip-package-hermes/basemind_hermes_plugin/__init__.py` `__version__` | matches `pyproject.toml` | Plugin package version. |
-| `pip-package-hermes/basemind_hermes_plugin/plugin.yaml` `version` | `X.Y.Z` or `X.Y.Z-rc.N` | Hermes Agent plugin manifest (Cargo form, bundled in the plugin wheel). |
+| `pip-package-hermes/hacienda_mcp_hermes_plugin/__init__.py` `__version__` | matches `pyproject.toml` | Plugin package version. |
+| `pip-package-hermes/hacienda_mcp_hermes_plugin/plugin.yaml` `version` | `X.Y.Z` or `X.Y.Z-rc.N` | Hermes Agent plugin manifest (Cargo form, bundled in the plugin wheel). |
 | `src/version.rs` `RELEASE_MINOR` | `u16` | Bumped only when the MINOR component changes (or major-100 carry for `1.X` and beyond). |
 | `package.json` `"version"` | `X.Y.Z` or `X.Y.Z-rc.N` | Workspace root marker (private). |
 | `opencode-plugin/package.json` `"version"` | `X.Y.Z` or `X.Y.Z-rc.N` | `basemind-opencode` npm package. |
@@ -35,7 +35,7 @@ the workflow's per-registry skip detection breaks on a partial bump.
 - **Patch** (`0.1.0` → `0.1.1`): blob + index format MUST stay compatible. `RELEASE_MINOR`
   unchanged. `release:sync-version` enforces this — it only edits `RELEASE_MINOR` if the minor
   component actually changed.
-- **Minor** (`0.1.x` → `0.2.0`): `RELEASE_MINOR` bumps by 1. All users wipe `.basemind/` on
+- **Minor** (`0.1.x` → `0.2.0`): `RELEASE_MINOR` bumps by 1. All users wipe `.hacienda-mcp/` on
   next scan (intentional). Mention the wipe in the CHANGELOG `## [0.X.0]` heading.
 - **Major** (`0.X.y` → `1.0.0`): `RELEASE_MINOR` jumps to `100`. After 1.0, the formula is
   `major * 100 + minor`. Encode this carefully — the `release:sync-version` script already does the

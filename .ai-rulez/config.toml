@@ -1,5 +1,5 @@
 version = "4.0"
-name = "basemind"
+name = "hacienda-mcp"
 description = "Code-map MCP server + scanner — pure-Rust, content-addressed, Fjall-backed inverted index."
 gitignore = true
 
@@ -8,12 +8,12 @@ presets = ["claude", "codex"]
 builtins = ["rust", "cicd", "documentation", "observability", "default-commands"]
 
 [plugin]
-name = "basemind"
+name = "hacienda-mcp"
 version = "0.22.0"
-display_name = "basemind"
+display_name = "hacienda-mcp"
 description = "Full AI context layer over MCP — tree-sitter code-map, document RAG (PDF/Office/HTML/email + OCR + reranker), shared agent memory, on-demand web crawl, git history + blame + per-symbol diff. 300+ languages, 10+ coding-agent harnesses, content-addressed Fjall + LanceDB."
-homepage = "https://github.com/Goldziher/basemind"
-repository = "https://github.com/Goldziher/basemind"
+homepage = "https://github.com/jamon8888/Hacienda-mind"
+repository = "https://github.com/jamon8888/Hacienda-mind"
 license = "MIT"
 category = "developer-tools"
 keywords = ["mcp", "agent-context", "rag", "code-map", "tree-sitter"]
@@ -27,7 +27,7 @@ email = "nhirschfeld@gmail.com"
 url = "https://github.com/Goldziher"
 
 [plugin.hermes]
-source = "pip-package-hermes/basemind_hermes_plugin/hermes.py"
+source = "pip-package-hermes/hacienda_mcp_hermes_plugin/hermes.py"
 requires_python = ">=3.9"
 
 
@@ -38,12 +38,12 @@ command = "npx"
 args = ["-y", "ai-rulez@latest", "mcp"]
 
 [[marketplaces]]
-name = "basemind"
-source = "Goldziher/basemind"
+name = "hacienda-mcp"
+source = "jamon8888/Hacienda-mind"
 type = "github"
 
 [[plugins]]
-marketplace = "basemind"
-name = "basemind"
+marketplace = "hacienda-mcp"
+name = "hacienda-mcp"
 scope = "project"
 enabled = true

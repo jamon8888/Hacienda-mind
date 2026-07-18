@@ -1,14 +1,14 @@
-//! `basemind init` — the re-runnable onboarding flow.
+//! `hacienda-mcp init` — the re-runnable onboarding flow.
 //!
 //! Two side effects, each idempotent and safe to re-run:
 //! 1. Write the commented `basemind.toml` scaffold at the repo root (kept, never clobbered, when
 //!    one already exists).
-//! 2. Inject a "prefer basemind over grep / read / git" rules block into the host repo's
+//! 2. Inject a "prefer hacienda-mcp over grep / read / git" rules block into the host repo's
 //!    agent-instructions file — an idempotent delimited block in CLAUDE.md / AGENTS.md, or an
 //!    ai-rulez rule file when `.ai-rulez/config.toml` owns governance.
 //!
 //! The index itself is never written into the repo: it lives in a machine-global cache under
-//! `~/.local/share/basemind/` (override `BASEMIND_DATA_HOME`), keyed by workspace and served by a
+//! `~/.local/share/hacienda-mcp/` (override `HACIENDA_MCP_DATA_HOME`), keyed by workspace and served by a
 //! background daemon, so there is nothing to gitignore.
 //!
 //! Capability selection (interactive in a TTY, flag-driven otherwise) narrows which routing rows
@@ -25,16 +25,16 @@ use super::init_rules::{self, BlockSections, Capability};
 use crate::config;
 
 /// BEGIN delimiter of the managed rules block. Load-bearing: the splice matches this verbatim.
-pub(crate) const BEGIN_MARKER: &str = "<!-- BEGIN basemind (managed by `basemind init`) -->";
+pub(crate) const BEGIN_MARKER: &str = "<!-- BEGIN hacienda-mcp (managed by `hacienda-mcp init`) -->";
 /// END delimiter of the managed rules block.
-pub(crate) const END_MARKER: &str = "<!-- END basemind -->";
+pub(crate) const END_MARKER: &str = "<!-- END hacienda-mcp -->";
 
 /// Fully-commented `basemind.toml` scaffold. Doubles as living documentation: every value shown is
 /// the built-in default, so an unedited file is a no-op. Written to the repo ROOT (committed); the
 /// index it drives lives in the machine-global cache, so nothing is written into the repo.
-pub(crate) const INIT_SCAFFOLD_TOML: &str = r##"# basemind configuration — https://github.com/Goldziher/basemind
+pub(crate) const INIT_SCAFFOLD_TOML: &str = r##"# hacienda-mcp configuration — https://github.com/Goldziher/hacienda-mcp
 # Lives at the repo root and is meant to be committed. The index (blobs + Fjall) is derived state
-# kept in the machine-global cache under ~/.local/share/basemind/ (override BASEMIND_DATA_HOME),
+# kept in the machine-global cache under ~/.local/share/hacienda-mcp/ (override HACIENDA_MCP_DATA_HOME),
 # keyed by workspace and wiped on schema bumps — nothing is written into the repo, so there is
 # nothing to gitignore. Never put durable config in the cache.
 # Every value below is the built-in default; uncomment and edit only what you want to change.
@@ -45,7 +45,7 @@ pub(crate) const INIT_SCAFFOLD_TOML: &str = r##"# basemind configuration — htt
 # filter the long tail. Narrow it if you only care about specific languages.
 # include = ["**/*"]
 # Extra exclude globs, ADDED ON TOP of the always-on floor (node_modules, target, dist, .venv,
-# __pycache__, .git, .basemind, bazel-*, .idea, .DS_Store, …). You cannot remove a floor entry.
+# __pycache__, .git, .hacienda-mcp, bazel-*, .idea, .DS_Store, …). You cannot remove a floor entry.
 # exclude = []
 # Honor .gitignore / .git/info/exclude while walking. Leave on unless you deliberately want
 # ignored files indexed.
@@ -133,7 +133,7 @@ pub enum RulesTarget {
     None,
 }
 
-/// Flags for `basemind init`. Flattened into the `Cmd::Init` clap variant in `main.rs`.
+/// Flags for `hacienda-mcp init`. Flattened into the `Cmd::Init` clap variant in `main.rs`.
 #[derive(Args, Debug, Default)]
 pub struct InitArgs {
     /// Accept defaults non-interactively: enable every capability unless narrowed by
@@ -218,9 +218,9 @@ pub fn run(root: &Path, args: &InitArgs) -> Result<()> {
         }
     }
     if any_write {
-        println!("basemind init: done.");
+        println!("hacienda-mcp init: done.");
     } else {
-        println!("basemind init: nothing to do — already up to date.");
+        println!("hacienda-mcp init: nothing to do — already up to date.");
     }
     Ok(())
 }
@@ -266,7 +266,7 @@ fn parse_capabilities(slugs: &[String]) -> Result<Vec<Capability>> {
 fn prompt_capabilities() -> Result<Vec<Capability>> {
     let stdin = std::io::stdin();
     let mut stdout = std::io::stdout();
-    println!("Select basemind capabilities to advertise (Y/n, blank = yes):");
+    println!("Select hacienda-mcp capabilities to advertise (Y/n, blank = yes):");
     let mut selected = Vec::new();
     for cap in Capability::ALL {
         write!(stdout, "  {} [Y/n] ", cap.label()).context("write prompt")?;
@@ -383,7 +383,7 @@ fn plan_rules(root: &Path, args: &InitArgs, caps: &[Capability], sections: Block
                 Err(e) => return Err(anyhow::Error::new(e).context(format!("read {}", path.display()))),
             };
             let next = splice_block(existing.as_deref(), &block)
-                .with_context(|| format!("update basemind rules block in {}", path.display()))?;
+                .with_context(|| format!("update hacienda-mcp rules block in {}", path.display()))?;
             if existing.as_deref() == Some(next.as_str()) {
                 return Ok(Some(Change::NoOp {
                     note: format!("rules: block already up to date ({})", path.display()),
@@ -391,7 +391,7 @@ fn plan_rules(root: &Path, args: &InitArgs, caps: &[Capability], sections: Block
             }
             Ok(Some(Change::Write {
                 path,
-                note: "injected basemind rules block",
+                note: "injected hacienda-mcp rules block",
                 contents: next,
             }))
         }
@@ -414,12 +414,12 @@ fn splice_block(existing: Option<&str>, block: &str) -> Result<String> {
             let begin_body = begin + BEGIN_MARKER.len();
             if end_start < begin_body {
                 anyhow::bail!(
-                    "malformed basemind block: END marker precedes BEGIN marker — resolve the markers manually then re-run"
+                    "malformed hacienda-mcp block: END marker precedes BEGIN marker — resolve the markers manually then re-run"
                 );
             }
             if existing[begin_body..end_start].contains(BEGIN_MARKER) {
                 anyhow::bail!(
-                    "malformed basemind block: a second BEGIN marker before the END marker — resolve the markers manually then re-run"
+                    "malformed hacienda-mcp block: a second BEGIN marker before the END marker — resolve the markers manually then re-run"
                 );
             }
             let end = end_start + END_MARKER.len();
@@ -439,7 +439,7 @@ fn splice_block(existing: Option<&str>, block: &str) -> Result<String> {
             Ok(out)
         }
         (Some(_), None) | (None, Some(_)) => anyhow::bail!(
-            "malformed basemind block: only one of the BEGIN/END markers is present — resolve the markers manually then re-run"
+            "malformed hacienda-mcp block: only one of the BEGIN/END markers is present — resolve the markers manually then re-run"
         ),
         (None, None) => {
             // ~keep No markers: append at EOF with a blank-line separator.
@@ -469,9 +469,9 @@ fn report_dry_run(changes: &[Change]) {
         }
     }
     if pending == 0 {
-        println!("basemind init --print: no changes — already up to date.");
+        println!("hacienda-mcp init --print: no changes — already up to date.");
     } else {
-        println!("basemind init --print: {pending} file(s) would change (nothing written).");
+        println!("hacienda-mcp init --print: {pending} file(s) would change (nothing written).");
     }
 }
 
@@ -483,7 +483,7 @@ mod tests {
     fn splice_appends_block_when_no_markers() {
         let out = splice_block(
             Some("# Title\n\nbody\n"),
-            "<!-- BEGIN basemind (managed by `basemind init`) -->\nX\n<!-- END basemind -->\n",
+            "<!-- BEGIN hacienda-mcp (managed by `hacienda-mcp init`) -->\nX\n<!-- END hacienda-mcp -->\n",
         )
         .expect("well-formed input splices");
         assert!(out.starts_with("# Title\n\nbody\n"), "user content preserved");

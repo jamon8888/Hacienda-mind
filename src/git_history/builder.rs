@@ -28,7 +28,7 @@ pub enum RebuildOutcome {
 /// Bring the index up to date with `repo`'s current HEAD, running the revalidation decision tree.
 /// Best-effort callers ignore the error; the index simply stays stale and tools fall back to the
 /// live walk until the next successful sync.
-pub fn sync(index: &GitHistoryIndex, repo: &Repo, basemind_dir: &Path) -> Result<RebuildOutcome, GitHistoryError> {
+pub fn sync(index: &GitHistoryIndex, repo: &Repo, hacienda_mcp_dir: &Path) -> Result<RebuildOutcome, GitHistoryError> {
     let head = match repo.resolve_rev("HEAD") {
         Ok(h) => h,
         Err(_) => return Ok(RebuildOutcome::Fresh),
@@ -47,7 +47,7 @@ pub fn sync(index: &GitHistoryIndex, repo: &Repo, basemind_dir: &Path) -> Result
     }
 
     let reason = if index.is_empty() { "initial" } else { "history-rewrite" };
-    index.clear(basemind_dir)?;
+    index.clear(hacienda_mcp_dir)?;
     rebuild(index, repo, reason)
 }
 

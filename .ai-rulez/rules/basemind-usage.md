@@ -2,11 +2,11 @@
 priority: high
 ---
 
-# basemind usage
+# hacienda-mcp usage
 
-## basemind — prefer it over grep / read / git
+## hacienda-mcp — prefer it over grep / read / git
 
-basemind is this repo's indexed context layer. Prefer it BEFORE grep, before reading files to find structure, and before naked `git` — it's the default, not a preference. basemind returns paths, lines, and signatures at a fraction of the tokens of reading source. The index lives in a machine-global cache (`~/.local/share/basemind/`, override `BASEMIND_DATA_HOME`), keyed by workspace and served by a background daemon — nothing is written into the repo, and any number of sessions read and write concurrently.
+hacienda-mcp is this repo's indexed context layer. Prefer it BEFORE grep, before reading files to find structure, and before naked `git` — it's the default, not a preference. hacienda-mcp returns paths, lines, and signatures at a fraction of the tokens of reading source. The index lives in a machine-global cache (`~/.local/share/hacienda-mcp/`, override `HACIENDA_MCP_DATA_HOME`), keyed by workspace and served by a background daemon — nothing is written into the repo, and any number of sessions read and write concurrently.
 
 ### Routing
 
@@ -26,11 +26,11 @@ basemind is this repo's indexed context layer. Prefer it BEFORE grep, before rea
 - About to `grep` / `rg`? → `workspace_grep`.
 - About to open a file just to find a symbol? → `outline` / `search_symbols`.
 - About to `git log` / `git blame`? → `recent_changes` / `blame_symbol`.
-- Already mapped a file with basemind? Don't re-read it.
+- Already mapped a file with hacienda-mcp? Don't re-read it.
 
 ### Setup & maintenance
 
-- Install the basemind Claude Code plugin from its marketplace (`/plugin marketplace add Goldziher/basemind`, then install `basemind`).
-- Keep basemind current: enable plugin auto-update, or update the binary regularly so the index format and tools stay in sync.
-- Re-run `basemind init` (or `/bm-init`) after enabling new capabilities to refresh this block.
+- Install the hacienda-mcp Claude Code plugin from its marketplace (`/plugin marketplace add jamon8888/Hacienda-mind`, then install `hacienda-mcp`).
+- Keep hacienda-mcp current: enable plugin auto-update, or update the binary regularly so the index format and tools stay in sync.
+- Re-run `hacienda-mcp init` (or `/bm-init`) after enabling new capabilities to refresh this block.
 

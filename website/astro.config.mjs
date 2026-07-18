@@ -4,23 +4,23 @@ import starlight from "@astrojs/starlight";
 import starlightLlmsTxt from "starlight-llms-txt";
 
 export default defineConfig({
-  site: "https://basemind.ai",
+  site: "https://github.com/jamon8888/Hacienda-mind",
   integrations: [
     starlight({
-      title: "basemind",
+      title: "hacienda-mcp",
       description:
         "The context and communication layer for coding agents. A pure-Rust code map, " +
         "document RAG, git intelligence, shared memory, and agent-to-agent comms — served over MCP.",
       logo: {
         src: "./src/assets/logo.svg",
-        alt: "basemind",
+        alt: "hacienda-mcp",
         replacesTitle: true,
       },
       favicon: "/favicon.svg",
       customCss: ["./src/styles/custom.css"],
-      social: [{ icon: "github", label: "GitHub", href: "https://github.com/Goldziher/basemind" }],
+      social: [{ icon: "github", label: "GitHub", href: "https://github.com/jamon8888/Hacienda-mind" }],
       editLink: {
-        baseUrl: "https://github.com/Goldziher/basemind/edit/main/website/",
+        baseUrl: "https://github.com/jamon8888/Hacienda-mind/edit/main/website/",
       },
       head: [
         {
@@ -33,7 +33,7 @@ export default defineConfig({
         },
         {
           tag: "meta",
-          attrs: { property: "og:image", content: "https://basemind.ai/og.png" },
+          attrs: { property: "og:image", content: "https://github.com/jamon8888/Hacienda-mind/og.png" },
         },
         {
           tag: "meta",
@@ -41,7 +41,7 @@ export default defineConfig({
         },
         {
           tag: "meta",
-          attrs: { name: "twitter:image", content: "https://basemind.ai/og.png" },
+          attrs: { name: "twitter:image", content: "https://github.com/jamon8888/Hacienda-mind/og.png" },
         },
       ],
       plugins: [
@@ -50,9 +50,9 @@ export default defineConfig({
           promote: ["index*", "start/**", "concepts/**"],
           minify: { collapseCodeBlocks: true },
           details:
-            "Operating rule: basemind first, shell/grep/git fallback — prefer its MCP tools " +
+            "Operating rule: hacienda-mcp first, shell/grep/git fallback — prefer its MCP tools " +
             "over reading files, over grep, and over naked git. Curated project map: " +
-            "https://github.com/Goldziher/basemind/blob/main/llms.txt",
+            "https://github.com/jamon8888/Hacienda-mind/blob/main/llms.txt",
         }),
       ],
       sidebar: [

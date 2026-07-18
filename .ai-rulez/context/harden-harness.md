@@ -16,7 +16,7 @@ cargo test --release --test harden -- --ignored --nocapture
 
    `ripgrep` (Rust), `tokio` (Rust), `typescript` (TS/JS), `react` (TS/JSX), `django` (Python),
    `requests` (Python), `gin` (Go), `ripgrep-shallow` (shallow clone smoke).
-2. For each repo: `basemind scan`, then an **in-process git-ops measurement** (`measure_git_ops`):
+2. For each repo: `hacienda-mcp scan`, then an **in-process git-ops measurement** (`measure_git_ops`):
    build the git-history index synchronously and time warm, microsecond-resolution indexed-vs-live
    latency for `commits_touching` (hot + rare path), `recent_changes`, and `window_commits`, plus the
    build time and on-disk index size. Then it sweeps every MCP code-map + git tool over stdio,
@@ -31,17 +31,17 @@ cargo test --release --test harden -- --ignored --nocapture
 
 ### Knobs
 
-- `BASEMIND_HARDEN_NO_BUILD=1` — skip the release rebuild; reuse `target/release/basemind`. Use this for fast iteration.
-- `BASEMIND_HARDEN_FEATURES=<set>` — cargo features to build/run with (default `full`). Set to `""`
+- `HACIENDA_MCP_HARDEN_NO_BUILD=1` — skip the release rebuild; reuse `target/release/hacienda-mcp`. Use this for fast iteration.
+- `HACIENDA_MCP_HARDEN_FEATURES=<set>` — cargo features to build/run with (default `full`). Set to `""`
   for default features only — needed where the `documents`/`memory`/`intelligence` stack can't
   compile; the harness records those tools as skipped and still measures scan + git-ops.
-- `BASEMIND_HARDEN_REPO=<name>` — restrict to a single repo when debugging.
+- `HACIENDA_MCP_HARDEN_REPO=<name>` — restrict to a single repo when debugging.
 - Per-repo metrics land at `/tmp/basemind-harden-*.log` (full run), the NDJSON results file, and a
   paste-ready git-ops markdown table at `<results-dir>/gitops.md`.
 
 #### Performance baselines
 
-Measured on an Apple M4 (10 cores — 4 P + 6 E, 16 GB), default-feature build (`BASEMIND_HARDEN_FEATURES=""`).
+Measured on an Apple M4 (10 cores — 4 P + 6 E, 16 GB), default-feature build (`HACIENDA_MCP_HARDEN_FEATURES=""`).
 
 | Repo | Files | Scan time | git-history build | `commits_touching` indexed / live |
 |---|---|---|---|---|

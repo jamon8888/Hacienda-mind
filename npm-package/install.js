@@ -46,13 +46,13 @@ function getPlatformTriple() {
 
 function getReleaseAssets() {
   const platform = getPlatformTriple();
-  const baseUrl = `https://github.com/Goldziher/basemind/releases/download/v${version}`;
+  const baseUrl = `https://github.com/jamon8888/Hacienda-mind/releases/download/v${version}`;
   const ext = platform.includes("windows") ? "zip" : "tar.gz";
   const assetName = `basemind-${platform}.${ext}`;
   return {
     assetName,
     archiveUrl: `${baseUrl}/${assetName}`,
-    checksumsUrl: `${baseUrl}/basemind_${version}_checksums.txt`,
+    checksumsUrl: `${baseUrl}/hacienda_mcp_${version}_checksums.txt`,
   };
 }
 
@@ -226,7 +226,7 @@ async function installBinary() {
     const isZip = archiveUrl.endsWith(".zip");
     const binDir = path.join(__dirname, "bin");
     const archivePath = path.join(binDir, assetName);
-    const binaryName = os.type() === "Windows_NT" ? "basemind.exe" : "basemind";
+    const binaryName = os.type() === "Windows_NT" ? "hacienda-mcp.exe" : "hacienda-mcp";
     const binaryPath = path.join(binDir, binaryName);
 
     if (!fs.existsSync(binDir)) {
@@ -237,7 +237,7 @@ async function installBinary() {
       return;
     }
 
-    console.log(`Downloading basemind binary from ${archiveUrl}...`);
+    console.log(`Downloading hacienda-mcp binary from ${archiveUrl}...`);
 
     await retryWithBackoff(() => downloadWithRedirects(archiveUrl, archivePath));
 
@@ -266,9 +266,9 @@ async function installBinary() {
       fs.chmodSync(binaryPath, 0o755);
     }
 
-    console.log("basemind binary installed successfully!");
+    console.log("hacienda-mcp binary installed successfully!");
   } catch (error) {
-    console.error("Error installing basemind binary:", error.message);
+    console.error("Error installing hacienda-mcp binary:", error.message);
     process.exit(1);
   }
 }

@@ -1,4 +1,4 @@
-//! Heuristic estimator for "how many tokens did this basemind tool call save the agent vs the
+//! Heuristic estimator for "how many tokens did this hacienda-mcp tool call save the agent vs the
 //! grep + Read baseline?". Honest about being a heuristic — every row carries the baseline name
 //! so the dashboard can disclose the assumption.
 //!
@@ -6,7 +6,7 @@
 //! through [`super::tokens::count_tokens`] — a real o200k (gpt-4o) tokenizer under the `documents`
 //! feature, a `bytes / 4` heuristic otherwise. When only a **byte length** is available (the live
 //! telemetry path, whose caller has already collapsed the response to a byte count), there is no
-//! text to tokenize, so it falls back to the same `bytes / 4` rule of thumb basemind's scan-cost
+//! text to tokenize, so it falls back to the same `bytes / 4` rule of thumb hacienda-mcp's scan-cost
 //! reporting uses. Under default features the two tiers are numerically identical.
 
 use serde::Serialize;
@@ -58,7 +58,7 @@ const DOCUMENT_READ_MULTIPLIER: u64 = 5;
 
 /// `list_files` baseline multiplier. The alternative is shelling out to `find` / `ls -R` and
 /// then reading the (unfiltered, noisier) listing the agent must scan by hand. A modest 2× —
-/// basemind returns the already-filtered set, saving the agent the extra listing it reads.
+/// hacienda-mcp returns the already-filtered set, saving the agent the extra listing it reads.
 const LIST_FILES_READ_MULTIPLIER: u64 = 2;
 
 /// Web-ingestion baseline multiplier (`web_scrape` / `web_crawl` / `web_map`). The alternative

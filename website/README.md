@@ -1,6 +1,6 @@
-# basemind docs site
+# hacienda-mcp docs site
 
-The [basemind.ai](https://basemind.ai) documentation site — built with
+The [github.com/jamon8888/Hacienda-mind](https://github.com/jamon8888/Hacienda-mind) documentation site — built with
 [Astro Starlight](https://starlight.astro.build) and deployed to GitHub Pages by
 `.github/workflows/docs.yaml`.
 
@@ -19,7 +19,7 @@ npm run preview  # serve the built site
 - `astro.config.mjs` — site config, sidebar, and the `starlight-llms-txt` plugin
   (generates `/llms.txt`, `/llms-small.txt`, `/llms-full.txt`).
 - `src/styles/custom.css` — brand theme.
-- `public/CNAME` — the custom domain (`basemind.ai`).
+- `public/CNAME` — the custom domain (`github.com/jamon8888/Hacienda-mind`).
 
 Content is sourced from the repo `README.md`, `docs/ARCHITECTURE.md`, and the `skills/` SKILL files —
 keep it in sync when those change.

@@ -9,7 +9,7 @@ All measurements are from an **Apple M4** (10 cores — 4 performance + 6 effici
 
 ## Scan Speed
 
-Measured with the hardening harness, which clones each project fresh, then runs `basemind scan`:
+Measured with the hardening harness, which clones each project fresh, then runs `hacienda-mcp scan`:
 
 | Project | Files | Languages | Scan time |
 |---|---|---|---|
@@ -31,7 +31,7 @@ Document indexing and semantic search (PDFs, Office, HTML, images, email) adds a
 
 ## Git-History Queries
 
-basemind precomputes a per-repo git-history index — posting lists mapping paths to commits (newest-first) — so the history tools are posting-list lookups rather than tree walks.
+hacienda-mcp precomputes a per-repo git-history index — posting lists mapping paths to commits (newest-first) — so the history tools are posting-list lookups rather than tree walks.
 
 Warm, in-process query latency on the same M4:
 
@@ -58,7 +58,7 @@ To measure: `cargo bench --bench git_history` or the git-ops block in `scripts/h
 
 ## Query Latency Summary
 
-Once the index is in memory (after `basemind serve` starts):
+Once the index is in memory (after `hacienda-mcp serve` starts):
 
 - **Code questions** (outline, symbol search, call-graph): **< 1 ms** (in-memory hash lookup + tree walk)
 - **Reference search** (`find_references`): **a few ms** (Fjall prefix scan, bounded by `scan_cap = limit * 8`)
@@ -69,8 +69,8 @@ All are returned over MCP stdio, so network latency (if running remotely) adds o
 
 ## Memory Usage
 
-`basemind serve` holds the index in memory so it can answer without re-reading the project. The
-footprint scales with project size; `basemind cache stats` reports both the on-disk cache
+`hacienda-mcp serve` holds the index in memory so it can answer without re-reading the project. The
+footprint scales with project size; `hacienda-mcp cache stats` reports both the on-disk cache
 (per-component, matching `du`) and process RAM for your project.
 
 ## Scaling
@@ -85,12 +85,12 @@ Eager L2 (call-site extraction) is on by default and adds to scan time. Set `eag
 skip it for faster scans, at the cost of disabling reference search.
 
 <Aside type="note">
-All numbers are from production basemind builds (`cargo build --release`). Debug builds are much slower and not representative.
+All numbers are from production hacienda-mcp builds (`cargo build --release`). Debug builds are much slower and not representative.
 </Aside>
 
 ## Re-scan Performance
 
-`basemind watch` and live-watched re-scans only process changed files:
+`hacienda-mcp watch` and live-watched re-scans only process changed files:
 
 - Unchanged files are skipped via their content hash — identical content is never reprocessed.
 - For changed files, only affected index entries are updated (read-before-write batch).

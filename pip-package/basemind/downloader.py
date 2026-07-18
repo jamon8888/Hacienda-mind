@@ -82,9 +82,9 @@ def _asset(version: str) -> tuple[str, str, str, str]:
     triple = _platform_triple()
     ext = "zip" if "windows" in triple else "tar.gz"
     asset_name = f"basemind-{triple}.{ext}"
-    base = f"https://github.com/Goldziher/basemind/releases/download/v{tag}"
+    base = f"https://github.com/jamon8888/Hacienda-mind/releases/download/v{tag}"
     archive_url = f"{base}/{asset_name}"
-    checksums_url = f"{base}/basemind_{tag}_checksums.txt"
+    checksums_url = f"{base}/hacienda_mcp_{tag}_checksums.txt"
     return archive_url, ext, asset_name, checksums_url
 
 
@@ -221,12 +221,12 @@ def _extract(archive: Path, ext: str, destination: Path) -> None:
 
 
 def _binary_name() -> str:
-    return "basemind.exe" if platform.system().lower() == "windows" else "basemind"
+    return "hacienda-mcp.exe" if platform.system().lower() == "windows" else "hacienda-mcp"
 
 
 def _cache_dir(version: str) -> Path:
     """Directory holding the extracted binary plus its bundled lib/ tree."""
-    cache_dir = Path.home() / ".cache" / "basemind" / version
+    cache_dir = Path.home() / ".cache" / "hacienda-mcp" / version
     cache_dir.mkdir(parents=True, exist_ok=True)
     return cache_dir
 
@@ -239,7 +239,7 @@ def _prune_stale_versions(keep_version: str) -> None:
     whose name isn't ``keep_version`` is dead weight (this wrapper only runs its own
     version). Best-effort: a dir in use by another process is skipped on error.
     """
-    root = Path.home() / ".cache" / "basemind"
+    root = Path.home() / ".cache" / "hacienda-mcp"
     if not root.is_dir():
         return
     for entry in root.iterdir():
@@ -259,7 +259,7 @@ def ensure_binary():
     """
     from . import __version__
 
-    override = os.getenv("BASEMIND_BINARY")
+    override = os.getenv("HACIENDA_MCP_BINARY")
     if override:
         return override
 
@@ -270,7 +270,7 @@ def ensure_binary():
         return str(binary_path)
 
     archive_url, ext, asset_name, checksums_url = _asset(__version__)
-    print(f"Downloading basemind binary v{__version__}...", file=sys.stderr)
+    print(f"Downloading hacienda-mcp binary v{__version__}...", file=sys.stderr)
 
     lock_path = cache_dir / ".lock"
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -333,8 +333,8 @@ def ensure_binary():
                 pass
 
 
-def run_basemind(args):
-    """Run the basemind binary with the given arguments."""
+def run_hacienda-mcp(args):
+    """Run the hacienda-mcp binary with the given arguments."""
     binary_path = ensure_binary()
 
     try:
@@ -343,4 +343,4 @@ def run_basemind(args):
     except FileNotFoundError as exc:
         raise RuntimeError(f"Binary not found at {binary_path}") from exc
     except Exception as exc:
-        raise RuntimeError(f"Failed to run basemind: {exc}") from exc
+        raise RuntimeError(f"Failed to run hacienda-mcp: {exc}") from exc
