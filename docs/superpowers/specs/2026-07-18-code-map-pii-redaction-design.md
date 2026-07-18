@@ -52,7 +52,7 @@ with a Presidio-style regex layer for patterns the model misses.
    warning **and** mark the scan/response so the operator knows redaction did NOT happen — no
    silent no-op.
 7. **RGPD infrastructure:** add at-rest encryption of `.hacienda-mcp/`, subject-scoped erasure +
-   retention TTL, and telemetry param scrubbing — scoped as infrastructure work in Section 5.
+   retention TTL, and telemetry param scrubbing — scoped as infrastructure work in Section 6.
 
 ## Approach
 
