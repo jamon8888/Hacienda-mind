@@ -1,10 +1,10 @@
 ---
 name: basemind-stats
 description: >-
-  Show a quick dashboard of basemind activity in this session: how many code-map
+  Show a quick dashboard of hacienda-mcp activity in this session: how many code-map
   tool calls have run, the per-tool histogram, and the estimated tokens saved vs
-  a hypothetical grep+Read baseline. Use when the user asks "what has basemind
-  done?", "how much is basemind helping?", "show me basemind stats", or invokes
+  a hypothetical grep+Read baseline. Use when the user asks "what has hacienda-mcp
+  done?", "how much is hacienda-mcp helping?", "show me hacienda-mcp stats", or invokes
   `/bm-stats` directly.
 ---
 
@@ -21,7 +21,7 @@ Call the `telemetry_summary` MCP tool and render the result as a markdown report
 
 ## When to use
 
-The user asks "what has basemind done?", "how much is basemind helping?", "show me basemind
+The user asks "what has hacienda-mcp done?", "how much is hacienda-mcp helping?", "show me hacienda-mcp
 stats", or invokes `/bm-stats` directly. This skill is strictly user-invoked — see Notes.
 
 ## How to run
@@ -32,13 +32,13 @@ stats", or invokes `/bm-stats` directly. This skill is strictly user-invoked —
 2. Render a markdown block in this shape:
 
    ```text
-   ## basemind activity (today)
+   ## hacienda-mcp activity (today)
    - **N tool calls** ; top tools: outline (18), search_symbols (12), …
    - **~K tokens saved** vs grep + Read baseline
    - recent: outline (4ms, 312B), search_symbols (2ms, 180B), …
    ```
 
-3. If `total_calls` is 0, say so plainly ("no basemind activity in the window yet").
+3. If `total_calls` is 0, say so plainly ("no hacienda-mcp activity in the window yet").
    Don't pretend to have data.
 4. **Always disclose the savings model.** Add one sentence at the end:
 

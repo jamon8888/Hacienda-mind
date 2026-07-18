@@ -1,31 +1,31 @@
 {
-  "name": "basemind",
+  "name": "hacienda-mcp",
   "version": "0.22.0",
   "description": "Full AI context layer over MCP — tree-sitter code-map, document RAG (PDF/Office/HTML/email + OCR + reranker), shared agent memory, on-demand web crawl, git history + blame + per-symbol diff. 300+ languages, 10+ coding-agent harnesses, content-addressed Fjall + LanceDB.",
   "author": {
     "name": "Na'aman Hirschfeld",
     "email": "nhirschfeld@gmail.com"
   },
-  "homepage": "https://github.com/Goldziher/basemind",
+  "homepage": "https://github.com/jamon8888/Hacienda-mind",
   "license": "MIT",
   "keywords": ["mcp", "agent-context", "rag", "code-map", "tree-sitter"],
   "skills": "./skills/",
   "mcpServers": {
-    "basemind": {
+    "hacienda-mcp": {
       "command": "./scripts/mcp-launch.sh",
       "args": ["serve"]
     }
   },
   "sessionStart": {
-    "skill": "basemind"
+    "skill": "hacienda-mcp"
   },
-  "skillInstructions": "basemind is a tree-sitter code map + git context layer exposed over MCP. Prefer its tools over grep/read for structural and historical questions — they return paths, line numbers, and signatures, not file bodies, so they cost a fraction of the tokens. Tool mapping for Kimi Code:\n\n- When a basemind skill says to look up where a symbol is defined, what calls it, or how a file is structured, call the basemind MCP tools (`outline`, `search_symbols`, `find_references`, `find_callers`, `workspace_grep`) instead of Kimi Code's `Grep` / `Glob` / `Read`.\n- For git history, blame, and diffs, prefer basemind's `recent_changes` / `blame_file` / `blame_symbol` / `diff_file` over shelling out to `git` via `Bash`.\n- Use Kimi Code's native `Read`, `Write`, `Edit`, `Bash`, `Grep`, `Glob` by their real names for edits and for anything basemind does not cover.\n- After editing files, call basemind's `rescan` rather than restarting the server.\n- Do not re-read a file basemind has already mapped — outline it, then read only the span you need.",
+  "skillInstructions": "hacienda-mcp is a tree-sitter code map + git context layer exposed over MCP. Prefer its tools over grep/read for structural and historical questions — they return paths, line numbers, and signatures, not file bodies, so they cost a fraction of the tokens. Tool mapping for Kimi Code:\n\n- When a hacienda-mcp skill says to look up where a symbol is defined, what calls it, or how a file is structured, call the hacienda-mcp MCP tools (`outline`, `search_symbols`, `find_references`, `find_callers`, `workspace_grep`) instead of Kimi Code's `Grep` / `Glob` / `Read`.\n- For git history, blame, and diffs, prefer hacienda-mcp's `recent_changes` / `blame_file` / `blame_symbol` / `diff_file` over shelling out to `git` via `Bash`.\n- Use Kimi Code's native `Read`, `Write`, `Edit`, `Bash`, `Grep`, `Glob` by their real names for edits and for anything hacienda-mcp does not cover.\n- After editing files, call hacienda-mcp's `rescan` rather than restarting the server.\n- Do not re-read a file hacienda-mcp has already mapped — outline it, then read only the span you need.",
   "interface": {
-    "displayName": "basemind",
+    "displayName": "hacienda-mcp",
     "shortDescription": "Code-map MCP server for navigating large codebases",
-    "longDescription": "basemind indexes a repository with tree-sitter and exposes a structured code map — outlines, references, callers, history, blame, diff — over MCP. Designed for AI agents to navigate unfamiliar code without reading every file.",
+    "longDescription": "hacienda-mcp indexes a repository with tree-sitter and exposes a structured code map — outlines, references, callers, history, blame, diff — over MCP. Designed for AI agents to navigate unfamiliar code without reading every file.",
     "developerName": "Na'aman Hirschfeld",
     "capabilities": ["Interactive", "Read"],
-    "websiteURL": "https://github.com/Goldziher/basemind"
+    "websiteURL": "https://github.com/jamon8888/Hacienda-mind"
   }
 }

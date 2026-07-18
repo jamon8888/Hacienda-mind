@@ -1,6 +1,6 @@
 //! LanceDB-backed vector storage for the document tier and shared agent memory.
 //!
-//! One store per `.basemind/lance/` directory. The dim of the embedding vector
+//! One store per `.hacienda-mcp/lance/` directory. The dim of the embedding vector
 //! is fixed at table-creation time and persisted in a small `meta.json`; reopen
 //! with a different dim triggers a wipe-and-rebuild of the whole lance dir
 //! (mirroring the existing `INDEX_SCHEMA_VER`-mismatch flow in

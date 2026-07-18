@@ -1,6 +1,6 @@
 ---
 name: bm-stats
-description: Show the basemind dashboard — resource footprint (disk + RAM) and activity (tool calls, per-tool histogram, estimated tokens saved). Works with or without the MCP server.
+description: Show the hacienda-mcp dashboard — resource footprint (disk + RAM) and activity (tool calls, per-tool histogram, estimated tokens saved). Works with or without the MCP server.
 argument-hint: [today|1h|24h|all]
 ---
 
@@ -11,27 +11,27 @@ Source-Hash: blake3:960affce8e7d6c8efa32c93ebdd7ca85100e78044731248bd9b44189655e
 Schema-Version: v1
 -->
 
-# bm-stats — basemind dashboard
+# bm-stats — hacienda-mcp dashboard
 
-Show a basemind dashboard with two sections: resource footprint (on-disk size + process RAM) and
+Show a hacienda-mcp dashboard with two sections: resource footprint (on-disk size + process RAM) and
 activity (tool calls, per-tool histogram, estimated tokens saved).
 
 ## When to use
 
-The user asks "how much is basemind helping?", "show me basemind stats", or wants to check disk /
+The user asks "how much is hacienda-mcp helping?", "show me hacienda-mcp stats", or wants to check disk /
 RAM usage.
 
 ## How to use
 
 Invoke `/bm-stats` (default window `today`) or `/bm-stats <today|1h|24h|all>`. Window: $ARGUMENTS
 
-1. **Resource footprint.** MCP tool `cache_stats`, or CLI `basemind cache stats` (add `--json` to
+1. **Resource footprint.** MCP tool `cache_stats`, or CLI `hacienda-mcp cache stats` (add `--json` to
    parse). Report: `total_bytes` (matches `du`), the per-component breakdown (blobs / views /
    git-history / lance / git-cache / telemetry / other), and process RAM (`rss_bytes` +
    `peak_rss_bytes`). If `blob_accounting_ok` is `false`, note that orphan accounting was skipped
    (stale/unreadable index — re-scan to restore it); the sizes are still accurate.
 
-2. **Activity.** MCP tool `telemetry_summary`, or CLI `basemind telemetry --window <today|1h|24h|all>`
+2. **Activity.** MCP tool `telemetry_summary`, or CLI `hacienda-mcp telemetry --window <today|1h|24h|all>`
    (add `--json`). Report call count, the per-tool histogram, and estimated tokens saved for the
    window.
 

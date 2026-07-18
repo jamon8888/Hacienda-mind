@@ -1,6 +1,6 @@
 //! Concurrency smoke tests for the MCP server.
 //!
-//! Exercises concurrent tool calls against a single running `basemind serve`
+//! Exercises concurrent tool calls against a single running `hacienda-mcp serve`
 //! subprocess to catch deadlocks, torn reads, and thread-safety issues that the
 //! sequential `tests/mcp_smoke.rs` cannot reach. Each test spins up its own
 //! throwaway git repo + scan + server so they are fully independent.
@@ -39,7 +39,7 @@ fn git(repo: &Path, args: &[&str]) {
 /// The second commit modifies `alpha()` so that `symbol_history` has at least
 /// one "modified" entry to return.
 fn build_repo() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     git(root, &["init", "-q"]);
@@ -69,17 +69,17 @@ fn build_repo() -> TempDir {
 
 fn run_scan(root: &Path) {
     // These tests call `scan` synchronously from inside a `#[tokio::test]` multi-thread runtime.
-    let mut cfg = basemind::config::default_for_root(root);
+    let mut cfg = hacienda_mcp::config::default_for_root(root);
     cfg.documents.embed = false;
     cfg.code_search.embed = false;
-    let _ = basemind::lang::ensure_grammars().expect("grammar bootstrap");
-    let mut store = basemind::store::Store::open(root, basemind::store::VIEW_WORKING).expect("open store");
-    basemind::scanner::scan(
+    let _ = hacienda_mcp::lang::ensure_grammars().expect("grammar bootstrap");
+    let mut store = hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING).expect("open store");
+    hacienda_mcp::scanner::scan(
         root,
         &mut store,
         &cfg,
-        basemind::scanner::ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::ScanSource::WorkingTree,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .expect("scan");
 }
@@ -105,18 +105,18 @@ fn call_params(name: &'static str, args: Value) -> CallToolRequestParams {
     params
 }
 
-/// Spawn a basemind serve process and complete the rmcp handshake.
+/// Spawn a hacienda-mcp serve process and complete the rmcp handshake.
 ///
 /// Returns the `RunningService`. Callers that need concurrent access should
 /// clone the inner `Peer` via `service.peer().clone()` — `Peer` is `Clone`
 /// and `call_tool` takes `&self`, so many tasks can share a single `Peer`.
 /// To tear down, call `service.cancel().await` (takes ownership).
 async fn spawn_server(root: &Path) -> rmcp::service::RunningService<rmcp::RoleClient, ()> {
-    let bin = env!("CARGO_BIN_EXE_basemind");
+    let bin = env!("CARGO_BIN_EXE_hacienda-mcp");
     let cmd = AsyncCommand::new(bin).configure(|c| {
         c.arg("--root").arg(root).arg("serve").arg("--view").arg("working");
     });
-    let transport = TokioChildProcess::new(cmd).expect("spawn basemind serve");
+    let transport = TokioChildProcess::new(cmd).expect("spawn hacienda-mcp serve");
     ().serve(transport).await.expect("rmcp handshake")
 }
 
@@ -608,7 +608,7 @@ async fn daemon_writer_serve_forwards_rescan_and_sees_fresh_symbols() {
 /// cross-file `refs_by_def` reverse index at scan time.
 #[cfg(all(feature = "comms", feature = "code-intel-js", any(unix, windows)))]
 fn build_ts_crossfile_repo() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     git(root, &["init", "-q"]);
@@ -686,7 +686,7 @@ async fn daemon_writer_serve_resolves_cross_file_callers_through_the_daemon() {
 #[cfg(all(feature = "comms", feature = "code-intel-stack", any(unix, windows)))]
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn daemon_writer_serve_resolves_cross_file_python_callers_through_the_daemon() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     git(root, &["init", "-q"]);

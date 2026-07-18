@@ -1,19 +1,19 @@
 //! Embedded rmux daemon entry point.
 //!
-//! basemind ships its own rmux daemon rather than depending on an external
+//! hacienda-mcp ships its own rmux daemon rather than depending on an external
 //! `rmux` binary. The rmux SDK's `connect_or_start` spawns a daemon by
 //! re-executing a binary with the hidden flag
 //! [`rmux_client::INTERNAL_DAEMON_FLAG`] (`--__internal-daemon`) followed by the
 //! socket path and any config flags. By pointing the SDK at our own executable
 //! (`current_exe()`, set via [`point_sdk_daemon_at`] from [`intercept_from_env`]
 //! at `main` startup) and intercepting that flag at the very top of `main`,
-//! `basemind --__internal-daemon <socket> [config…]` BECOMES the daemon.
+//! `hacienda-mcp --__internal-daemon <socket> [config…]` BECOMES the daemon.
 //!
 //! [`run_internal_daemon`] mirrors rmux's own `run_hidden_daemon`
 //! (`/tmp/rmux` reference clone, `src/main.rs`): parse the socket path, build a
 //! [`rmux_server::DaemonConfig`] with config-file loading disabled and no web
 //! frontend, then bind + wait on a dedicated tokio runtime. The trailing config
-//! flags the SDK passes are intentionally ignored — basemind always runs the
+//! flags the SDK passes are intentionally ignored — hacienda-mcp always runs the
 //! daemon with `ConfigFileSelection::Disabled` and no web port.
 
 use std::ffi::OsString;
@@ -23,7 +23,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
 
-/// Inspect the process arguments and, when basemind was re-execed as the
+/// Inspect the process arguments and, when hacienda-mcp was re-execed as the
 /// embedded rmux daemon, run the daemon and return its result.
 ///
 /// The rmux SDK starts a daemon by re-execing the daemon binary with the hidden
@@ -33,7 +33,7 @@ use anyhow::{Context, Result, bail};
 /// returns `None` and the caller proceeds with normal CLI parsing.
 ///
 /// Called at the very top of `main`, before clap parses, so the daemon process
-/// never sees basemind's CLI surface.
+/// never sees hacienda-mcp's CLI surface.
 #[must_use]
 pub fn intercept_from_env() -> Option<Result<()>> {
     let mut args = std::env::args_os();
@@ -48,7 +48,7 @@ pub fn intercept_from_env() -> Option<Result<()>> {
 }
 
 /// Set the rmux SDK's daemon-binary discovery env var to `current_exe()`, so
-/// `connect_or_start` re-execs basemind as the embedded daemon. Best-effort: if
+/// `connect_or_start` re-execs hacienda-mcp as the embedded daemon. Best-effort: if
 /// the executable path can't be resolved the variable is left unset and the
 /// first `shell_spawn` surfaces a clear "could not start daemon" error instead.
 fn point_sdk_daemon_at_self() {
@@ -62,10 +62,10 @@ fn point_sdk_daemon_at_self() {
 /// Point the rmux SDK's daemon-binary discovery at `binary`, so `connect_or_start`
 /// re-execs `binary --__internal-daemon …` as the daemon.
 ///
-/// Centralizes the single `set_var` basemind performs for the shells feature.
+/// Centralizes the single `set_var` hacienda-mcp performs for the shells feature.
 /// Production calls it via [`intercept_from_env`] at `main` startup; integration
-/// tests (which never run basemind's `main`) call it to point the SDK at the
-/// separately built `basemind` binary.
+/// tests (which never run hacienda-mcp's `main`) call it to point the SDK at the
+/// separately built `hacienda-mcp` binary.
 ///
 /// # Safety
 /// `std::env::set_var` is not thread-safe under the 2024 edition. The caller must
@@ -78,12 +78,12 @@ pub unsafe fn point_sdk_daemon_at(binary: &std::path::Path) {
     }
 }
 
-/// Run basemind as the embedded rmux daemon and block until shutdown.
+/// Run hacienda-mcp as the embedded rmux daemon and block until shutdown.
 ///
 /// `args` are the arguments that followed [`rmux_client::INTERNAL_DAEMON_FLAG`]
 /// on the command line: the first non-`--` argument is the Unix socket path the
 /// daemon must bind, and any subsequent `--…` flags are config selectors the SDK
-/// forwards. basemind ignores those trailing flags and always runs with config
+/// forwards. hacienda-mcp ignores those trailing flags and always runs with config
 /// loading disabled and no web frontend.
 ///
 /// This builds its own multi-thread tokio runtime (the daemon owns the process
@@ -117,7 +117,7 @@ where
 ///
 /// Matches rmux's own parser: the first argument that does NOT start with `--`
 /// is the socket path. Everything else (config-file selectors, web flags) is a
-/// `--…` flag basemind deliberately drops. Returns `None` when no positional
+/// `--…` flag hacienda-mcp deliberately drops. Returns `None` when no positional
 /// socket path is present.
 fn parse_socket_path<I>(args: I) -> Option<PathBuf>
 where
@@ -133,10 +133,10 @@ where
 
 /// Reject a daemon socket path that is not an absolute, traversal-free path.
 ///
-/// The path arrives as a process argument when basemind is re-execed as the
+/// The path arrives as a process argument when hacienda-mcp is re-execed as the
 /// embedded daemon. Although the SDK only ever passes a basemind-owned absolute
 /// path, validating defends against argument confusion (e.g. an external caller
-/// invoking `basemind --__internal-daemon ../evil`): a relative path or one
+/// invoking `hacienda-mcp --__internal-daemon ../evil`): a relative path or one
 /// containing a `..` component is refused so the daemon can only bind where it
 /// was legitimately told to.
 pub(crate) fn validate_socket_path(path: &Path) -> Result<()> {

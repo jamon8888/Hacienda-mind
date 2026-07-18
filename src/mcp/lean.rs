@@ -1,7 +1,7 @@
 //! Opt-in "lean" MCP tool surface (W5 slice 3).
 //!
-//! basemind normally advertises its full ~45-tool surface; an agent pays for every tool's
-//! JSON schema on each session. When `BASEMIND_MCP_LEAN` is set to a truthy value, the server
+//! hacienda-mcp normally advertises its full ~45-tool surface; an agent pays for every tool's
+//! JSON schema on each session. When `HACIENDA_MCP_MCP_LEAN` is set to a truthy value, the server
 //! instead advertises just three wrapper tools and defers the real schemas until requested:
 //!
 //! * `list_tools` — a compressed `name + one-line description` listing of every real tool.
@@ -27,17 +27,17 @@ use serde_json::{Value, json};
 
 use super::BasemindServer;
 
-/// Environment variable toggling the lean three-tool surface. Mirrors the `BASEMIND_GUARD`
+/// Environment variable toggling the lean three-tool surface. Mirrors the `HACIENDA_MCP_GUARD`
 /// opt-in convention: unset / `0` / `off` / `false` / empty = default full surface; any other
 /// value = lean surface.
-const LEAN_ENV: &str = "BASEMIND_MCP_LEAN";
+const LEAN_ENV: &str = "HACIENDA_MCP_MCP_LEAN";
 
 /// The three wrapper tool names exposed in lean mode.
 const TOOL_LIST: &str = "list_tools";
 const TOOL_GET_SCHEMA: &str = "get_tool_schema";
 const TOOL_INVOKE: &str = "invoke_tool";
 
-/// Returns `true` when the lean surface is enabled via `BASEMIND_MCP_LEAN`.
+/// Returns `true` when the lean surface is enabled via `HACIENDA_MCP_MCP_LEAN`.
 ///
 /// Read on every `list_tools` / `call_tool` so the mode is decided per process from the
 /// environment the server was launched with; the value does not change mid-session in practice
@@ -62,7 +62,7 @@ fn lean_tool_definitions() -> Vec<Tool> {
     vec![
         Tool::new(
             TOOL_LIST,
-            "Lean-mode discovery: list every real basemind tool as a compressed \
+            "Lean-mode discovery: list every real hacienda-mcp tool as a compressed \
              name + one-line description. Call get_tool_schema to fetch a tool's full input \
              schema, then invoke_tool to run it.",
             wrapper_schema(json!({
@@ -75,13 +75,13 @@ fn lean_tool_definitions() -> Vec<Tool> {
         Tool::new(
             TOOL_GET_SCHEMA,
             "Lean-mode schema fetch: return the full input JSON schema (and description) for \
-             one real basemind tool by name.",
+             one real hacienda-mcp tool by name.",
             wrapper_schema(json!({
                 "type": "object",
                 "properties": {
                     "tool_name": {
                         "type": "string",
-                        "description": "Name of the real basemind tool to describe."
+                        "description": "Name of the real hacienda-mcp tool to describe."
                     }
                 },
                 "required": ["tool_name"],
@@ -91,7 +91,7 @@ fn lean_tool_definitions() -> Vec<Tool> {
         .annotate(ToolAnnotations::new().read_only(true).open_world(false)),
         Tool::new(
             TOOL_INVOKE,
-            "Lean-mode dispatch: run a real basemind tool. Pass its name and the arguments \
+            "Lean-mode dispatch: run a real hacienda-mcp tool. Pass its name and the arguments \
              object it expects (the shape get_tool_schema returns); the result is returned \
              verbatim.",
             wrapper_schema(json!({
@@ -99,7 +99,7 @@ fn lean_tool_definitions() -> Vec<Tool> {
                 "properties": {
                     "tool_name": {
                         "type": "string",
-                        "description": "Name of the real basemind tool to invoke."
+                        "description": "Name of the real hacienda-mcp tool to invoke."
                     },
                     "tool_input": {
                         "type": "object",
@@ -142,7 +142,7 @@ fn required_str(args: Option<&JsonObject>, field: &str) -> Result<String, McpErr
 fn reject_wrapper_target(tool_name: &str) -> Result<(), McpError> {
     if matches!(tool_name, TOOL_LIST | TOOL_GET_SCHEMA | TOOL_INVOKE) {
         return Err(McpError::invalid_params(
-            format!("`{tool_name}` is a lean wrapper tool, not a real basemind tool"),
+            format!("`{tool_name}` is a lean wrapper tool, not a real hacienda-mcp tool"),
             None,
         ));
     }

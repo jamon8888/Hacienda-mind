@@ -1,9 +1,9 @@
-//! Cache garbage-collection + cleanup for the `.basemind/` directory.
+//! Cache garbage-collection + cleanup for the `.hacienda-mcp/` directory.
 //!
 //! Two responsibilities:
 //!
 //! 1. **Mark-and-sweep GC of the shared blob store** ([`run_gc`]). Blobs under
-//!    `.basemind/blobs/` are content-addressed and shared across every view; a blob is
+//!    `.hacienda-mcp/blobs/` are content-addressed and shared across every view; a blob is
 //!    *live* iff some view's `index.msgpack` still references its content hash. Re-scans
 //!    and branch switches leave behind blobs no view points at anymore — this reclaims them.
 //! 2. **Whole-component cleanup** ([`clear_component`]) and **introspection**
@@ -43,7 +43,7 @@ const BLOB_SUFFIXES: [&str; 4] = [".fm.msgpack", ".doc.msgpack", ".chunk.msgpack
 /// whether their stem is still referenced (the live `.fm` blob shares that stem).
 const LEGACY_BLOB_SUFFIXES: [&str; 2] = [".l1.msgpack", ".l2.msgpack"];
 
-/// Telemetry sink filename under `.basemind/`. Mirrors
+/// Telemetry sink filename under `.hacienda-mcp/`. Mirrors
 /// [`crate::mcp::telemetry::TELEMETRY_FILENAME`]; duplicated here to avoid a dependency on
 /// the MCP module from the cleanup layer.
 const TELEMETRY_FILENAME: &str = "telemetry.jsonl";
@@ -70,7 +70,7 @@ pub enum GcError {
     Join(String),
 }
 
-/// A clearable component of the `.basemind/` cache directory.
+/// A clearable component of the `.hacienda-mcp/` cache directory.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CacheComponent {
     /// Content-addressed extraction blobs under `blobs/`.
@@ -83,7 +83,7 @@ pub enum CacheComponent {
     GitCache,
     /// MCP per-call telemetry log (`telemetry.jsonl`).
     Telemetry,
-    /// Everything: the whole `.basemind/` directory.
+    /// Everything: the whole `.hacienda-mcp/` directory.
     All,
 }
 
@@ -132,7 +132,7 @@ pub struct GcReport {
     pub bytes_freed: u64,
 }
 
-/// Per-component byte sizes + blob accounting for the `.basemind/` cache.
+/// Per-component byte sizes + blob accounting for the `.hacienda-mcp/` cache.
 #[derive(Debug, Clone, Serialize)]
 pub struct CacheStats {
     /// Recursive byte size of `blobs/`.
@@ -155,12 +155,12 @@ pub struct CacheStats {
     /// deep-history repo) was omitted, so the reported total undercounted `du` — the bug this
     /// field fixes.
     pub git_history_bytes: u64,
-    /// Recursive byte size of the **entire** `.basemind/` tree. This is the ground-truth total
+    /// Recursive byte size of the **entire** `.hacienda-mcp/` tree. This is the ground-truth total
     /// (it matches `du`); the per-component fields are a breakdown of it, and any bytes not
     /// attributed to a named component land in [`Self::other_bytes`]. Computed from the whole
     /// tree so a future uncounted directory can never silently shrink the reported footprint.
     pub total_bytes: u64,
-    /// Bytes under `.basemind/` not attributed to any named component (`total_bytes` minus the
+    /// Bytes under `.hacienda-mcp/` not attributed to any named component (`total_bytes` minus the
     /// sum of the component fields): the legacy top-level `index.msgpack`, lock/id/config
     /// sidecars, `.gitignore`, and anything a future version adds before it gets its own field.
     pub other_bytes: u64,
@@ -176,7 +176,7 @@ pub struct CacheStats {
     /// Per-view indexed file count, keyed by view name. Empty entries are still listed.
     pub per_view_file_count: Vec<(String, usize)>,
     /// Current resident set size (physical RAM) of the process answering this call, in bytes.
-    /// `None` when unreadable on this platform. Inside `basemind serve` this is the live MCP
+    /// `None` when unreadable on this platform. Inside `hacienda-mcp serve` this is the live MCP
     /// server; from the one-shot CLI it is that transient process. See [`crate::sysres`].
     pub rss_bytes: Option<u64>,
     /// Peak resident set size of the reporting process over its lifetime, in bytes; `None` when
@@ -201,9 +201,9 @@ pub struct CacheStats {
 /// referenced — orphaning the entire store. Refusing to sweep when the live set might be
 /// incomplete is the safe failure mode: the caller surfaces the error and the operator can
 /// re-scan to rebuild the offending view's index before retrying GC.
-pub fn collect_referenced_hashes(basemind_dir: &Path) -> Result<AHashSet<String>, GcError> {
+pub fn collect_referenced_hashes(hacienda_mcp_dir: &Path) -> Result<AHashSet<String>, GcError> {
     let mut referenced = AHashSet::new();
-    let views_dir = basemind_dir.join(VIEWS_DIR);
+    let views_dir = hacienda_mcp_dir.join(VIEWS_DIR);
     if !views_dir.exists() {
         return Ok(referenced);
     }
@@ -362,10 +362,10 @@ fn gc_global_blobs_in(workspaces_dir: &Path, blobs_dir: &Path) -> Result<GcRepor
 /// enumerate ONE workspace's references — never the full live set across the machine. A real sweep
 /// from here would reap blobs other workspaces still need, so this is a non-destructive report
 /// (`removed == 0`) that still inspects the store (`scanned` = current blob count). Cross-workspace
-/// reference-counted GC is the daemon's job (Track E). The `basemind_dir` is taken under the
+/// reference-counted GC is the daemon's job (Track E). The `hacienda_mcp_dir` is taken under the
 /// store's advisory lock so the report is consistent against a concurrent scan of that workspace.
-pub fn run_gc(basemind_dir: &Path) -> Result<GcReport, GcError> {
-    let _lock = acquire_lock(basemind_dir)?;
+pub fn run_gc(hacienda_mcp_dir: &Path) -> Result<GcReport, GcError> {
+    let _lock = acquire_lock(hacienda_mcp_dir)?;
     gc_report_only()
 }
 
@@ -398,22 +398,22 @@ pub fn gc_report_only() -> Result<GcReport, GcError> {
 /// exist; mirrors the lance dir-wipe pattern for the (feature-gated) vector store.
 ///
 /// `Blobs` clears the machine-global blob store (shared by every workspace); all other components
-/// are per-workspace under `basemind_dir`.
-pub fn clear_component(basemind_dir: &Path, component: CacheComponent) -> Result<(), GcError> {
-    clear_component_in(basemind_dir, component, &global_blobs_dir())
+/// are per-workspace under `hacienda_mcp_dir`.
+pub fn clear_component(hacienda_mcp_dir: &Path, component: CacheComponent) -> Result<(), GcError> {
+    clear_component_in(hacienda_mcp_dir, component, &global_blobs_dir())
 }
 
 /// [`clear_component`] against an explicit blob directory (used for the `Blobs` branch). Production
 /// passes the global store; unit tests pass a per-test temp dir so a `Blobs` clear never wipes the
 /// machine-global store nor races sibling tests that rely on content-addressed blobs surviving.
-fn clear_component_in(basemind_dir: &Path, component: CacheComponent, blobs_dir: &Path) -> Result<(), GcError> {
+fn clear_component_in(hacienda_mcp_dir: &Path, component: CacheComponent, blobs_dir: &Path) -> Result<(), GcError> {
     match component {
         CacheComponent::Blobs => wipe_blobs_in(blobs_dir)?,
-        CacheComponent::Views => remove_dir_if_exists(&basemind_dir.join(VIEWS_DIR))?,
-        CacheComponent::Lance => clear_lance(basemind_dir)?,
-        CacheComponent::GitCache => remove_dir_if_exists(&basemind_dir.join(crate::git_cache::GIT_CACHE_DIR))?,
-        CacheComponent::Telemetry => remove_file_if_exists(&basemind_dir.join(TELEMETRY_FILENAME))?,
-        CacheComponent::All => remove_dir_if_exists(basemind_dir)?,
+        CacheComponent::Views => remove_dir_if_exists(&hacienda_mcp_dir.join(VIEWS_DIR))?,
+        CacheComponent::Lance => clear_lance(hacienda_mcp_dir)?,
+        CacheComponent::GitCache => remove_dir_if_exists(&hacienda_mcp_dir.join(crate::git_cache::GIT_CACHE_DIR))?,
+        CacheComponent::Telemetry => remove_file_if_exists(&hacienda_mcp_dir.join(TELEMETRY_FILENAME))?,
+        CacheComponent::All => remove_dir_if_exists(hacienda_mcp_dir)?,
     }
     Ok(())
 }
@@ -429,30 +429,30 @@ fn clear_component_in(basemind_dir: &Path, component: CacheComponent, blobs_dir:
 /// `name` is validated to be a single path component (no separators, no `..`) so a caller
 /// can never escape the `views/` directory. Returns `Ok(())` even when the view does not
 /// exist (idempotent), but errors on an invalid name.
-pub fn clear_single_view(basemind_dir: &Path, name: &str) -> Result<(), GcError> {
+pub fn clear_single_view(hacienda_mcp_dir: &Path, name: &str) -> Result<(), GcError> {
     if name.is_empty() || name.contains('/') || name.contains('\\') || name == "." || name == ".." {
         return Err(GcError::Io {
-            path: basemind_dir.join(VIEWS_DIR).join(name),
+            path: hacienda_mcp_dir.join(VIEWS_DIR).join(name),
             source: std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
                 format!("invalid view name {name:?}: must be a single path component"),
             ),
         });
     }
-    remove_dir_if_exists(&basemind_dir.join(VIEWS_DIR).join(name))
+    remove_dir_if_exists(&hacienda_mcp_dir.join(VIEWS_DIR).join(name))
 }
 
 /// Gather per-component sizes and blob accounting without mutating anything. The orphan
 /// count reuses [`collect_referenced_hashes`] but never deletes.
-pub fn cache_stats(basemind_dir: &Path) -> Result<CacheStats, GcError> {
-    cache_stats_in(basemind_dir, &global_blobs_dir())
+pub fn cache_stats(hacienda_mcp_dir: &Path) -> Result<CacheStats, GcError> {
+    cache_stats_in(hacienda_mcp_dir, &global_blobs_dir())
 }
 
 /// [`cache_stats`] against an explicit blob directory. Production passes the global store; unit
 /// tests pass a per-test temp dir so they neither read the machine-global blob store nor race
 /// each other on it.
-fn cache_stats_in(basemind_dir: &Path, blobs_dir: &Path) -> Result<CacheStats, GcError> {
-    let referenced = match collect_referenced_hashes(basemind_dir) {
+fn cache_stats_in(hacienda_mcp_dir: &Path, blobs_dir: &Path) -> Result<CacheStats, GcError> {
+    let referenced = match collect_referenced_hashes(hacienda_mcp_dir) {
         Ok(set) => Some(set),
         Err(e) => {
             tracing::warn!(
@@ -490,16 +490,16 @@ fn cache_stats_in(basemind_dir: &Path, blobs_dir: &Path) -> Result<CacheStats, G
     }
 
     let blobs_bytes = dir_size(blobs_dir)?;
-    let views_bytes = dir_size(&basemind_dir.join(VIEWS_DIR))?;
-    let lance_bytes = dir_size(&basemind_dir.join("lance"))?;
-    let git_cache_bytes = dir_size(&basemind_dir.join(crate::git_cache::GIT_CACHE_DIR))?;
-    let telemetry_bytes = file_size(&basemind_dir.join(TELEMETRY_FILENAME))?;
-    let git_history_bytes = dir_size(&basemind_dir.join(crate::git_history::GIT_HISTORY_DIR))?;
+    let views_bytes = dir_size(&hacienda_mcp_dir.join(VIEWS_DIR))?;
+    let lance_bytes = dir_size(&hacienda_mcp_dir.join("lance"))?;
+    let git_cache_bytes = dir_size(&hacienda_mcp_dir.join(crate::git_cache::GIT_CACHE_DIR))?;
+    let telemetry_bytes = file_size(&hacienda_mcp_dir.join(TELEMETRY_FILENAME))?;
+    let git_history_bytes = dir_size(&hacienda_mcp_dir.join(crate::git_history::GIT_HISTORY_DIR))?;
 
     // Blobs live in the machine-global store now, outside this workspace's tree — so the total is
     // the per-workspace tree PLUS the global blob store. `other_bytes` then captures anything under
     // the workspace dir not attributed to a named component (lock/id sidecars, legacy index, …).
-    let total_bytes = dir_size(basemind_dir)? + blobs_bytes;
+    let total_bytes = dir_size(hacienda_mcp_dir)? + blobs_bytes;
     let accounted = blobs_bytes + views_bytes + lance_bytes + git_cache_bytes + telemetry_bytes + git_history_bytes;
     let other_bytes = total_bytes.saturating_sub(accounted);
 
@@ -517,7 +517,7 @@ fn cache_stats_in(basemind_dir: &Path, blobs_dir: &Path) -> Result<CacheStats, G
         blob_count,
         orphan_blob_count,
         blob_accounting_ok,
-        per_view_file_count: per_view_file_count(basemind_dir)?,
+        per_view_file_count: per_view_file_count(hacienda_mcp_dir)?,
         rss_bytes: rss.current_bytes,
         peak_rss_bytes: rss.peak_bytes,
     })
@@ -531,9 +531,9 @@ fn blob_stem(file_name: &str) -> Option<&str> {
 
 /// Per-view indexed file count. A view whose index is missing or unreadable contributes a
 /// `0` so the operator still sees the view listed.
-fn per_view_file_count(basemind_dir: &Path) -> Result<Vec<(String, usize)>, GcError> {
+fn per_view_file_count(hacienda_mcp_dir: &Path) -> Result<Vec<(String, usize)>, GcError> {
     let mut out = Vec::new();
-    let views_dir = basemind_dir.join(VIEWS_DIR);
+    let views_dir = hacienda_mcp_dir.join(VIEWS_DIR);
     if !views_dir.exists() {
         return Ok(out);
     }
@@ -554,17 +554,17 @@ fn per_view_file_count(basemind_dir: &Path) -> Result<Vec<(String, usize)>, GcEr
     Ok(out)
 }
 
-/// Wipe every file/dir under `.basemind/lance/`, keeping the dir itself — mirrors the
+/// Wipe every file/dir under `.hacienda-mcp/lance/`, keeping the dir itself — mirrors the
 /// `wipe_on_mismatch` pattern in `src/lance/mod.rs`. Feature-gated: the lance store only
 /// exists in intelligence builds, so on a code-only build this is a no-op.
 #[cfg(feature = "intelligence")]
-fn clear_lance(basemind_dir: &Path) -> Result<(), GcError> {
-    remove_dir_if_exists(&basemind_dir.join(crate::store::LANCE_DIR))
+fn clear_lance(hacienda_mcp_dir: &Path) -> Result<(), GcError> {
+    remove_dir_if_exists(&hacienda_mcp_dir.join(crate::store::LANCE_DIR))
 }
 
 /// No-op on builds without the vector store compiled in.
 #[cfg(not(feature = "intelligence"))]
-fn clear_lance(_basemind_dir: &Path) -> Result<(), GcError> {
+fn clear_lance(_hacienda_mcp_dir: &Path) -> Result<(), GcError> {
     Ok(())
 }
 
@@ -600,7 +600,7 @@ fn read_dir(dir: &Path) -> Result<std::fs::ReadDir, GcError> {
 /// Uses the allocated block count (`blocks × 512`) on Unix rather than the apparent length
 /// (`metadata().len()`). This matters because Fjall keeps **sparse** journal files: their apparent
 /// length can be tens of MB while only a few hundred KB of blocks are actually allocated. Summing
-/// apparent lengths over-reported the footprint many-fold (e.g. a 9.6 MB `.basemind/` read as
+/// apparent lengths over-reported the footprint many-fold (e.g. a 9.6 MB `.hacienda-mcp/` read as
 /// ~132 MB); block size is the ground truth that reconciles to `du`. On non-Unix we fall back to
 /// the apparent length (no portable block API).
 #[cfg(unix)]
@@ -664,13 +664,13 @@ mod tests {
     /// pointing only at the referenced stem.
     ///
     /// Since the blob store went machine-global, these tests keep their blobs in a *per-fixture*
-    /// temp `blobs/` dir under `basemind_dir` and drive GC / stats through the `gc_blobs_in` /
+    /// temp `blobs/` dir under `hacienda_mcp_dir` and drive GC / stats through the `gc_blobs_in` /
     /// `cache_stats_in` seams — never the real global store. That keeps each test hermetic and
     /// parallel-safe (colliding hex stems across tests can't clobber one another).
     struct Fixture {
         _tmp: tempfile::TempDir,
-        basemind_dir: PathBuf,
-        /// Per-fixture blob directory (`basemind_dir/blobs`), passed to the `_in` seams.
+        hacienda_mcp_dir: PathBuf,
+        /// Per-fixture blob directory (`hacienda_mcp_dir/blobs`), passed to the `_in` seams.
         blobs_dir: PathBuf,
         referenced_stem: String,
         orphan_stem: String,
@@ -679,9 +679,9 @@ mod tests {
 
     fn build_fixture() -> Fixture {
         let tmp = tempfile::tempdir().expect("tempdir");
-        let basemind_dir = tmp.path().join(".basemind");
-        let blobs = basemind_dir.join(BLOBS_DIR);
-        let working = basemind_dir.join(VIEWS_DIR).join("working");
+        let hacienda_mcp_dir = tmp.path().join(".hacienda-mcp");
+        let blobs = hacienda_mcp_dir.join(BLOBS_DIR);
+        let working = hacienda_mcp_dir.join(VIEWS_DIR).join("working");
         fs::create_dir_all(&blobs).expect("mk blobs");
         fs::create_dir_all(&working).expect("mk view");
 
@@ -708,7 +708,7 @@ mod tests {
 
         Fixture {
             _tmp: tmp,
-            basemind_dir,
+            hacienda_mcp_dir,
             blobs_dir: blobs,
             referenced_stem,
             orphan_stem,
@@ -720,15 +720,15 @@ mod tests {
     fn cache_stats_counts_git_history_and_reconciles_total() {
         let fx = build_fixture();
 
-        let gh_dir = fx.basemind_dir.join(crate::git_history::GIT_HISTORY_DIR);
+        let gh_dir = fx.hacienda_mcp_dir.join(crate::git_history::GIT_HISTORY_DIR);
         fs::create_dir_all(&gh_dir).expect("mk git-history");
         let gh_payload = b"git-history-index-bytes-XXXXXXXX";
         fs::write(gh_dir.join("commits.fjall"), gh_payload).expect("write gh blob");
 
         let stray = b"lockmeta";
-        fs::write(fx.basemind_dir.join(".lock.meta"), stray).expect("write stray");
+        fs::write(fx.hacienda_mcp_dir.join(".lock.meta"), stray).expect("write stray");
 
-        let stats = cache_stats_in(&fx.basemind_dir, &fx.blobs_dir).expect("cache_stats");
+        let stats = cache_stats_in(&fx.hacienda_mcp_dir, &fx.blobs_dir).expect("cache_stats");
 
         assert!(
             stats.git_history_bytes >= gh_payload.len() as u64,
@@ -747,7 +747,7 @@ mod tests {
         // construction — assert the definition directly rather than against a bare tree walk.
         assert_eq!(
             stats.total_bytes,
-            dir_size(&fx.basemind_dir).expect("dir_size") + stats.blobs_bytes,
+            dir_size(&fx.hacienda_mcp_dir).expect("dir_size") + stats.blobs_bytes,
             "total_bytes is the workspace tree plus the global blob store"
         );
         let component_sum = stats.blobs_bytes
@@ -766,15 +766,15 @@ mod tests {
     #[test]
     fn cache_stats_degrades_when_index_unreadable() {
         let fx = build_fixture();
-        let working = fx.basemind_dir.join(VIEWS_DIR).join("working");
+        let working = fx.hacienda_mcp_dir.join(VIEWS_DIR).join("working");
         fs::write(working.join(INDEX_FILE), b"\xff\xff not-msgpack \x00").expect("corrupt index");
 
         assert!(
-            collect_referenced_hashes(&fx.basemind_dir).is_err(),
+            collect_referenced_hashes(&fx.hacienda_mcp_dir).is_err(),
             "an unreadable index must fail the delete-path safety check"
         );
 
-        let stats = cache_stats_in(&fx.basemind_dir, &fx.blobs_dir).expect("cache_stats must not hard-fail");
+        let stats = cache_stats_in(&fx.hacienda_mcp_dir, &fx.blobs_dir).expect("cache_stats must not hard-fail");
         assert!(
             !stats.blob_accounting_ok,
             "orphan accounting must be flagged unavailable"
@@ -787,7 +787,7 @@ mod tests {
         assert!(stats.total_bytes > 0, "sizes are still reported");
         assert_eq!(
             stats.total_bytes,
-            dir_size(&fx.basemind_dir).expect("dir_size") + stats.blobs_bytes,
+            dir_size(&fx.hacienda_mcp_dir).expect("dir_size") + stats.blobs_bytes,
             "total still reconciles to the workspace tree plus the blob store"
         );
     }
@@ -795,7 +795,7 @@ mod tests {
     #[test]
     fn should_collect_only_referenced_stem() {
         let fx = build_fixture();
-        let referenced = collect_referenced_hashes(&fx.basemind_dir).expect("collect");
+        let referenced = collect_referenced_hashes(&fx.hacienda_mcp_dir).expect("collect");
         assert_eq!(referenced.len(), 1, "exactly one live stem");
         assert!(referenced.contains(&fx.referenced_stem), "live stem present");
         assert!(
@@ -807,7 +807,7 @@ mod tests {
     #[test]
     fn should_remove_only_orphan_blob() {
         let fx = build_fixture();
-        let referenced = collect_referenced_hashes(&fx.basemind_dir).expect("collect");
+        let referenced = collect_referenced_hashes(&fx.hacienda_mcp_dir).expect("collect");
         let report = gc_blobs_in(&fx.blobs_dir, &referenced).expect("gc");
 
         assert_eq!(report.scanned, 2, "one ref blob + one orphan inspected");
@@ -817,7 +817,7 @@ mod tests {
             "freed bytes equal the orphan's exact length"
         );
 
-        let blobs = fx.basemind_dir.join(BLOBS_DIR);
+        let blobs = fx.hacienda_mcp_dir.join(BLOBS_DIR);
         assert!(
             blobs.join(format!("{}.fm.msgpack", fx.referenced_stem)).exists(),
             "referenced filemap survives"
@@ -831,11 +831,11 @@ mod tests {
     #[test]
     fn should_reclaim_legacy_split_tier_blobs_even_when_stem_is_referenced() {
         let fx = build_fixture();
-        let blobs = fx.basemind_dir.join(BLOBS_DIR);
+        let blobs = fx.hacienda_mcp_dir.join(BLOBS_DIR);
         fs::write(blobs.join(format!("{}.l1.msgpack", fx.referenced_stem)), b"legacy-l1").expect("write legacy l1");
         fs::write(blobs.join(format!("{}.l2.msgpack", fx.referenced_stem)), b"legacy-l2").expect("write legacy l2");
 
-        let referenced = collect_referenced_hashes(&fx.basemind_dir).expect("collect");
+        let referenced = collect_referenced_hashes(&fx.hacienda_mcp_dir).expect("collect");
         assert!(
             referenced.contains(&fx.referenced_stem),
             "stem is referenced by the live index"
@@ -861,7 +861,7 @@ mod tests {
     fn should_report_one_orphan_before_gc_and_zero_after() {
         let fx = build_fixture();
 
-        let before = cache_stats_in(&fx.basemind_dir, &fx.blobs_dir).expect("stats before");
+        let before = cache_stats_in(&fx.hacienda_mcp_dir, &fx.blobs_dir).expect("stats before");
         assert_eq!(before.blob_count, 2, "two blob files on disk");
         assert_eq!(before.orphan_blob_count, 1, "one orphan before GC");
         assert_eq!(
@@ -873,10 +873,10 @@ mod tests {
         // Mirror `run_gc`'s mark+sweep against the per-fixture blob dir (the global-store equivalent
         // `run_gc` takes the store lock and sweeps `global_blobs_dir()`, which these hermetic tests
         // deliberately avoid).
-        let referenced = collect_referenced_hashes(&fx.basemind_dir).expect("collect");
+        let referenced = collect_referenced_hashes(&fx.hacienda_mcp_dir).expect("collect");
         gc_blobs_in(&fx.blobs_dir, &referenced).expect("gc");
 
-        let after = cache_stats_in(&fx.basemind_dir, &fx.blobs_dir).expect("stats after");
+        let after = cache_stats_in(&fx.hacienda_mcp_dir, &fx.blobs_dir).expect("stats after");
         assert_eq!(after.blob_count, 1, "orphan reaped");
         assert_eq!(after.orphan_blob_count, 0, "no orphans remain");
     }
@@ -884,9 +884,9 @@ mod tests {
     #[test]
     fn should_clear_only_blobs_component() {
         let fx = build_fixture();
-        fs::write(fx.basemind_dir.join(TELEMETRY_FILENAME), b"{}\n").expect("telemetry");
+        fs::write(fx.hacienda_mcp_dir.join(TELEMETRY_FILENAME), b"{}\n").expect("telemetry");
 
-        clear_component_in(&fx.basemind_dir, CacheComponent::Blobs, &fx.blobs_dir).expect("clear blobs");
+        clear_component_in(&fx.hacienda_mcp_dir, CacheComponent::Blobs, &fx.blobs_dir).expect("clear blobs");
 
         let blobs = &fx.blobs_dir;
         let remaining: Vec<_> = fs::read_dir(blobs)
@@ -897,7 +897,7 @@ mod tests {
         assert!(blobs.exists(), "blobs dir itself preserved");
 
         assert!(
-            fx.basemind_dir
+            fx.hacienda_mcp_dir
                 .join(VIEWS_DIR)
                 .join("working")
                 .join(INDEX_FILE)
@@ -905,18 +905,18 @@ mod tests {
             "view index untouched by Blobs clear"
         );
         assert!(
-            fx.basemind_dir.join(TELEMETRY_FILENAME).exists(),
+            fx.hacienda_mcp_dir.join(TELEMETRY_FILENAME).exists(),
             "telemetry untouched by Blobs clear"
         );
     }
 
     /// Build a fixture with two scanned views (`working` + `rev-abc`), each with a real
-    /// `index.msgpack`, sharing the blob store. Returns the basemind dir.
+    /// `index.msgpack`, sharing the blob store. Returns the hacienda-mcp dir.
     fn build_two_view_fixture() -> (tempfile::TempDir, PathBuf) {
         let tmp = tempfile::tempdir().expect("tempdir");
-        let basemind_dir = tmp.path().join(".basemind");
+        let hacienda_mcp_dir = tmp.path().join(".hacienda-mcp");
         for view in ["working", "rev-abc"] {
-            let view_dir = basemind_dir.join(VIEWS_DIR).join(view);
+            let view_dir = hacienda_mcp_dir.join(VIEWS_DIR).join(view);
             fs::create_dir_all(&view_dir).expect("mk view");
             let mut index = Index::empty();
             index.files.insert(
@@ -931,43 +931,43 @@ mod tests {
             let bytes = rmp_serde::to_vec_named(&index).expect("encode");
             fs::write(view_dir.join(INDEX_FILE), bytes).expect("write index");
         }
-        (tmp, basemind_dir)
+        (tmp, hacienda_mcp_dir)
     }
 
     #[test]
     fn should_clear_single_view_and_leave_others_intact() {
-        let (_tmp, basemind_dir) = build_two_view_fixture();
+        let (_tmp, hacienda_mcp_dir) = build_two_view_fixture();
 
-        clear_single_view(&basemind_dir, "rev-abc").expect("clear one view");
+        clear_single_view(&hacienda_mcp_dir, "rev-abc").expect("clear one view");
 
         assert!(
-            !basemind_dir.join(VIEWS_DIR).join("rev-abc").exists(),
+            !hacienda_mcp_dir.join(VIEWS_DIR).join("rev-abc").exists(),
             "named view removed"
         );
         assert!(
-            basemind_dir.join(VIEWS_DIR).join("working").join(INDEX_FILE).exists(),
+            hacienda_mcp_dir.join(VIEWS_DIR).join("working").join(INDEX_FILE).exists(),
             "other view survives single-view clear"
         );
     }
 
     #[test]
     fn clear_single_view_is_idempotent_for_missing_view() {
-        let (_tmp, basemind_dir) = build_two_view_fixture();
-        clear_single_view(&basemind_dir, "rev-does-not-exist").expect("missing view is a no-op");
-        assert!(basemind_dir.join(VIEWS_DIR).join("working").exists());
-        assert!(basemind_dir.join(VIEWS_DIR).join("rev-abc").exists());
+        let (_tmp, hacienda_mcp_dir) = build_two_view_fixture();
+        clear_single_view(&hacienda_mcp_dir, "rev-does-not-exist").expect("missing view is a no-op");
+        assert!(hacienda_mcp_dir.join(VIEWS_DIR).join("working").exists());
+        assert!(hacienda_mcp_dir.join(VIEWS_DIR).join("rev-abc").exists());
     }
 
     #[test]
     fn clear_single_view_rejects_path_traversal() {
-        let (_tmp, basemind_dir) = build_two_view_fixture();
+        let (_tmp, hacienda_mcp_dir) = build_two_view_fixture();
         for bad in ["..", "a/b", "../escape", ""] {
             assert!(
-                clear_single_view(&basemind_dir, bad).is_err(),
+                clear_single_view(&hacienda_mcp_dir, bad).is_err(),
                 "invalid view name {bad:?} must be rejected"
             );
         }
-        assert!(basemind_dir.join(VIEWS_DIR).join("working").exists());
+        assert!(hacienda_mcp_dir.join(VIEWS_DIR).join("working").exists());
     }
 
     #[test]
@@ -993,7 +993,7 @@ mod tests {
         fs::write(blobs.join(format!("{}.chunk.msgpack", fx.orphan_stem)), b"orphan-chunk").expect("orphan chunk");
         fs::write(blobs.join(format!("{}.rref.msgpack", fx.orphan_stem)), b"orphan-rref").expect("orphan rref");
 
-        let referenced = collect_referenced_hashes(&fx.basemind_dir).expect("collect");
+        let referenced = collect_referenced_hashes(&fx.hacienda_mcp_dir).expect("collect");
         gc_blobs_in(&fx.blobs_dir, &referenced).expect("gc");
 
         assert!(

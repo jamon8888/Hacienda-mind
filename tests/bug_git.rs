@@ -6,14 +6,14 @@
 //! * #15: `status_porcelain` must report tracked-file modifications and untracked
 //!   files (the working tree is not clean after editing a committed file).
 //!
-//! Fixtures are built with the system `git` CLI — basemind never writes to a repo,
+//! Fixtures are built with the system `git` CLI — hacienda-mcp never writes to a repo,
 //! so going through `git` is the most representative way to exercise the contract.
 
 use std::fs;
 use std::path::Path;
 use std::process::Command;
 
-use basemind::git::Repo;
+use hacienda_mcp::git::Repo;
 use tempfile::TempDir;
 
 fn run(repo: &Path, args: &[&str]) {
@@ -40,7 +40,7 @@ fn git_out(repo: &Path, args: &[&str]) -> String {
 }
 
 fn init_repo() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     run(dir.path(), &["init", "-q"]);
     run(dir.path(), &["config", "commit.gpgsign", "false"]);

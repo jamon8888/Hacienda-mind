@@ -1,6 +1,6 @@
 //! Admin / housekeeping tool shims for `BasemindServer`.
 //!
-//! These are operations that mutate basemind's own on-disk state (index,
+//! These are operations that mutate hacienda-mcp's own on-disk state (index,
 //! caches) rather than just querying it. Kept in a separate file so
 //! `tools.rs` stays under the 1000-line cap.
 
@@ -48,7 +48,7 @@ impl BasemindServer {
     }
 
     #[tool(
-        description = "Aggregate `.basemind/telemetry.jsonl` into a usage summary: total tool \
+        description = "Aggregate `.hacienda-mcp/telemetry.jsonl` into a usage summary: total tool \
             calls, per-tool histogram, total response bytes, estimated tokens saved vs the \
             grep+Read baseline. Optional `window` (`today` default, `1h`, `24h`, `all`) and `tool` \
             filter. `est_tokens_saved` is heuristic — each row carries a `saved_baseline` label.",
@@ -67,9 +67,9 @@ impl BasemindServer {
     }
 
     #[tool(
-        description = "Resource footprint of basemind: on-disk size + blob accounting + process \
+        description = "Resource footprint of hacienda-mcp: on-disk size + blob accounting + process \
             RAM. Reports recursive byte sizes per component (blobs / views / lance / git-cache / \
-            telemetry / git-history), the ground-truth `total_bytes` for the whole `.basemind/` \
+            telemetry / git-history), the ground-truth `total_bytes` for the whole `.hacienda-mcp/` \
             tree (matches `du`) with the unattributed remainder in `other_bytes`, total blob-file \
             count, orphaned-blob count (unreferenced, reclaimable via `cache_gc`), per-view indexed \
             file counts, and the serving process's current + peak RSS (`rss_bytes` / \
@@ -89,7 +89,7 @@ impl BasemindServer {
     }
 
     #[tool(
-        description = "Garbage-collect orphaned extraction blobs from `.basemind/blobs/`. Blobs are \
+        description = "Garbage-collect orphaned extraction blobs from `.hacienda-mcp/blobs/`. Blobs are \
             content-addressed and shared across views; re-scans and branch switches orphan blobs \
             no view references. Mark-and-sweep reclaims only those (referenced blobs untouched). \
             Runs under the live server's lock — safe anytime. Returns scanned / removed / \
@@ -111,11 +111,11 @@ impl BasemindServer {
     }
 
     #[tool(
-        description = "Clear a `.basemind/` cache component: \
+        description = "Clear a `.hacienda-mcp/` cache component: \
             `blobs|views|lance|git-cache|telemetry|all`. Non-live caches (`git-cache`, \
             `telemetry`, `lance`) clear freely. `blobs` needs `confirm=true` (an in-process \
             rescan rebuilds it). `views`/`all` would yank the live Fjall index from under the \
-            server, so they are refused in-process — stop it and run `basemind cache clear \
+            server, so they are refused in-process — stop it and run `hacienda-mcp cache clear \
             --component views|all`. Returns the component and whether it was cleared.",
         annotations(read_only_hint = false, destructive_hint = true, open_world_hint = false)
     )]

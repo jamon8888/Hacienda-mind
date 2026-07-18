@@ -10,7 +10,7 @@
 //!
 //! ## Peer credentials without `libc`
 //!
-//! basemind does not depend on `libc`, so this module declares the two C entry points it needs
+//! hacienda-mcp does not depend on `libc`, so this module declares the two C entry points it needs
 //! itself (`getuid`, `getsockopt`). They are part of the platform libc that is always linked
 //! on Unix, so the `extern "C"` declarations resolve at link time. Each call site carries a
 //! `// SAFETY:` note. On non-Unix targets the front-end is unavailable; Windows production IPC

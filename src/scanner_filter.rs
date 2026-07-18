@@ -47,7 +47,7 @@ const FLOOR_EXCLUDES: &[&str] = &[
     "**/bazel-bin/**",
     "**/bazel-testlogs/**",
     "**/.git/**",
-    "**/.basemind/**",
+    "**/.hacienda-mcp/**",
     "**/.idea/**",
     "**/.DS_Store",
 ];
@@ -392,21 +392,21 @@ mod tests {
     }
 
     #[test]
-    fn should_reject_root_and_nested_basemind_via_default_exclude() {
+    fn should_reject_root_and_nested_hacienda_mcp_via_default_exclude() {
         let (filter, root, _tmp) = filter_for(|root| {
-            fs::create_dir_all(root.join(".basemind")).unwrap();
-            fs::write(root.join(".basemind/x.msgpack"), b"\x00").unwrap();
-            fs::create_dir_all(root.join("child/.basemind")).unwrap();
-            fs::write(root.join("child/.basemind/y.msgpack"), b"\x00").unwrap();
+            fs::create_dir_all(root.join(".hacienda-mcp")).unwrap();
+            fs::write(root.join(".hacienda-mcp/x.msgpack"), b"\x00").unwrap();
+            fs::create_dir_all(root.join("child/.hacienda-mcp")).unwrap();
+            fs::write(root.join("child/.hacienda-mcp/y.msgpack"), b"\x00").unwrap();
             fs::write(root.join("child/real.rs"), b"fn d() {}\n").unwrap();
         });
-        assert!(!filter.allows_glob(".basemind/x.msgpack"));
-        assert!(!filter.allows_glob("child/.basemind/y.msgpack"));
-        assert!(!filter.is_indexable(&root.join(".basemind/x.msgpack")));
-        assert!(!filter.is_indexable(&root.join("child/.basemind/y.msgpack")));
+        assert!(!filter.allows_glob(".hacienda-mcp/x.msgpack"));
+        assert!(!filter.allows_glob("child/.hacienda-mcp/y.msgpack"));
+        assert!(!filter.is_indexable(&root.join(".hacienda-mcp/x.msgpack")));
+        assert!(!filter.is_indexable(&root.join("child/.hacienda-mcp/y.msgpack")));
         assert!(
             filter.is_indexable(&root.join("child/real.rs")),
-            "a real source file beside a nested .basemind must still be kept"
+            "a real source file beside a nested .hacienda-mcp must still be kept"
         );
     }
 

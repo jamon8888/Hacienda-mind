@@ -1,8 +1,8 @@
 //! Integration tests for the git-aware scanner sources.
 //!
 //! These tests spin up real git repositories on tempdirs (via the `git` CLI) and drive
-//! `basemind::scanner::scan` against them with `ScanSource::Staged` and `ScanSource::Rev`.
-//! Using the system `git` to set up the fixtures is intentional — basemind itself never
+//! `hacienda_mcp::scanner::scan` against them with `ScanSource::Staged` and `ScanSource::Rev`.
+//! Using the system `git` to set up the fixtures is intentional — hacienda-mcp itself never
 //! writes to a repo, so going through `git` is the most representative way to test the
 //! contract from the developer's perspective.
 
@@ -10,10 +10,10 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
-use basemind::config::ConfigV1;
-use basemind::git::Repo;
-use basemind::scanner::{ScanSource, scan};
-use basemind::store::{Store, VIEW_STAGED, VIEW_WORKING};
+use hacienda_mcp::config::ConfigV1;
+use hacienda_mcp::git::Repo;
+use hacienda_mcp::scanner::{ScanSource, scan};
+use hacienda_mcp::store::{Store, VIEW_STAGED, VIEW_WORKING};
 use tempfile::TempDir;
 
 fn run(repo: &Path, args: &[&str]) {
@@ -30,7 +30,7 @@ fn run(repo: &Path, args: &[&str]) {
 }
 
 fn init_repo() -> (TempDir, ConfigV1) {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     run(dir.path(), &["init", "-q"]);
     run(dir.path(), &["config", "commit.gpgsign", "false"]);
@@ -56,14 +56,14 @@ fn scan_staged_uses_index_blobs_not_working_tree() {
         &mut store,
         &cfg,
         ScanSource::Staged(&repo),
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .expect("scan staged");
 
     assert_eq!(report.stats.updated, 1, "one file updated");
     let entry = store.lookup("a.rs").expect("a.rs indexed");
     assert_eq!(entry.language, "rust");
-    let hits = basemind::query::search_symbols(&store, "clean_one", None).unwrap();
+    let hits = hacienda_mcp::query::search_symbols(&store, "clean_one", None).unwrap();
     assert_eq!(hits.len(), 1, "staged scan saw committed symbols");
 }
 
@@ -82,7 +82,7 @@ fn scan_rev_at_head_matches_clean_working_tree() {
         &mut wt_store,
         &cfg,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     let wt_entry = wt_store.lookup("a.rs").expect("a.rs in WT view").clone();
@@ -100,7 +100,7 @@ fn scan_rev_at_head_matches_clean_working_tree() {
             repo: &repo,
             sha: head_sha,
         },
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     let rev_entry = rev_store.lookup("a.rs").expect("a.rs in rev view").clone();
@@ -126,7 +126,7 @@ fn views_live_in_separate_subdirs_under_workspace_cache() {
         &mut working,
         &cfg,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     drop(working);
@@ -137,19 +137,19 @@ fn views_live_in_separate_subdirs_under_workspace_cache() {
         &mut staged,
         &cfg,
         ScanSource::Staged(&repo),
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
     drop(staged);
 
-    // The cache is machine-global + workspace-keyed now, not `<root>/.basemind/`.
-    let cache = basemind::store::workspace_cache_dir(root);
+    // The cache is machine-global + workspace-keyed now, not `<root>/.hacienda-mcp/`.
+    let cache = hacienda_mcp::store::workspace_cache_dir(root);
     let views_dir = cache.join("views");
     assert!(views_dir.join(VIEW_WORKING).join("index.msgpack").exists());
     assert!(views_dir.join(VIEW_STAGED).join("index.msgpack").exists());
     assert!(!cache.join("index.msgpack").exists());
     // Nothing is written under the repo root anymore.
-    assert!(!root.join(".basemind").exists(), "no in-repo cache dir is created");
+    assert!(!root.join(".hacienda-mcp").exists(), "no in-repo cache dir is created");
 }
 
 #[test]
@@ -159,9 +159,9 @@ fn legacy_top_level_index_is_migrated_into_working_view() {
 
     // Simulate a pre-views layout inside the (now global) workspace cache dir: a top-level
     // `index.msgpack` that `Store::open` must migrate into `views/working/`.
-    let cache = basemind::store::workspace_cache_dir(root);
+    let cache = hacienda_mcp::store::workspace_cache_dir(root);
     fs::create_dir_all(&cache).unwrap();
-    let empty = basemind::store::Index::empty();
+    let empty = hacienda_mcp::store::Index::empty();
     let bytes = rmp_serde::to_vec_named(&empty).unwrap();
     fs::write(cache.join("index.msgpack"), &bytes).unwrap();
 
@@ -209,7 +209,7 @@ fn scan_skips_submodule_paths_by_default() {
 
     let repo = Repo::discover(root).expect("discover parent");
     let subs = repo.submodule_paths();
-    assert_eq!(subs, vec![basemind::path::RelPath::from("vendored")], "got {subs:?}");
+    assert_eq!(subs, vec![hacienda_mcp::path::RelPath::from("vendored")], "got {subs:?}");
 
     {
         let mut store = Store::open(root, VIEW_WORKING).unwrap();
@@ -218,7 +218,7 @@ fn scan_skips_submodule_paths_by_default() {
             &mut store,
             &cfg,
             ScanSource::WorkingTree,
-            basemind::scanner::EmbedMode::Inline,
+            hacienda_mcp::scanner::EmbedMode::Inline,
         )
         .expect("scan default");
         assert!(store.lookup("top.rs").is_some(), "parent file should be indexed");
@@ -236,7 +236,7 @@ fn scan_skips_submodule_paths_by_default() {
         &mut store2,
         &cfg2,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .expect("scan opt-in");
     assert!(
@@ -260,7 +260,7 @@ fn blame_file_uses_committed_blob_not_dirty_working_tree() {
 
     let repo = Repo::discover(root).expect("discover");
     let head = repo.resolve_rev("HEAD").expect("resolve HEAD");
-    let rel = basemind::path::RelPath::from("a.rs".as_bytes());
+    let rel = hacienda_mcp::path::RelPath::from("a.rs".as_bytes());
     let result = repo
         .blame_file(&head, &rel, Some((1, 2)))
         .expect("blame committed blob");
@@ -301,7 +301,7 @@ fn log_for_path_stops_at_rename_while_blame_follows() {
     );
 
     let head = repo.resolve_rev("HEAD").expect("resolve HEAD");
-    let rel = basemind::path::RelPath::from("new.rs".as_bytes());
+    let rel = hacienda_mcp::path::RelPath::from("new.rs".as_bytes());
     let blame = repo.blame_file(&head, &rel, Some((1, 1))).expect("blame new.rs");
     assert!(
         !blame.hunks.is_empty(),
@@ -366,7 +366,7 @@ fn list_worktrees_reports_main_and_linked_with_branches() {
     assert_eq!(main.branch.as_deref(), Some("main"));
     assert!(!main.detached);
 
-    let by_name: std::collections::HashMap<&str, &basemind::git::WorktreeInfo> =
+    let by_name: std::collections::HashMap<&str, &hacienda_mcp::git::WorktreeInfo> =
         worktrees.iter().map(|w| (w.name.as_str(), w)).collect();
 
     let a = by_name.get("wt-attached").expect("attached worktree present");

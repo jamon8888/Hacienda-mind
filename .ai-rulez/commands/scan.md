@@ -2,21 +2,21 @@
 priority: high
 aliases: [s]
 usage: "/scan [path]"
-description: "Run basemind scan against the current working tree (or a path argument)"
+description: "Run hacienda-mcp scan against the current working tree (or a path argument)"
 ---
 
 # Scan
 
-Run a full `basemind scan` and report the result.
+Run a full `hacienda-mcp scan` and report the result.
 
-1. Build if stale: `cargo build --release` (skip if `target/release/basemind` is fresh).
+1. Build if stale: `cargo build --release` (skip if `target/release/hacienda-mcp` is fresh).
 2. Run:
 
    ```bash
-   ./target/release/basemind scan ${1:-.}
+   ./target/release/hacienda-mcp scan ${1:-.}
    ```
 
-3. Report from stdout / the resulting `.basemind/`:
+3. Report from stdout / the resulting `.hacienda-mcp/`:
    - Wall-clock scan time.
    - Total files indexed.
    - Total symbols extracted.

@@ -5,7 +5,7 @@ description: Navigate code structure across 300+ languages — symbols, referenc
 
 import { Aside, Badge, Card, CardGrid } from '@astrojs/starlight/components';
 
-basemind pre-indexes your codebase using tree-sitter, mapping symbols, calls, and imports
+hacienda-mcp pre-indexes your codebase using tree-sitter, mapping symbols, calls, and imports
 across 300+ languages. Structural queries resolve in milliseconds and return **paths, line
 numbers, and signatures — not file bodies** — so they cost a fraction of the tokens of
 reading source.
@@ -193,7 +193,7 @@ URL, on-disk cache size, and index build time.
   edges, not text matches.
 - **`workspace_grep` instead of shelling out to ripgrep** when you genuinely need regex —
   it runs over the in-RAM index and returns capped, structured results.
-- **Do not re-read a file basemind already mapped.** If the outline answered the question,
+- **Do not re-read a file hacienda-mcp already mapped.** If the outline answered the question,
   stop.
 - **`rescan` after you edit code**, not a server reconnect. Pass `paths: [...]` to limit
   it.

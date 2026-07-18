@@ -1,4 +1,4 @@
-//! Broker-daemon entry point (`basemind comms daemon`).
+//! Broker-daemon entry point (`hacienda-mcp comms daemon`).
 //!
 //! Unlike [`comms`](super::comms) — the agent-comms *client* verbs — this module runs the broker
 //! *server*: it binds the singleton endpoint (the bind IS the lock), opens the store, and serves

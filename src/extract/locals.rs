@@ -48,7 +48,7 @@ static LOCALS_QUERIES: OnceLock<RwLock<AHashMap<LangId, CachedQuery>>> = OnceLoc
 /// Compile + cache the `locals` query for a language.
 ///
 /// Prefers a vendored override (see [`vendored_locals`]), else the raw TSLP `locals.scm` via
-/// `get_locals_query`. Compiled with basemind's own tree-sitter runtime — deliberately *not*
+/// `get_locals_query`. Compiled with hacienda-mcp's own tree-sitter runtime — deliberately *not*
 /// TSLP's compiled `get_query(_, Locals)`, which binds the query to TSLP's bundled runtime
 /// version and would break under a runtime-version skew (the crate documents this caveat).
 ///

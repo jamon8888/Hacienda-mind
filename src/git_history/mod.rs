@@ -5,7 +5,7 @@
 //!
 //! ## Why a separate DB
 //!
-//! Lives at `.basemind/git-history.fjall/` — a sibling of `views/` and `git-cache/`, NOT inside a
+//! Lives at `.hacienda-mcp/git-history.fjall/` — a sibling of `views/` and `git-cache/`, NOT inside a
 //! per-view `index.fjall`. Git history is repo-global (identical across the working/staged/rev
 //! views) and immortal/append-only as HEAD advances, so it carries its own [`GIT_HISTORY_SCHEMA`]
 //! and survives an `INDEX_SCHEMA_VER` bump — a code-map schema change must never throw away the
@@ -14,7 +14,7 @@
 //! ## Single-writer
 //!
 //! Fjall takes an exclusive per-directory process lock, so only the process holding
-//! `.basemind/.lock` (a `scan`/`rescan`, or a writable `serve`) opens this DB. A read-only serve
+//! `.hacienda-mcp/.lock` (a `scan`/`rescan`, or a writable `serve`) opens this DB. A read-only serve
 //! keeps `git_history: None` and falls back to the (now-fast) live walk. The index is a pure
 //! accelerator — tools use it only when `last_indexed_head == HEAD` and otherwise live-walk, so it
 //! can never serve stale or incorrect results.
@@ -56,7 +56,7 @@ use crate::path::RelPath;
 /// feature, so the bump only forces in-flight dev indexes to rebuild.
 pub const GIT_HISTORY_SCHEMA: u32 = crate::version::RELEASE_MINOR as u32 + 5;
 
-/// On-disk directory name of the git-history index under `.basemind/`. `pub(crate)` so the cache
+/// On-disk directory name of the git-history index under `.hacienda-mcp/`. `pub(crate)` so the cache
 /// accounting in [`crate::store_gc::cache_stats`] can size it (it is a sibling of `views/`).
 pub(crate) const GIT_HISTORY_DIR: &str = "git-history.fjall";
 
@@ -70,7 +70,7 @@ pub(crate) const GIT_HISTORY_DIR: &str = "git-history.fjall";
 /// large repo) into a one-time cost shared across every worktree.
 ///
 /// Falls back to `root`'s own workspace cache dir when `root` is not inside a git repository.
-pub fn shared_history_basemind_dir(root: &std::path::Path) -> std::path::PathBuf {
+pub fn shared_history_hacienda_mcp_dir(root: &std::path::Path) -> std::path::PathBuf {
     let base = match crate::git::Repo::discover(root) {
         Ok(repo) if repo.is_linked_worktree() => repo.main_worktree_root(),
         _ => root.to_path_buf(),
@@ -85,10 +85,10 @@ const GH_OPEN_RETRIES: u32 = 5;
 const GH_OPEN_BACKOFF: std::time::Duration = std::time::Duration::from_millis(50);
 
 /// Whether the git-history index is enabled for this process. On by default; set
-/// `BASEMIND_GH_INDEX=0` to disable it (the history tools then fall back to the live walk). The
+/// `HACIENDA_MCP_GH_INDEX=0` to disable it (the history tools then fall back to the live walk). The
 /// `scan` / `rescan` CLIs additionally honor a `--no-git-history` flag.
 pub fn index_enabled() -> bool {
-    std::env::var("BASEMIND_GH_INDEX").map(|v| v != "0").unwrap_or(true)
+    std::env::var("HACIENDA_MCP_GH_INDEX").map(|v| v != "0").unwrap_or(true)
 }
 
 #[derive(Debug, Error)]
@@ -144,11 +144,11 @@ pub struct GitHistoryIndex {
 }
 
 impl GitHistoryIndex {
-    /// Open (or create) `.basemind/git-history.fjall/`. On schema mismatch the directory is wiped
+    /// Open (or create) `.hacienda-mcp/git-history.fjall/`. On schema mismatch the directory is wiped
     /// and recreated empty (the caller rebuilds via the builder). Returns `Err` if another process
     /// holds the Fjall lock — read-only callers swallow that to `None`.
-    pub fn open(basemind_dir: &Path) -> Result<Self, GitHistoryError> {
-        let dir = basemind_dir.join(GIT_HISTORY_DIR);
+    pub fn open(hacienda_mcp_dir: &Path) -> Result<Self, GitHistoryError> {
+        let dir = hacienda_mcp_dir.join(GIT_HISTORY_DIR);
         let mut attempt = 0;
         loop {
             match Self::open_at(&dir) {
@@ -207,9 +207,9 @@ impl GitHistoryIndex {
 
     /// Drop all data and reset to an empty index at the current schema. Used by `revalidate` when a
     /// history rewrite is detected and by the manual force-rebuild path. Safe because only the
-    /// `.basemind/.lock` holder ever opens this DB, so no other process holds a handle.
-    pub fn clear(&self, basemind_dir: &Path) -> Result<(), GitHistoryError> {
-        let dir = basemind_dir.join(GIT_HISTORY_DIR);
+    /// `.hacienda-mcp/.lock` holder ever opens this DB, so no other process holds a handle.
+    pub fn clear(&self, hacienda_mcp_dir: &Path) -> Result<(), GitHistoryError> {
+        let dir = hacienda_mcp_dir.join(GIT_HISTORY_DIR);
         for ks in [
             &self.commit_by_ord,
             &self.ord_by_sha,

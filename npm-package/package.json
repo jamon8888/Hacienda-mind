@@ -1,20 +1,20 @@
 {
-  "name": "basemind",
+  "name": "hacienda-mcp",
   "version": "0.22.0",
   "description": "Full AI context layer over MCP — tree-sitter code-map, document RAG (PDF/Office/HTML/email + OCR + reranker), shared agent memory, on-demand web crawl, git history + blame + per-symbol diff. 300+ languages, 10+ coding-agent harnesses, content-addressed Fjall + LanceDB.",
   "keywords": ["agent-context", "code-map", "mcp", "rag", "tree-sitter"],
-  "homepage": "https://basemind.ai",
+  "homepage": "https://github.com/jamon8888/Hacienda-mind",
   "bugs": {
-    "url": "https://github.com/Goldziher/basemind/issues"
+    "url": "https://github.com/jamon8888/Hacienda-mind/issues"
   },
   "license": "MIT",
   "author": "Na'aman Hirschfeld",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Goldziher/basemind.git"
+    "url": "git+https://github.com/jamon8888/Hacienda-mind.git"
   },
   "bin": {
-    "basemind": "bin/basemind.js"
+    "hacienda-mcp": "bin/hacienda-mcp.js"
   },
   "files": ["index.js", "install.js", "bin/"],
   "main": "index.js",

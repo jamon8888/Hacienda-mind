@@ -1,14 +1,14 @@
 //! Executable CLI↔MCP parity guard.
 //!
-//! basemind's contract is that every MCP `#[tool]` an agent can call over stdio is ALSO reachable
-//! from the `basemind` CLI (agents and tests drive both). This test makes that contract enforceable:
+//! hacienda-mcp's contract is that every MCP `#[tool]` an agent can call over stdio is ALSO reachable
+//! from the `hacienda-mcp` CLI (agents and tests drive both). This test makes that contract enforceable:
 //!
 //! 1. It enumerates the live MCP tool surface from the in-process server
 //!    ([`BasemindServer::tool_names`]) — the exact set `tools/list` advertises.
 //! 2. It cross-references that set against `TOOL_TO_CLI`, a maintained table mapping each tool to
 //!    the CLI command that invokes it.
 //! 3. It asserts the mapping is a bijection (every tool mapped, every mapping real) and that each
-//!    mapped CLI path actually resolves (`basemind <path> --help` exits 0).
+//!    mapped CLI path actually resolves (`hacienda-mcp <path> --help` exits 0).
 //!
 //! A new tool shipped without its CLI counterpart fails step 2 (unmapped tool); a renamed/removed
 //! CLI command fails step 3. The table is feature-gated the same way the routers are, so the guard
@@ -16,16 +16,16 @@
 
 use std::process::Command;
 
-use basemind::cli::context::build_server;
-use basemind::config::DocumentsCliOverrides;
-use basemind::store::VIEW_WORKING;
+use hacienda_mcp::cli::context::build_server;
+use hacienda_mcp::config::DocumentsCliOverrides;
+use hacienda_mcp::store::VIEW_WORKING;
 
 fn bin() -> &'static str {
-    env!("CARGO_BIN_EXE_basemind")
+    env!("CARGO_BIN_EXE_hacienda-mcp")
 }
 
 /// The intended MCP-tool → CLI-command mapping. The CLI value is the argument path (sans the
-/// `basemind` prefix and any positional operands) used to reach the identical tool code. Grouped by
+/// `hacienda-mcp` prefix and any positional operands) used to reach the identical tool code. Grouped by
 /// router; feature-gated groups mirror the `#[cfg]` on their `tool_router_*` registration in
 /// `src/mcp/mod.rs` so the set matches `tool_names()` exactly under any feature build.
 fn tool_to_cli() -> Vec<(&'static str, &'static str)> {
@@ -124,7 +124,7 @@ fn tool_to_cli() -> Vec<(&'static str, &'static str)> {
 /// Build a one-shot server over an empty tempdir just to read its advertised tool set. The working
 /// view opens read-only even when never scanned, so no fixture repo is needed.
 fn advertised_tools() -> Vec<String> {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let tmp = tempfile::tempdir().expect("tempdir");
     let server =
         build_server(tmp.path(), VIEW_WORKING, DocumentsCliOverrides::default()).expect("build one-shot server");
@@ -159,10 +159,10 @@ fn every_mapped_cli_command_resolves() {
         let output = Command::new(bin())
             .args(&args)
             .output()
-            .unwrap_or_else(|e| panic!("spawn `basemind {cli} --help`: {e}"));
+            .unwrap_or_else(|e| panic!("spawn `hacienda-mcp {cli} --help`: {e}"));
         assert!(
             output.status.success(),
-            "`basemind {cli} --help` (for tool `{tool}`) exited {:?}\nstderr: {}",
+            "`hacienda-mcp {cli} --help` (for tool `{tool}`) exited {:?}\nstderr: {}",
             output.status.code(),
             String::from_utf8_lossy(&output.stderr)
         );

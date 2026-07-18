@@ -1,6 +1,6 @@
 //! Integration smoke tests for W11 git-mined skill-proposal boundaries.
 //!
-//! All tests drive behavior through a `basemind serve` MCP subprocess so
+//! All tests drive behavior through a `hacienda-mcp serve` MCP subprocess so
 //! the association-rule thresholds, tombstone logic, and pagination are exercised
 //! end-to-end over the real MCP wire — not against mocked internals.
 //!
@@ -61,7 +61,7 @@ fn git(repo: &Path, args: &[&str]) {
 /// With `min_support=1` / `min_confidence=0.1` the (`core.rs`, `helper.rs`) pair
 /// co-changed in commit 1, which is enough for at least one proposal.
 fn build_governance_repo() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
 
@@ -83,18 +83,18 @@ fn build_governance_repo() -> TempDir {
 
 /// Scan the repo into a working-tree index (same pattern as `mcp_smoke.rs::run_scan`).
 fn run_scan(root: &Path) {
-    let cfg = basemind::config::default_for_root(root);
-    let _ = basemind::lang::ensure_grammars().expect("grammar bootstrap");
+    let cfg = hacienda_mcp::config::default_for_root(root);
+    let _ = hacienda_mcp::lang::ensure_grammars().expect("grammar bootstrap");
     // Run the scan on a dedicated std thread, OFF this `#[tokio::test]` runtime: the scanner's
     std::thread::scope(|scope| {
         scope.spawn(|| {
-            let mut store = basemind::store::Store::open(root, basemind::store::VIEW_WORKING).expect("open store");
-            basemind::scanner::scan(
+            let mut store = hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING).expect("open store");
+            hacienda_mcp::scanner::scan(
                 root,
                 &mut store,
                 &cfg,
-                basemind::scanner::ScanSource::WorkingTree,
-                basemind::scanner::EmbedMode::Inline,
+                hacienda_mcp::scanner::ScanSource::WorkingTree,
+                hacienda_mcp::scanner::EmbedMode::Inline,
             )
             .expect("scan");
         });
@@ -125,7 +125,7 @@ fn call_params(name: &'static str, args: Value) -> CallToolRequestParams {
 }
 
 fn build_confidence_repo() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
 
@@ -157,7 +157,7 @@ fn build_confidence_repo() -> TempDir {
 }
 
 fn build_bulk_repo() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
 
@@ -181,7 +181,7 @@ fn build_bulk_repo() -> TempDir {
 }
 
 fn build_two_cluster_repo() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
 
@@ -211,13 +211,13 @@ fn build_two_cluster_repo() -> TempDir {
     dir
 }
 
-/// Spawn a `basemind serve` subprocess and return the rmcp service handle.
+/// Spawn a `hacienda-mcp serve` subprocess and return the rmcp service handle.
 async fn spawn_serve(root: &Path) -> rmcp::service::RunningService<rmcp::RoleClient, ()> {
-    let bin = env!("CARGO_BIN_EXE_basemind");
+    let bin = env!("CARGO_BIN_EXE_hacienda-mcp");
     let cmd = AsyncCommand::new(bin).configure(|c| {
         c.arg("--root").arg(root).arg("serve").arg("--view").arg("working");
     });
-    let transport = TokioChildProcess::new(cmd).expect("spawn basemind serve");
+    let transport = TokioChildProcess::new(cmd).expect("spawn hacienda-mcp serve");
     ().serve(transport).await.expect("rmcp handshake")
 }
 

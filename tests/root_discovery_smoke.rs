@@ -1,14 +1,14 @@
-//! Smoke tests for monorepo rootward config-marker discovery: `discover_root_with_basemind` walks
+//! Smoke tests for monorepo rootward config-marker discovery: `discover_root_with_hacienda_mcp` walks
 //! UP from a start dir to the nearest ancestor that carries a committed `basemind.toml` (monorepo /
 //! nested-git support), then falls back to git discovery, then to `start` unchanged.
 //!
 //! The cache moved out of the repo to a machine-global XDG store, so there is no longer a
-//! `.basemind/` directory in the tree to anchor on — the committed `basemind.toml` is the durable
+//! `.hacienda-mcp/` directory in the tree to anchor on — the committed `basemind.toml` is the durable
 //! in-repo marker of a basemind-managed root.
 
 use std::fs;
 
-use basemind::config::{CONFIG_FILE_NAME, discover_root_with_basemind, init_root};
+use hacienda_mcp::config::{CONFIG_FILE_NAME, discover_root_with_hacienda_mcp, init_root};
 
 /// `git init` a directory so it becomes its own git repo workdir.
 fn git_init(dir: &std::path::Path) {
@@ -33,7 +33,7 @@ fn resolves_upward_to_ancestor_with_config_marker() {
     let sub = root.join("crates").join("inner");
     fs::create_dir_all(&sub).expect("mkdir subfolder");
 
-    let resolved = discover_root_with_basemind(&sub);
+    let resolved = discover_root_with_hacienda_mcp(&sub);
     assert_eq!(resolved, root, "subfolder resolves up to the dir holding basemind.toml");
 }
 
@@ -51,7 +51,7 @@ fn inner_git_repo_bounds_the_config_marker_walk() {
     let sub = inner.join("src").join("pkg");
     fs::create_dir_all(&sub).expect("mkdir inner subfolder");
 
-    let resolved = discover_root_with_basemind(&sub);
+    let resolved = discover_root_with_hacienda_mcp(&sub);
     assert_eq!(
         resolved, inner,
         "the enclosing subrepo bounds the walk: resolves to the subrepo root, not the outer basemind.toml"
@@ -72,7 +72,7 @@ fn inner_repo_own_config_marker_wins_within_its_bound() {
     let sub = inner.join("src");
     fs::create_dir(&sub).expect("mkdir inner subfolder");
 
-    let resolved = discover_root_with_basemind(&sub);
+    let resolved = discover_root_with_hacienda_mcp(&sub);
     assert_eq!(resolved, inner, "subrepo's own basemind.toml is found within its bound");
 }
 
@@ -84,7 +84,7 @@ fn falls_back_to_git_workdir_when_no_config_marker() {
     let sub = repo.join("src").join("pkg");
     fs::create_dir_all(&sub).expect("mkdir subfolder");
 
-    let resolved = discover_root_with_basemind(&sub);
+    let resolved = discover_root_with_hacienda_mcp(&sub);
     assert_eq!(resolved, repo, "no basemind.toml → resolves to the git workdir");
 }
 
@@ -98,7 +98,7 @@ fn a_config_marker_directory_is_ignored_only_a_file_counts() {
     let sub = root.join("child");
     fs::create_dir(&sub).expect("mkdir child");
 
-    let resolved = discover_root_with_basemind(&sub);
+    let resolved = discover_root_with_hacienda_mcp(&sub);
     assert_eq!(
         resolved, sub,
         "basemind.toml as a directory is skipped; no git → start unchanged"
@@ -107,7 +107,7 @@ fn a_config_marker_directory_is_ignored_only_a_file_counts() {
 
 #[test]
 fn init_root_anchors_to_enclosing_git_repo_not_parent_config_marker() {
-    // The reported `basemind init` bug: run from inside a repo whose parent already has a
+    // The reported `hacienda-mcp init` bug: run from inside a repo whose parent already has a
     // `basemind.toml`, and init must scaffold the CURRENT repo — never travel up to the parent.
     let tmp = tempfile::tempdir().expect("tempdir");
     let parent = tmp.path().canonicalize().expect("canonicalize parent");
@@ -144,6 +144,6 @@ fn returns_start_unchanged_when_neither_config_marker_nor_git() {
     let sub = start.join("plain");
     fs::create_dir(&sub).expect("mkdir plain subfolder");
 
-    let resolved = discover_root_with_basemind(&sub);
+    let resolved = discover_root_with_hacienda_mcp(&sub);
     assert_eq!(resolved, sub, "no basemind.toml and no git → start unchanged");
 }

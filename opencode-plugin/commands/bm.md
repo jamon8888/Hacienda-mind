@@ -1,12 +1,12 @@
 ---
 name: bm
-description: Ask basemind anything about the current codebase — outlines, refs, callers, git history, blame, diffs, docs, memory.
+description: Ask hacienda-mcp anything about the current codebase — outlines, refs, callers, git history, blame, diffs, docs, memory.
 argument-hint: <question about the codebase>
 ---
 
-# bm — ask basemind anything about this codebase
+# bm — ask hacienda-mcp anything about this codebase
 
-Answer the user's question using the basemind MCP server instead of reading files or shelling
+Answer the user's question using the hacienda-mcp MCP server instead of reading files or shelling
 out to grep/git.
 
 ## When to use
@@ -44,4 +44,4 @@ Route the question to the tool that answers it directly:
 
 ## See also
 
-The `basemind` skill for the full tool-routing table and context-economy discipline.
+The `hacienda-mcp` skill for the full tool-routing table and context-economy discipline.

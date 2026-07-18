@@ -13,9 +13,9 @@ use serde::{Deserialize, Serialize};
 pub enum ConfigSource {
     /// Hard-coded `Default::default()` value.
     Default,
-    /// Loaded from `.basemind/basemind.toml`.
+    /// Loaded from `.hacienda-mcp/basemind.toml`.
     File,
-    /// Override pulled from an environment variable (`BASEMIND_*`).
+    /// Override pulled from an environment variable (`HACIENDA_MCP_*`).
     Env,
     /// Override passed via a CLI flag (`--documents-*`).
     Cli,

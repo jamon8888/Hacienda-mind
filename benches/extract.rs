@@ -1,15 +1,15 @@
 //! L1+L2 tree-sitter extraction microbenchmarks.
 //!
-//! Benches the public `basemind::extract::extract_l1_l2` entry point — the single
+//! Benches the public `hacienda_mcp::extract::extract_l1_l2` entry point — the single
 //! parse + query-walk the scanner pays per file. Two representative inputs (a
 //! realistic Rust module and a TypeScript module) are embedded so the bench is
 //! deterministic and network-free. `LangId` is resolved via the public
-//! `basemind::lang::detect` from a synthetic path with the right extension.
+//! `hacienda_mcp::lang::detect` from a synthetic path with the right extension.
 
 use std::path::Path;
 
-use basemind::extract::extract_l1_l2;
-use basemind::lang::detect;
+use hacienda_mcp::extract::extract_l1_l2;
+use hacienda_mcp::lang::detect;
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 

@@ -32,7 +32,7 @@ pub(super) async fn run_cache_stats(
     let state_for_stats = Arc::clone(&state);
     let stats = tokio::task::spawn_blocking(move || {
         let store = state_for_stats.store.blocking_read();
-        store_gc::cache_stats(&store.basemind_dir)
+        store_gc::cache_stats(&store.hacienda_mcp_dir)
     })
     .await
     .map_err(|e| McpError::internal_error(format!("cache_stats join: {e}"), None))?
@@ -73,13 +73,13 @@ pub(super) async fn run_cache_clear(
             return Err(McpError::invalid_request(
                 format!(
                     "view `{name}` is the one this server is serving; clearing it would break \
-                     the live index. Stop the server and run `basemind cache clear --component \
+                     the live index. Stop the server and run `hacienda-mcp cache clear --component \
                      views:{name}`, or serve a different view."
                 ),
                 None,
             ));
         }
-        let dir = state.store.read().await.basemind_dir.clone();
+        let dir = state.store.read().await.hacienda_mcp_dir.clone();
         tokio::task::spawn_blocking(move || store_gc::clear_single_view(&dir, &name))
             .await
             .map_err(|e| McpError::internal_error(format!("cache_clear join: {e}"), None))?
@@ -101,7 +101,7 @@ pub(super) async fn run_cache_clear(
         CacheComponent::All | CacheComponent::Views => Err(McpError::invalid_request(
             format!(
                 "clearing `{}` removes the live Fjall index out from under the running \
-                 server; stop the server and run `basemind cache clear --component {}`",
+                 server; stop the server and run `hacienda-mcp cache clear --component {}`",
                 component.as_str(),
                 component.as_str()
             ),
@@ -137,7 +137,7 @@ pub(super) async fn run_cache_clear(
 async fn clear_live_component(state: Arc<ServerState>, component: CacheComponent) -> Result<(), McpError> {
     tokio::task::spawn_blocking(move || {
         let store = state.store.blocking_write();
-        store_gc::clear_component(&store.basemind_dir, component)
+        store_gc::clear_component(&store.hacienda_mcp_dir, component)
     })
     .await
     .map_err(|e| McpError::internal_error(format!("cache_clear join: {e}"), None))?

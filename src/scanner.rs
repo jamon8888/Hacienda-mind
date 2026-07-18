@@ -31,7 +31,7 @@ const INDEX_COMMIT_BATCH: usize = 256;
 /// Candidate-count threshold above which `walk_candidates` emits a visibility warning. This is
 /// pure observability — not a hard cap — so a runaway monorepo scan (e.g. a Bazel tree whose
 /// generated / vendored dirs slipped past `.gitignore` and the `[scan] exclude` globs) is visible
-/// in the logs instead of silently ballooning `.basemind/`.
+/// in the logs instead of silently ballooning `.hacienda-mcp/`.
 const LARGE_SCAN_CANDIDATE_WARN: usize = 50_000;
 
 /// Per-rayon-worker accumulator: buffers each file's index upsert into a shared Fjall write
@@ -335,7 +335,7 @@ pub(crate) fn submodule_roots_for_source(root: &Path, source: &ScanSource<'_>) -
 
 /// Whether the expensive embedding step runs during the scan.
 ///
-/// - `Inline` (today's default; used by the CLI `basemind scan`, the watcher, and manual `rescan`)
+/// - `Inline` (today's default; used by the CLI `hacienda-mcp scan`, the watcher, and manual `rescan`)
 ///   embeds during the scan — code chunks and documents get their vectors + LanceDB rows in one pass.
 /// - `Deferred` skips embedding: the scan still writes the code-map, the BM25 keyword lane, and the
 ///   content-addressed blobs, but emits **no** vector rows and does **not** persist the
@@ -440,7 +440,7 @@ pub fn scan(
 /// Incremental scan: process only the given absolute paths. Used by the watcher
 /// where the debouncer already told us which files changed.
 ///
-/// Paths outside `root`, inside `.basemind/`, or not matching the include globs are
+/// Paths outside `root`, inside `.hacienda-mcp/`, or not matching the include globs are
 /// silently dropped (the watcher pre-filters but we re-check defensively).
 /// Removed files (path no longer exists) are purged from the index.
 pub fn scan_paths(
@@ -472,7 +472,7 @@ pub fn scan_paths(
             }
             Err(_) => continue,
         };
-        if rel.is_empty() || rel.starts_with(crate::config::BASEMIND_DIR) {
+        if rel.is_empty() || rel.starts_with(crate::config::HACIENDA_MCP_DIR) {
             continue;
         }
         if !abs.exists() {
@@ -634,7 +634,7 @@ fn candidates_for_source(
         _ => raw
             .into_iter()
             .filter(|rel| filters.allows(rel))
-            .filter(|rel| !rel.starts_with(crate::config::BASEMIND_DIR))
+            .filter(|rel| !rel.starts_with(crate::config::HACIENDA_MCP_DIR))
             .collect(),
     };
     out.sort();

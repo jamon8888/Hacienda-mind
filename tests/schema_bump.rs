@@ -36,7 +36,7 @@ struct LegacyEntry {
 #[cfg(feature = "documents")]
 #[test]
 fn pre_iter6_doc_blob_deserialises_into_new_filemap_doc() {
-    use basemind::extract::doc::FileMapDoc;
+    use hacienda_mcp::extract::doc::FileMapDoc;
     use serde::Serialize;
 
     #[derive(Serialize)]
@@ -100,7 +100,7 @@ fn pre_iter6_doc_blob_deserialises_into_new_filemap_doc() {
 #[cfg(feature = "documents")]
 #[test]
 fn pre_iter7_doc_blob_deserialises_into_new_filemap_doc() {
-    use basemind::extract::doc::FileMapDoc;
+    use hacienda_mcp::extract::doc::FileMapDoc;
     use serde::Serialize;
 
     #[derive(Serialize)]
@@ -178,13 +178,13 @@ fn pre_iter7_doc_blob_deserialises_into_new_filemap_doc() {
 
 #[test]
 fn opening_against_stale_schema_index_refreshes_durably_without_wiping_blobs() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path();
-    // The cache is machine-global + workspace-keyed now, not `<root>/.basemind/`.
-    let basemind_dir = basemind::store::workspace_cache_dir(root);
-    let blobs_dir = basemind::store::global_blobs_dir();
-    fs::create_dir_all(&basemind_dir).unwrap();
+    // The cache is machine-global + workspace-keyed now, not `<root>/.hacienda-mcp/`.
+    let hacienda_mcp_dir = hacienda_mcp::store::workspace_cache_dir(root);
+    let blobs_dir = hacienda_mcp::store::global_blobs_dir();
+    fs::create_dir_all(&hacienda_mcp_dir).unwrap();
     fs::create_dir_all(&blobs_dir).unwrap();
 
     // A test-unique blob stem so this test's durable-refresh assertion is not perturbed by another
@@ -204,9 +204,9 @@ fn opening_against_stale_schema_index_refreshes_durably_without_wiping_blobs() {
     );
     let legacy = LegacyIndex { schema_ver: 99, files };
     let bytes = rmp_serde::to_vec_named(&legacy).unwrap();
-    fs::write(basemind_dir.join("index.msgpack"), bytes).unwrap();
+    fs::write(hacienda_mcp_dir.join("index.msgpack"), bytes).unwrap();
 
-    let store = basemind::store::Store::open(root, basemind::store::VIEW_WORKING)
+    let store = hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING)
         .expect("open should succeed via durable refresh");
     assert!(
         store.index.files.is_empty(),
@@ -218,9 +218,9 @@ fn opening_against_stale_schema_index_refreshes_durably_without_wiping_blobs() {
     );
     assert!(blobs_dir.exists());
 
-    let view_index = basemind_dir
+    let view_index = hacienda_mcp_dir
         .join("views")
-        .join(basemind::store::VIEW_WORKING)
+        .join(hacienda_mcp::store::VIEW_WORKING)
         .join("index.msgpack");
     assert!(
         !view_index.exists(),
@@ -234,12 +234,12 @@ fn opening_against_stale_schema_index_refreshes_durably_without_wiping_blobs() {
 /// corrupt a concurrently running `serve`). Regression test for the post-bump CLI-first path.
 #[test]
 fn open_read_only_degrades_to_empty_on_stale_schema_without_error() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path();
-    let view_dir = basemind::store::workspace_cache_dir(root)
+    let view_dir = hacienda_mcp::store::workspace_cache_dir(root)
         .join("views")
-        .join(basemind::store::VIEW_WORKING);
+        .join(hacienda_mcp::store::VIEW_WORKING);
     fs::create_dir_all(&view_dir).unwrap();
 
     let mut files = std::collections::BTreeMap::new();
@@ -259,7 +259,7 @@ fn open_read_only_degrades_to_empty_on_stale_schema_without_error() {
     )
     .unwrap();
 
-    let store = basemind::store::Store::open_read_only(root, basemind::store::VIEW_WORKING)
+    let store = hacienda_mcp::store::Store::open_read_only(root, hacienda_mcp::store::VIEW_WORKING)
         .expect("open_read_only must degrade gracefully, not error, on a stale-schema index");
     assert!(
         store.index.files.is_empty(),
@@ -281,7 +281,7 @@ fn open_read_only_degrades_to_empty_on_stale_schema_without_error() {
 fn schema_bump_refreshes_blobs_in_place_and_gc_reclaims_only_orphans() {
     use std::collections::BTreeMap;
 
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path();
 
@@ -291,33 +291,33 @@ fn schema_bump_refreshes_blobs_in_place_and_gc_reclaims_only_orphans() {
     // own, so we can assert on exactly those stems.
     fs::write(root.join("a.rs"), b"pub fn schema_bump_refresh_marker() {}\n").unwrap();
 
-    let config = basemind::config::ConfigV1::with_defaults();
+    let config = hacienda_mcp::config::ConfigV1::with_defaults();
 
     {
-        let mut store = basemind::store::Store::open(root, basemind::store::VIEW_WORKING).unwrap();
-        basemind::scanner::scan(
+        let mut store = hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
+        hacienda_mcp::scanner::scan(
             root,
             &mut store,
             &config,
-            basemind::scanner::ScanSource::WorkingTree,
-            basemind::scanner::EmbedMode::Inline,
+            hacienda_mcp::scanner::ScanSource::WorkingTree,
+            hacienda_mcp::scanner::EmbedMode::Inline,
         )
         .expect("first scan");
         store.flush().expect("flush");
     }
 
-    let basemind_dir = basemind::store::workspace_cache_dir(root);
-    let blobs_dir = basemind::store::global_blobs_dir();
-    let view_index = basemind_dir
+    let hacienda_mcp_dir = hacienda_mcp::store::workspace_cache_dir(root);
+    let blobs_dir = hacienda_mcp::store::global_blobs_dir();
+    let view_index = hacienda_mcp_dir
         .join("views")
-        .join(basemind::store::VIEW_WORKING)
+        .join(hacienda_mcp::store::VIEW_WORKING)
         .join("index.msgpack");
 
     // The content-hash stems this workspace's index references — the only blobs this test owns in
     // the shared global store. We assert on exactly these, never the whole (shared) directory.
     let referenced_stems = |label: &str| -> Vec<String> {
         let idx_bytes = fs::read(&view_index).unwrap_or_else(|e| panic!("read view index ({label}): {e}"));
-        let index: basemind::store::Index = rmp_serde::from_slice(&idx_bytes).unwrap();
+        let index: hacienda_mcp::store::Index = rmp_serde::from_slice(&idx_bytes).unwrap();
         let mut v: Vec<String> = index.files.values().map(|e| e.hash_hex.clone()).collect();
         v.sort();
         v.dedup();
@@ -343,7 +343,7 @@ fn schema_bump_refreshes_blobs_in_place_and_gc_reclaims_only_orphans() {
     );
 
     let idx_bytes = fs::read(&view_index).unwrap();
-    let real_index: basemind::store::Index = rmp_serde::from_slice(&idx_bytes).unwrap();
+    let real_index: hacienda_mcp::store::Index = rmp_serde::from_slice(&idx_bytes).unwrap();
 
     let mut forged_files: BTreeMap<String, LegacyEntry> = BTreeMap::new();
     for (rel, entry) in &real_index.files {
@@ -364,7 +364,7 @@ fn schema_bump_refreshes_blobs_in_place_and_gc_reclaims_only_orphans() {
     fs::write(&view_index, rmp_serde::to_vec_named(&forged).unwrap()).unwrap();
 
     {
-        let store = basemind::store::Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+        let store = hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
         assert!(
             store.index.files.is_empty(),
             "index reset to empty after the forced schema mismatch"
@@ -376,13 +376,13 @@ fn schema_bump_refreshes_blobs_in_place_and_gc_reclaims_only_orphans() {
     );
 
     {
-        let mut store = basemind::store::Store::open(root, basemind::store::VIEW_WORKING).unwrap();
-        basemind::scanner::scan(
+        let mut store = hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
+        hacienda_mcp::scanner::scan(
             root,
             &mut store,
             &config,
-            basemind::scanner::ScanSource::WorkingTree,
-            basemind::scanner::EmbedMode::Inline,
+            hacienda_mcp::scanner::ScanSource::WorkingTree,
+            hacienda_mcp::scanner::EmbedMode::Inline,
         )
         .expect("refresh scan");
         store.flush().expect("flush");
@@ -400,7 +400,7 @@ fn schema_bump_refreshes_blobs_in_place_and_gc_reclaims_only_orphans() {
     );
 
     {
-        let store = basemind::store::Store::open(root, basemind::store::VIEW_WORKING).unwrap();
+        let store = hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING).unwrap();
         let entry = store.index.files.values().next().expect("one indexed file");
         let map = store
             .read_l1_by_hex(&entry.hash_hex)
@@ -408,7 +408,7 @@ fn schema_bump_refreshes_blobs_in_place_and_gc_reclaims_only_orphans() {
             .expect("l1 blob present");
         assert_eq!(
             map.schema_ver,
-            basemind::extract::SCHEMA_VER,
+            hacienda_mcp::extract::SCHEMA_VER,
             "refreshed blob carries the current schema version"
         );
     }

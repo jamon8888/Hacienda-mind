@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://basemind.ai/sitemap-index.xml
+Sitemap: https://github.com/jamon8888/Hacienda-mind/sitemap-index.xml

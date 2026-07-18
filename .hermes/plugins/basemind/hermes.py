@@ -3,19 +3,19 @@
 # Source-Hash: blake3:960affce8e7d6c8efa32c93ebdd7ca85100e78044731248bd9b44189655e893a
 # Schema-Version: v1
 
-"""Hermes Agent plugin registration for basemind.
+"""Hermes Agent plugin registration for hacienda-mcp.
 
-basemind's tools reach Hermes through an MCP server declared in ``~/.hermes/config.yaml``
-(``mcp_servers.basemind``) — a Hermes plugin cannot declare an MCP server. This module adds
-what MCP config cannot: the basemind helper *skills*, *slash commands*, and agent-comms
+hacienda-mcp's tools reach Hermes through an MCP server declared in ``~/.hermes/config.yaml``
+(``mcp_servers.hacienda-mcp``) — a Hermes plugin cannot declare an MCP server. This module adds
+what MCP config cannot: the hacienda-mcp helper *skills*, *slash commands*, and agent-comms
 *notifications* (parity with the Gemini/OpenCode plugin surfaces).
 
 Design constraints (all load-bearing):
 
-* **stdlib-only** — the same package is imported by the ``basemind`` CLI, so this module must
+* **stdlib-only** — the same package is imported by the ``hacienda-mcp`` CLI, so this module must
   not pull in Hermes or any third-party dependency at import time.
 * **import-cheap and side-effect-free** at module load.
-* **fail-open** — every registration and every hook is guarded; a missing ``basemind`` binary,
+* **fail-open** — every registration and every hook is guarded; a missing ``hacienda-mcp`` binary,
   a down comms broker, or a Hermes build that lacks a given ``ctx`` method must degrade to a
   no-op, never raise. A raising plugin would break both Hermes startup and the CLI.
 
@@ -36,18 +36,18 @@ _SKILLS_DIR = _PKG_DIR / "skills"
 _COMMANDS_DIR = _PKG_DIR / "commands"
 
 _DISCIPLINE = (
-    "basemind is available over MCP in this session — a tree-sitter code map + git context. "
+    "hacienda-mcp is available over MCP in this session — a tree-sitter code map + git context. "
     "Prefer it over grep/read for structural and historical questions: its tools return paths, "
     "line numbers, and signatures, not file bodies, so they cost a fraction of the tokens of "
     "reading source. Default workflow: outline a file before opening it (then read only the span "
     "you need); search_symbols instead of grep for a definition; find_references/find_callers "
     "instead of grepping call sites; workspace_grep instead of shelling out to ripgrep; rescan "
-    "after edits instead of reconnecting. Do not re-read a file basemind already mapped."
+    "after edits instead of reconnecting. Do not re-read a file hacienda-mcp already mapped."
 )
 
 _COMMS_TOOLS = (
-    "basemind first, shell/grep/git fallback — prefer basemind over grep, over naked git, and for "
-    "docs/RAG/NER, web crawl, and parsing. You are connected to basemind agent-comms — coordinate "
+    "hacienda-mcp first, shell/grep/git fallback — prefer hacienda-mcp over grep, over naked git, and for "
+    "docs/RAG/NER, web crawl, and parsing. You are connected to hacienda-mcp agent-comms — coordinate "
     "with other agents via THREADS: scoped conversations addressed by at least two of {subject, "
     "path-glob, members}, discovered by scope (you're a member, your cwd matches the path-glob, or a "
     "subject filter) — never globally — and joined explicitly (no auto-join). Levers: thread_list to "
@@ -60,7 +60,7 @@ _COMMS_TOOLS = (
 
 
 def register(ctx) -> None:
-    """Register basemind's skills, slash commands, and comms hooks with Hermes.
+    """Register hacienda-mcp's skills, slash commands, and comms hooks with Hermes.
 
     Each capability group is independently guarded so a failure in one (or a ``ctx`` that
     lacks a given ``register_*`` method) never prevents the others from registering.
@@ -89,7 +89,7 @@ def _register_commands(ctx) -> None:
         if not body:
             continue
         name = cmd_md.stem
-        description = _front_matter_description(body) or f"basemind {name} command"
+        description = _front_matter_description(body) or f"hacienda-mcp {name} command"
         _safe_call(reg, name, _make_command_handler(body), description)
 
 
@@ -159,7 +159,7 @@ def _delta_context(cwd: str, session_id: str) -> str | None:
         return None
     _write_text(hwm_file, str(max_ts))
     return (
-        "New basemind agent-comms message(s) since your last turn (front-matter only — call "
+        "New hacienda-mcp agent-comms message(s) since your last turn (front-matter only — call "
         "message_get with an id to read a body):\n"
         f"{_format_lines(fresh)}\n"
         "Reply with thread_post {thread, subject, body, reply_to:<id>} if a response is warranted."
@@ -168,17 +168,17 @@ def _delta_context(cwd: str, session_id: str) -> str | None:
 
 def _inbox_messages(cwd: str, limit: int):
     """Return the inbox message list (possibly empty), or ``None`` when the broker is unavailable."""
-    data = _run_basemind_json(["comms", "inbox", "--root", cwd, "--json", "--limit", str(limit)], timeout=6)
+    data = _run_hacienda_mcp_json(["comms", "inbox", "--root", cwd, "--json", "--limit", str(limit)], timeout=6)
     if data is None:
         return None
     messages = data.get("messages")
     return messages if isinstance(messages, list) else []
 
 
-def _run_basemind_json(args, timeout):
+def _run_hacienda_mcp_json(args, timeout):
     try:
         proc = subprocess.run(  # noqa: S603,S607 - fixed argv, no shell
-            ["basemind", *args],
+            ["hacienda-mcp", *args],
             capture_output=True,
             text=True,
             timeout=timeout,

@@ -52,8 +52,8 @@ async fn require_session(state: &ServerState, raw: &str) -> Result<(SessionId, r
 /// When the server is built with comms enabled (`feature = "comms"`, unix), the spawn is coupled
 /// to a comms THREAD so the parent (this server) and the spawned child can talk bidirectionally: a
 /// thread with explicit members `[parent, child]` (plus a subject, satisfying the ≥2-of-3
-/// addressing rule) is started BEFORE the shell starts, and the child inherits `BASEMIND_THREAD_ID`
-/// / `BASEMIND_PARENT_AGENT_ID` / `BASEMIND_AGENT_ID` in its environment. Because the child is an
+/// addressing rule) is started BEFORE the shell starts, and the child inherits `HACIENDA_MCP_THREAD_ID`
+/// / `HACIENDA_MCP_PARENT_AGENT_ID` / `HACIENDA_MCP_AGENT_ID` in its environment. Because the child is an
 /// explicit member, the thread already surfaces in its inbox — no auto-join. The coupling is
 /// created atomically before the spawn: a failure aborts the spawn, so no thread-less session
 /// leaks. When comms is disabled the tool behaves headless and `room_id` / `child_agent` are `None`.
@@ -115,7 +115,7 @@ pub(super) async fn run_shell_spawn(state: &ServerState, params: ShellSpawnParam
         socket_path: state.shell_runtime.socket_path().to_path_buf(),
         cols: state.config.shells.default_cols,
         rows: state.config.shells.default_rows,
-        exe: std::env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("basemind")),
+        exe: std::env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("hacienda-mcp")),
     };
     let attach_command = target.attach_command();
 
@@ -194,7 +194,7 @@ fn build_environment(env: Vec<ShellEnv>) -> Result<Vec<String>, McpError> {
 
 /// Best-effort comms coupling for a spawned session. Derives the child agent from the parent +
 /// the pre-minted `session_id`, starts a THREAD with members `[parent, child]` + a subject, and
-/// injects the child's identity env (plus `BASEMIND_THREAD_ID`) into `environment` BEFORE the shell
+/// injects the child's identity env (plus `HACIENDA_MCP_THREAD_ID`) into `environment` BEFORE the shell
 /// is spawned. Returns `(thread_id, child_agent)` on success.
 ///
 /// The coupling is OPTIONAL: comms is an add-on, so a broker that is unreachable / down must not
@@ -202,8 +202,8 @@ fn build_environment(env: Vec<ShellEnv>) -> Result<Vec<String>, McpError> {
 /// `environment` untouched so the session spawns headless.
 ///
 /// # Threat model
-/// The child's identity is asserted purely through inherited `BASEMIND_*` env vars. A spawned child
-/// is free to overwrite `BASEMIND_AGENT_ID` and claim another agent's id — the broker does not
+/// The child's identity is asserted purely through inherited `HACIENDA_MCP_*` env vars. A spawned child
+/// is free to overwrite `HACIENDA_MCP_AGENT_ID` and claim another agent's id — the broker does not
 /// cross-check. Acceptable for a local single-user dev tool (every process runs as the same uid).
 #[cfg(all(feature = "comms", any(unix, windows)))]
 async fn couple_session_room(
@@ -224,7 +224,7 @@ async fn couple_session_room(
 }
 
 /// The fallible inner body of [`couple_session_room`]. On `Ok`, the thread exists (with the parent
-/// and child as members), and the child's identity env + `BASEMIND_THREAD_ID` have been appended.
+/// and child as members), and the child's identity env + `HACIENDA_MCP_THREAD_ID` have been appended.
 #[cfg(all(feature = "comms", any(unix, windows)))]
 async fn try_couple_session_thread(
     state: &ServerState,
@@ -270,14 +270,14 @@ async fn try_couple_session_thread(
         thread.id.into_string()
     };
 
-    const IDENTITY_KEYS: [&str; 3] = ["BASEMIND_AGENT_ID", "BASEMIND_PARENT_AGENT_ID", "BASEMIND_THREAD_ID"];
+    const IDENTITY_KEYS: [&str; 3] = ["HACIENDA_MCP_AGENT_ID", "HACIENDA_MCP_PARENT_AGENT_ID", "HACIENDA_MCP_THREAD_ID"];
     environment.retain(|entry| {
         let key = entry.split('=').next().unwrap_or(entry);
         !IDENTITY_KEYS.contains(&key)
     });
-    environment.push(format!("BASEMIND_AGENT_ID={child_agent}"));
-    environment.push(format!("BASEMIND_PARENT_AGENT_ID={parent}"));
-    environment.push(format!("BASEMIND_THREAD_ID={thread_id}"));
+    environment.push(format!("HACIENDA_MCP_AGENT_ID={child_agent}"));
+    environment.push(format!("HACIENDA_MCP_PARENT_AGENT_ID={parent}"));
+    environment.push(format!("HACIENDA_MCP_THREAD_ID={thread_id}"));
 
     Ok((thread_id, child_agent.into_string()))
 }

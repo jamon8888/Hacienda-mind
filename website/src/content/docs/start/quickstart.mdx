@@ -11,7 +11,7 @@ After installing, index a repository and ask it questions. Most answers come bac
 in **under a millisecond** — queries are answered from RAM, not disk.
 
 <Aside type="tip">
-New to a repo? Run `basemind init` (or `/bm-init`) first — see
+New to a repo? Run `hacienda-mcp init` (or `/bm-init`) first — see
 [Get started](/start/installation/#get-started) — to scaffold `basemind.toml`
 and wire agent-instructions rules before you scan.
 </Aside>
@@ -22,15 +22,15 @@ and wire agent-instructions rules before you scan.
 
    From the repository root:
 
-   <Code code={`basemind scan`} lang="bash" />
+   <Code code={`hacienda-mcp scan`} lang="bash" />
 
    This walks the tree, parses with tree-sitter, and writes a content-addressed
-   blob store + inverted index under `.basemind/`. Takes a few seconds for small
+   blob store + inverted index under `.hacienda-mcp/`. Takes a few seconds for small
    repos, around 18 seconds for an 81k-file TypeScript monorepo.
 
 2. **Find where a symbol is defined**
 
-   <Code code={`basemind query symbol "parseQuery"`} lang="bash" />
+   <Code code={`hacienda-mcp query symbol "parseQuery"`} lang="bash" />
 
    Output:
 
@@ -41,7 +41,7 @@ src/utils.rs:89:1 parseQuery (type alias)`} lang="text" />
 
 3. **See what calls a function**
 
-   <Code code={`basemind query references "processFile"`} lang="bash" />
+   <Code code={`hacienda-mcp query references "processFile"`} lang="bash" />
 
    Output:
 
@@ -53,11 +53,11 @@ src/extract.rs:57:20 processFile`} lang="text" />
 
 4. **Find who last touched a line**
 
-   <Code code={`basemind git blame-file src/main.rs`} lang="bash" />
+   <Code code={`hacienda-mcp git blame-file src/main.rs`} lang="bash" />
 
    Or drill down to a single symbol:
 
-   <Code code={`basemind git blame-symbol src/main.rs "processFile"`} lang="bash" />
+   <Code code={`hacienda-mcp git blame-symbol src/main.rs "processFile"`} lang="bash" />
 
    Shows the last commit, author, and timestamp for each line or symbol.
 
@@ -65,9 +65,9 @@ src/extract.rs:57:20 processFile`} lang="text" />
 
    As you edit, update the index with:
 
-   <Code code={`basemind watch`} lang="bash" />
+   <Code code={`hacienda-mcp watch`} lang="bash" />
 
-   This runs in the foreground and re-indexes on file changes. Or use `basemind
+   This runs in the foreground and re-indexes on file changes. Or use `hacienda-mcp
    serve` if you're querying via the MCP server or plugin.
 
 </Steps>
@@ -83,7 +83,7 @@ src/extract.rs:57:20 processFile`} lang="text" />
 - **Outline before you read**: Use `outline` to see a file's structure (symbols,
   signatures, line numbers, imports) without opening it.
 
-  <Code code={`basemind query outline src/parser.rs`} lang="bash" />
+  <Code code={`hacienda-mcp query outline src/parser.rs`} lang="bash" />
 
   Output shows every symbol and its line number, so you know exactly what to read.
 
@@ -98,7 +98,7 @@ src/extract.rs:57:20 processFile`} lang="text" />
   <LinkCard
     title="How it works"
     href="/concepts/how-it-works/"
-    description="One scan, then instant answers — the architecture behind basemind."
+    description="One scan, then instant answers — the architecture behind hacienda-mcp."
   />
   <LinkCard
     title="MCP tools"
@@ -121,6 +121,6 @@ the tools in the chat:
 All the same queries, just over the MCP surface instead of the CLI.
 
 <Aside>
-After re-indexing, both the CLI (`basemind query ...`) and the MCP tools have
+After re-indexing, both the CLI (`hacienda-mcp query ...`) and the MCP tools have
 the fresh index. No server restart needed — use `rescan` to update in-process.
 </Aside>

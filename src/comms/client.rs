@@ -1,4 +1,4 @@
-//! `CommsClient`: the public client contract used by `basemind serve`, the CLI, and hooks.
+//! `CommsClient`: the public client contract used by `hacienda-mcp serve`, the CLI, and hooks.
 //!
 //! A thin async wrapper over a [`CommsLink`](super::transport::CommsLink) to the broker. The
 //! client owns the request/response correlation: the broker answers requests in order on the
@@ -46,7 +46,7 @@ const CONNECT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
 
 /// Strategy for (re)spawning the daemon when a reconnect finds the socket dead. Defaults to the
 /// production [`singleton::spawn_detached_daemon`]; tests inject a closure that launches the real
-/// `basemind` binary against an isolated comms dir (the test binary has no `comms daemon` verb).
+/// `hacienda-mcp` binary against an isolated comms dir (the test binary has no `comms daemon` verb).
 type SpawnFn = Box<dyn Fn(&CommsPaths) -> std::io::Result<()> + Send + Sync>;
 
 /// Errors surfaced by the client.
@@ -133,7 +133,7 @@ impl CommsClient {
     /// Connect like [`CommsClient::connect`], but inject the daemon respawn strategy used by the
     /// transparent reconnect path. The production [`CommsClient::connect`] supplies
     /// [`singleton::spawn_detached_daemon`]; tests inject a closure that launches the real
-    /// `basemind` binary so the reconnect can resurrect an isolated daemon.
+    /// `hacienda-mcp` binary so the reconnect can resurrect an isolated daemon.
     pub async fn connect_with_respawn(
         paths: &CommsPaths,
         agent: AgentId,
@@ -580,7 +580,7 @@ impl CommsClient {
         }
     }
 
-    /// List the workspaces the daemon currently holds hot (drives the `basemind statusline` CLI).
+    /// List the workspaces the daemon currently holds hot (drives the `hacienda-mcp statusline` CLI).
     pub async fn accessed_paths(&mut self) -> Result<Vec<AccessedWorkspace>, CommsClientError> {
         match self.request(CommsRequest::AccessedPaths).await? {
             CommsResponse::Accessed { workspaces } => Ok(workspaces),
@@ -793,7 +793,7 @@ mod tests {
             "error should name that the daemon is not running, got: {msg}"
         );
         assert!(
-            msg.contains("basemind comms start"),
+            msg.contains("hacienda-mcp comms start"),
             "error should name the start command, got: {msg}"
         );
         assert!(
@@ -806,7 +806,7 @@ mod tests {
 /// Map a `UnixStream::connect` failure into an actionable error. A missing socket file
 /// (`NotFound`) or a refused connection (`ConnectionRefused`) means no daemon is listening, so we
 /// wrap it with a message naming that the comms daemon is not running and the start command
-/// (`basemind comms start`). Any other connect error keeps its original `io::Error` context.
+/// (`hacienda-mcp comms start`). Any other connect error keeps its original `io::Error` context.
 fn daemon_unreachable_error(socket_path: &Path, source: std::io::Error) -> CommsClientError {
     match source.kind() {
         std::io::ErrorKind::NotFound | std::io::ErrorKind::ConnectionRefused => {
@@ -814,7 +814,7 @@ fn daemon_unreachable_error(socket_path: &Path, source: std::io::Error) -> Comms
                 source.kind(),
                 format!(
                     "comms daemon is not running (no socket at {}); start it with \
-                     `basemind comms start`",
+                     `hacienda-mcp comms start`",
                     socket_path.display()
                 ),
             ))

@@ -43,13 +43,13 @@ pub enum BatchKind {
 /// Path-emitting primitive at the core of every watcher. Runs the
 /// `notify-debouncer-full` event loop and, for each debounced batch, hands the
 /// caller the set of repo-relative changed paths (sorted + deduped, with
-/// `.basemind/` and out-of-root paths filtered out).
+/// `.hacienda-mcp/` and out-of-root paths filtered out).
 ///
 /// This is deliberately Store-free and scan-free: it does NOT own a `Store` and
 /// never touches the index. Both the standalone `watch` (which owns its own
 /// Store and scans) and the embedded MCP serve watcher (which funnels paths into
 /// the server's already-open store via `scan_and_refresh`) build on top of it,
-/// so we never open a second `.basemind/.lock` flock for the same repo.
+/// so we never open a second `.hacienda-mcp/.lock` flock for the same repo.
 ///
 /// Blocks until `shutdown` fires or the debouncer channel disconnects. No
 /// initial signal is emitted: each caller already owns its own initial-scan
@@ -117,9 +117,9 @@ pub fn watch_paths(
 /// wrapper over [`watch_paths`] that re-scans only the touched paths via
 /// `scanner::scan_paths`.
 ///
-/// This owns its own `Store` and is the backend for the `basemind watch` CLI.
+/// This owns its own `Store` and is the backend for the `hacienda-mcp watch` CLI.
 /// The MCP `serve` watcher does NOT use this entry point — it would acquire a
-/// second `.basemind/.lock` flock that `serve` already holds. It uses
+/// second `.hacienda-mcp/.lock` flock that `serve` already holds. It uses
 /// [`watch_paths`] directly and funnels paths into serve's open store instead.
 pub fn watch(
     root: &Path,
@@ -169,7 +169,7 @@ fn keep_event_path(filter: &crate::scanner_filter::IndexFilter, root: &Path, p: 
     let Ok(rel) = p.strip_prefix(root) else {
         return false;
     };
-    if rel.components().any(|c| c.as_os_str() == crate::config::BASEMIND_DIR) {
+    if rel.components().any(|c| c.as_os_str() == crate::config::HACIENDA_MCP_DIR) {
         return false;
     }
     let rel_cow = rel.to_string_lossy();
@@ -233,13 +233,13 @@ mod tests {
         let _ = handle.join();
     }
 
-    /// Changes inside `.basemind/` must never surface — the watcher would
+    /// Changes inside `.hacienda-mcp/` must never surface — the watcher would
     /// otherwise feed its own index writes back into a rescan loop.
     #[test]
-    fn should_ignore_changes_under_basemind_dir() {
+    fn should_ignore_changes_under_hacienda_mcp_dir() {
         let tmp = tempfile::tempdir().expect("tempdir");
         let root = tmp.path().canonicalize().expect("canonicalize tempdir");
-        std::fs::create_dir_all(root.join(crate::config::BASEMIND_DIR)).expect("mkdir .basemind");
+        std::fs::create_dir_all(root.join(crate::config::HACIENDA_MCP_DIR)).expect("mkdir .hacienda-mcp");
         let mut config = crate::config::default_for_root(&root);
         config.watch.debounce_ms = 50;
 
@@ -254,8 +254,8 @@ mod tests {
         });
 
         std::thread::sleep(Duration::from_millis(200));
-        std::fs::write(root.join(crate::config::BASEMIND_DIR).join("noise.txt"), b"ignored\n")
-            .expect("write basemind file");
+        std::fs::write(root.join(crate::config::HACIENDA_MCP_DIR).join("noise.txt"), b"ignored\n")
+            .expect("write hacienda-mcp file");
 
         let result = path_rx.recv_timeout(Duration::from_millis(800));
         assert!(result.is_err(), "expected no emission, got {result:?}");
@@ -264,16 +264,16 @@ mod tests {
         let _ = handle.join();
     }
 
-    /// Writes under a *nested* child-repo `.basemind/` and under a gitignored path must not wake a
+    /// Writes under a *nested* child-repo `.hacienda-mcp/` and under a gitignored path must not wake a
     /// rescan — this is the core of issue #33 (an umbrella repo's watcher must ignore a nested
     /// serve's index flushes, and gitignored churn generally).
     #[ignore = "timing-sensitive negative assertion; flaky on CI. Filter covered by scanner_filter tests"]
     #[test]
-    fn should_ignore_nested_basemind_and_gitignored_paths() {
+    fn should_ignore_nested_hacienda_mcp_and_gitignored_paths() {
         let tmp = tempfile::tempdir().expect("tempdir");
         let root = tmp.path().canonicalize().expect("canonicalize tempdir");
         std::fs::create_dir_all(root.join(".git")).expect("mkdir .git");
-        std::fs::create_dir_all(root.join("child").join(crate::config::BASEMIND_DIR)).expect("mkdir child/.basemind");
+        std::fs::create_dir_all(root.join("child").join(crate::config::HACIENDA_MCP_DIR)).expect("mkdir child/.hacienda-mcp");
         std::fs::write(root.join(".gitignore"), b"build/\n").expect("write .gitignore");
         std::fs::create_dir_all(root.join("build")).expect("mkdir build");
         let mut config = crate::config::default_for_root(&root);
@@ -292,17 +292,17 @@ mod tests {
         std::thread::sleep(Duration::from_millis(500));
         std::fs::write(
             root.join("child")
-                .join(crate::config::BASEMIND_DIR)
+                .join(crate::config::HACIENDA_MCP_DIR)
                 .join("index.msgpack"),
             b"\x00",
         )
-        .expect("write nested basemind file");
+        .expect("write nested hacienda-mcp file");
         std::fs::write(root.join("build").join("out.o"), b"\x00").expect("write gitignored file");
 
         let result = path_rx.recv_timeout(Duration::from_millis(800));
         assert!(
             result.is_err(),
-            "expected no emission for nested-.basemind / gitignored churn, got {result:?}"
+            "expected no emission for nested-.hacienda-mcp / gitignored churn, got {result:?}"
         );
 
         let _ = shutdown_tx.send(());

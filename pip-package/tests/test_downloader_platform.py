@@ -11,7 +11,7 @@ Cover the two behaviours that broke real installs:
 from __future__ import annotations
 
 import pytest
-from basemind import downloader
+from hacienda-mcp import downloader
 
 
 def _triple(monkeypatch, *, system: str, machine: str, sysctls: dict[str, str]) -> str:
@@ -58,10 +58,10 @@ def test_linux_and_windows_unaffected(monkeypatch):
 
 
 def test_prune_removes_old_versions_keeps_current(monkeypatch, tmp_path):
-    cache = tmp_path / ".cache" / "basemind"
+    cache = tmp_path / ".cache" / "hacienda-mcp"
     for name in ("0.9.0", "0.14.0", "0.19.2"):
         (cache / name).mkdir(parents=True)
-        (cache / name / "basemind").write_bytes(b"x")
+        (cache / name / "hacienda-mcp").write_bytes(b"x")
     (cache / ".lock").mkdir()
     monkeypatch.setattr(downloader.Path, "home", classmethod(lambda cls: tmp_path))
 
@@ -80,7 +80,7 @@ def test_staging_dir_is_created_on_the_cache_filesystem(monkeypatch, tmp_path):
     """#38: staging must sit under the cache root so the final atomic rename is not a
     cross-device (EXDEV) link when the system temp dir and $HOME are on different filesystems."""
     monkeypatch.setattr(downloader.Path, "home", classmethod(lambda cls: tmp_path))
-    monkeypatch.delenv("BASEMIND_BINARY", raising=False)
+    monkeypatch.delenv("HACIENDA_MCP_BINARY", raising=False)
 
     captured: dict[str, object] = {}
 
@@ -97,4 +97,4 @@ def test_staging_dir_is_created_on_the_cache_filesystem(monkeypatch, tmp_path):
     with pytest.raises(_Sentinel):
         downloader.ensure_binary()
 
-    assert captured["dir"] == tmp_path / ".cache" / "basemind"
+    assert captured["dir"] == tmp_path / ".cache" / "hacienda-mcp"

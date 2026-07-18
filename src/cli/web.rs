@@ -85,5 +85,5 @@ pub async fn run(server: &BasemindServer, cmd: WebCmd, json: bool, out: &mut imp
 
 #[cfg(not(feature = "crawl"))]
 pub async fn run(_server: &BasemindServer, _cmd: WebCmd, _json: bool, _out: &mut impl Write) -> Result<()> {
-    anyhow::bail!("this `basemind` was built without the `crawl` feature; rebuild with --features crawl")
+    anyhow::bail!("this `hacienda-mcp` was built without the `crawl` feature; rebuild with --features crawl")
 }

@@ -1,10 +1,10 @@
 # Document de démonstration en français
 
 Voici un texte d'exemple en français pour valider la détection automatique
-de langue par le pipeline de basemind. Le contenu doit être suffisamment
+de langue par le pipeline de hacienda-mcp. Le contenu doit être suffisamment
 long pour permettre à whatlang d'identifier correctement la langue avec
 une confiance supérieure au seuil par défaut.
 
-Le projet basemind utilise xberg pour l'extraction de documents et
+Le projet hacienda-mcp utilise xberg pour l'extraction de documents et
 prend désormais en charge la configuration de la détection de langue à
 travers toutes les surfaces (TOML, CLI, MCP, variables d'environnement).

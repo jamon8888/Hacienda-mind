@@ -7,9 +7,9 @@
 use std::path::Path;
 use std::process::Command;
 
-use basemind::git::Repo;
-use basemind::git_cache::GitCache;
-use basemind::store_gc::cache_stats;
+use hacienda_mcp::git::Repo;
+use hacienda_mcp::git_cache::GitCache;
+use hacienda_mcp::store_gc::cache_stats;
 
 fn run(repo: &Path, args: &[&str]) {
     let status = Command::new("git")
@@ -26,7 +26,7 @@ fn run(repo: &Path, args: &[&str]) {
 
 #[test]
 fn git_cache_bytes_nonzero_after_disk_backed_log_call() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     run(root, &["init", "-q"]);
@@ -35,20 +35,20 @@ fn git_cache_bytes_nonzero_after_disk_backed_log_call() {
     run(root, &["add", "."]);
     run(root, &["commit", "-q", "-m", "init"]);
 
-    let basemind_dir = root.join(".basemind");
-    std::fs::create_dir_all(&basemind_dir).expect("mk basemind");
+    let hacienda_mcp_dir = root.join(".hacienda-mcp");
+    std::fs::create_dir_all(&hacienda_mcp_dir).expect("mk hacienda-mcp");
 
     let repo = Repo::discover(root).expect("discover");
     let head = repo.resolve_rev("HEAD").expect("resolve HEAD");
 
-    let cache = GitCache::open(&basemind_dir, 32, true).expect("open git cache");
+    let cache = GitCache::open(&hacienda_mcp_dir, 32, true).expect("open git cache");
 
-    let before = cache_stats(&basemind_dir).expect("stats before");
+    let before = cache_stats(&hacienda_mcp_dir).expect("stats before");
 
     let commits = cache.log(&repo, &head, None, 50, true).expect("log");
     assert!(!commits.is_empty(), "repo has at least one commit");
 
-    let after = cache_stats(&basemind_dir).expect("stats after");
+    let after = cache_stats(&hacienda_mcp_dir).expect("stats after");
 
     assert!(
         after.git_cache_bytes > before.git_cache_bytes,
@@ -65,7 +65,7 @@ fn git_cache_bytes_nonzero_after_disk_backed_log_call() {
 
 #[test]
 fn ram_only_git_cache_legitimately_persists_nothing() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     run(root, &["init", "-q"]);
@@ -74,17 +74,17 @@ fn ram_only_git_cache_legitimately_persists_nothing() {
     run(root, &["add", "."]);
     run(root, &["commit", "-q", "-m", "init"]);
 
-    let basemind_dir = root.join(".basemind");
-    std::fs::create_dir_all(&basemind_dir).expect("mk basemind");
+    let hacienda_mcp_dir = root.join(".hacienda-mcp");
+    std::fs::create_dir_all(&hacienda_mcp_dir).expect("mk hacienda-mcp");
 
     let repo = Repo::discover(root).expect("discover");
     let head = repo.resolve_rev("HEAD").expect("resolve HEAD");
 
-    let cache = GitCache::open(&basemind_dir, 32, false).expect("open ram-only git cache");
+    let cache = GitCache::open(&hacienda_mcp_dir, 32, false).expect("open ram-only git cache");
     let commits = cache.log(&repo, &head, None, 50, true).expect("log");
     assert!(!commits.is_empty(), "log returns commits from RAM");
 
-    let stats = cache_stats(&basemind_dir).expect("stats");
+    let stats = cache_stats(&hacienda_mcp_dir).expect("stats");
     assert_eq!(
         stats.git_cache_bytes, 0,
         "RAM-only cache writes nothing to disk; 0 is the honest on-disk size"

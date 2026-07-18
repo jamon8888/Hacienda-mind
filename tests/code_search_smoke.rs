@@ -1,6 +1,6 @@
 //! End-to-end smoke test for the semantic code-search tier (`search_code` + `get_chunk`).
 //!
-//! Gated on `feature = "code-search"`. Drives the real `basemind` binary: scan a tiny fixture
+//! Gated on `feature = "code-search"`. Drives the real `hacienda-mcp` binary: scan a tiny fixture
 //! (which chunks + embeds source), then `query search-code` and `query get-chunk` over the CLI —
 //! the same tool code an MCP client dispatches.
 //!
@@ -12,7 +12,7 @@
 use std::process::Command;
 
 fn bin() -> &'static str {
-    env!("CARGO_BIN_EXE_basemind")
+    env!("CARGO_BIN_EXE_hacienda-mcp")
 }
 
 /// The fixture: one documented function + a struct, so the chunker emits at least one symbol
@@ -29,7 +29,7 @@ pub struct Config {\n\
 
 #[test]
 fn search_code_finds_chunk_then_get_chunk_fetches_body() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let tmp = tempfile::tempdir().expect("tempdir");
     let root = tmp.path();
     std::fs::write(root.join("lib.rs"), FIXTURE).expect("write fixture");
@@ -41,7 +41,7 @@ fn search_code_finds_chunk_then_get_chunk_fetches_body() {
         .expect("spawn scan");
     assert!(
         scan.status.success(),
-        "basemind scan failed: {}",
+        "hacienda-mcp scan failed: {}",
         String::from_utf8_lossy(&scan.stderr)
     );
 
@@ -124,7 +124,7 @@ fn search_code_finds_chunk_then_get_chunk_fetches_body() {
 /// sidecar is missing, even when the file content is identical to the stored blob.
 #[test]
 fn stale_sidecar_rechunked_when_content_unchanged() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let tmp = tempfile::tempdir().expect("tempdir");
     let root = tmp.path();
     // Test-unique content: the `.chunk.msgpack` sidecar is content-addressed in the shared global
@@ -193,11 +193,11 @@ fn stale_sidecar_rechunked_when_content_unchanged() {
 /// skipping it.
 #[test]
 fn deferred_chunk_only_sidecar_is_reprocessed_by_an_inline_embed_pass() {
-    use basemind::config::ConfigV1;
-    use basemind::scanner::{EmbedMode, ScanSource, scan};
-    use basemind::store::{Store, VIEW_WORKING};
+    use hacienda_mcp::config::ConfigV1;
+    use hacienda_mcp::scanner::{EmbedMode, ScanSource, scan};
+    use hacienda_mcp::store::{Store, VIEW_WORKING};
 
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let tmp = tempfile::tempdir().expect("tempdir");
     let root = tmp.path();
     // Test-unique content so this test's content-addressed sidecar can't collide with a sibling's.
@@ -271,12 +271,12 @@ fn deferred_chunk_only_sidecar_is_reprocessed_by_an_inline_embed_pass() {
 /// BM25 must rank the fixture's chunk first.
 #[test]
 fn search_code_keyword_mode_ranks_by_bm25() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let tmp = tempfile::tempdir().expect("tempdir");
     let root = tmp.path();
     std::fs::write(root.join("lib.rs"), FIXTURE).expect("write fixture");
     // Canonical committed config location; the cache moved to a global XDG store so there is no
-    // in-repo `.basemind/` dir to hold a legacy config.
+    // in-repo `.hacienda-mcp/` dir to hold a legacy config.
     std::fs::write(
         root.join("basemind.toml"),
         "\"$schema\" = \"v1\"\n\n[code_search]\nembed = false\n",
@@ -290,7 +290,7 @@ fn search_code_keyword_mode_ranks_by_bm25() {
         .expect("spawn scan");
     assert!(
         scan.status.success(),
-        "basemind scan failed: {}",
+        "hacienda-mcp scan failed: {}",
         String::from_utf8_lossy(&scan.stderr)
     );
 
@@ -363,7 +363,7 @@ fn search_code_keyword_mode_ranks_by_bm25() {
 /// owning chunk; the exact lane's 2x RRF weight must float that chunk to the top. No embedder needed.
 #[test]
 fn search_code_hybrid_ranks_exact_symbol_first() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let tmp = tempfile::tempdir().expect("tempdir");
     let root = tmp.path();
     std::fs::write(root.join("lib.rs"), FIXTURE).expect("write fixture");
@@ -381,7 +381,7 @@ fn search_code_hybrid_ranks_exact_symbol_first() {
         .expect("spawn scan");
     assert!(
         scan.status.success(),
-        "basemind scan failed: {}",
+        "hacienda-mcp scan failed: {}",
         String::from_utf8_lossy(&scan.stderr)
     );
 
@@ -445,12 +445,12 @@ fn search_code_hybrid_ranks_exact_symbol_first() {
 /// than "the first sidecar anywhere" (which could belong to a sibling test's identical content).
 /// Returns `None` when the sidecar does not exist (clean scan or chunker disabled).
 fn find_chunk_sidecar(stem: &str) -> Option<std::path::PathBuf> {
-    let path = basemind::store::global_blobs_dir().join(format!("{stem}.chunk.msgpack"));
+    let path = hacienda_mcp::store::global_blobs_dir().join(format!("{stem}.chunk.msgpack"));
     path.exists().then_some(path)
 }
 
 /// Content hash (hex stem) of `bytes` — the key under which the blob store addresses this file's
 /// sidecars. Lets a test locate exactly its own `.chunk.msgpack` in the shared global store.
 fn content_stem(bytes: &[u8]) -> String {
-    basemind::hashing::hex(&basemind::hashing::hash_bytes(bytes))
+    hacienda_mcp::hashing::hex(&hacienda_mcp::hashing::hash_bytes(bytes))
 }

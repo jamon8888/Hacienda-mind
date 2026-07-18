@@ -1,5 +1,5 @@
 //! Append-only per-tool-call telemetry. One JSONL row per successful MCP tool dispatch, written
-//! to `.basemind/telemetry.jsonl`. Powers the live statusline (`plugins/basemind/statusline.sh`)
+//! to `.hacienda-mcp/telemetry.jsonl`. Powers the live statusline (`plugins/basemind/statusline.sh`)
 //! and the `telemetry_summary` MCP tool.
 //!
 //! Telemetry is best-effort. Disk-full / permission-denied / serialize-failed all log via
@@ -16,7 +16,7 @@ use serde_json::Value;
 
 use super::savings::SavingsRow;
 
-/// Filename relative to `.basemind/`. Single source of truth so the statusline
+/// Filename relative to `.hacienda-mcp/`. Single source of truth so the statusline
 /// script and the `telemetry_summary` reader resolve to the same path.
 pub const TELEMETRY_FILENAME: &str = "telemetry.jsonl";
 
@@ -49,10 +49,10 @@ pub struct Telemetry {
 
 impl Telemetry {
     /// Construct a telemetry handle. The file isn't opened until the first record — lets
-    /// `basemind serve` boot without touching the filesystem if no one ever queries it.
-    pub fn new(basemind_dir: &Path) -> Self {
+    /// `hacienda-mcp serve` boot without touching the filesystem if no one ever queries it.
+    pub fn new(hacienda_mcp_dir: &Path) -> Self {
         Self {
-            path: basemind_dir.join(TELEMETRY_FILENAME),
+            path: hacienda_mcp_dir.join(TELEMETRY_FILENAME),
             writer: Mutex::new(None),
         }
     }

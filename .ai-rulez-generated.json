@@ -5,61 +5,61 @@
     ".hermes/package/pyproject.toml": {
       "content_hash": "blake3:c837d1843fb0058f5ffb9efb2eb94f7b74ab8df9a6f8dded908a37763dd19726"
     },
-    ".hermes/package/src/basemind_hermes_plugin/__init__.py": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/__init__.py": {
       "content_hash": "blake3:81c9d468586b798cb29dfc4dab0d40c90e865583a5a65cf6cc984b86f81fb6a8"
     },
-    ".hermes/package/src/basemind_hermes_plugin/commands/bm-doctor.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/commands/bm-doctor.md": {
       "content_hash": "blake3:bddb5b7c433220cce32a3cad1c9011d9f1fc6b05e2420bb09f7dfd280b1da2e7"
     },
-    ".hermes/package/src/basemind_hermes_plugin/commands/bm-init.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/commands/bm-init.md": {
       "content_hash": "blake3:9709ae46a4fe2ddf3fb12642716bbd876d0cd7a9dc82ecc8d5a7b4efadf09531"
     },
-    ".hermes/package/src/basemind_hermes_plugin/commands/bm-scan.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/commands/bm-scan.md": {
       "content_hash": "blake3:54d00ed56e2003136b06bcf59460a2782258f8e2e35475b07b65c2adcb5e873c"
     },
-    ".hermes/package/src/basemind_hermes_plugin/commands/bm-stats.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/commands/bm-stats.md": {
       "content_hash": "blake3:134dcd4fa2a3179ed99a6d3f30537d0fbd428229cda0872f969ff0496b0f4fde"
     },
-    ".hermes/package/src/basemind_hermes_plugin/commands/bm-statusline.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/commands/bm-statusline.md": {
       "content_hash": "blake3:de09e8bd2b7d6b9601cf0eec48848ada697671bbb75c8b332ac05cd8174146d5"
     },
-    ".hermes/package/src/basemind_hermes_plugin/commands/bm.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/commands/bm.md": {
       "content_hash": "blake3:8cdc39a2516f7fe0af441ddb5d47404d8716818b40f9967a10e907690e537e38"
     },
-    ".hermes/package/src/basemind_hermes_plugin/hermes.py": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/hermes.py": {
       "content_hash": "blake3:ee4622d491e93cef4b66ab6911bfae9feb739f612cb0f5ac8bccebd8fff72c70"
     },
-    ".hermes/package/src/basemind_hermes_plugin/plugin.yaml": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/plugin.yaml": {
       "content_hash": "blake3:559ac029d4e8d2f78eea130c93e0fc7c9bfd331992511ccdcf787992a642b729"
     },
-    ".hermes/package/src/basemind_hermes_plugin/skills/basemind-cli/SKILL.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/skills/basemind-cli/SKILL.md": {
       "content_hash": "blake3:64088a6dd06d1efcfce022b71b4612cfca9527c153c4eda5e2e99acea131f94c"
     },
-    ".hermes/package/src/basemind_hermes_plugin/skills/basemind-code-search/SKILL.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/skills/basemind-code-search/SKILL.md": {
       "content_hash": "blake3:d2b8f9fca3f729aeae8987600ecbe190271b7240e9cb2aa51b832c4cb4e06cce"
     },
-    ".hermes/package/src/basemind_hermes_plugin/skills/basemind-comms/SKILL.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/skills/basemind-comms/SKILL.md": {
       "content_hash": "blake3:f68f41182a2a47651f258f3559fa01a2aeb6c50e2fcdd5790f94c2a17053ea92"
     },
-    ".hermes/package/src/basemind_hermes_plugin/skills/basemind-doctor/SKILL.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/skills/basemind-doctor/SKILL.md": {
       "content_hash": "blake3:893d9f311f747516616d4a75fbe555fe343bf4f4b2cefa88d3f508036b64a758"
     },
-    ".hermes/package/src/basemind_hermes_plugin/skills/basemind-documents/SKILL.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/skills/basemind-documents/SKILL.md": {
       "content_hash": "blake3:b29ea41ab510c394d835970be9cf5092bea234b49088c2573e016009a260a1c1"
     },
-    ".hermes/package/src/basemind_hermes_plugin/skills/basemind-git-history/SKILL.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/skills/basemind-git-history/SKILL.md": {
       "content_hash": "blake3:49ef1197cf14d47c5100debccc6d6f0c23577c26a2dbaf0c8100e5a787540152"
     },
-    ".hermes/package/src/basemind_hermes_plugin/skills/basemind-scan/SKILL.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/skills/basemind-scan/SKILL.md": {
       "content_hash": "blake3:6e77dfce141eb6c2b45e6cf02f086cde1ee1ba49f3c9cfa3dca13a06e3cdf6fb"
     },
-    ".hermes/package/src/basemind_hermes_plugin/skills/basemind-stats/SKILL.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/skills/basemind-stats/SKILL.md": {
       "content_hash": "blake3:53bac1c108eba0ca5813bc9f76dc1e793e6dcbe9b89528f3a73d6862531d3820"
     },
-    ".hermes/package/src/basemind_hermes_plugin/skills/basemind/SKILL.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/skills/basemind/SKILL.md": {
       "content_hash": "blake3:70f3e3ffddfa914e775879f78876f79c3536ca80f262fa87d0209b9b37b7a51c"
     },
-    ".hermes/package/src/basemind_hermes_plugin/skills/multi-agent-room/SKILL.md": {
+    ".hermes/package/src/hacienda_mcp_hermes_plugin/skills/multi-agent-room/SKILL.md": {
       "content_hash": "blake3:525b3f8031902107da61ff0f2a5e71f24e1e3bc25f8b5a39bcef00c712bc8894"
     },
     ".hermes/plugins/basemind/__init__.py": {

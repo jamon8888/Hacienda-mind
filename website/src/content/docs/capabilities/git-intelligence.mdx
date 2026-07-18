@@ -5,13 +5,13 @@ description: Explore git history without shelling out — commits, blame, diffs,
 
 import { Aside, Badge, Card, CardGrid } from '@astrojs/starlight/components';
 
-basemind precomputes a per-repo git-history index backed by `gix`, resolving blame and diffs
+hacienda-mcp precomputes a per-repo git-history index backed by `gix`, resolving blame and diffs
 at **symbol** resolution. History queries return commits, authors, and paths as structured
 data in **tens of microseconds** — a pure accelerator that rebuilds automatically when history
 changes.
 
 <Aside type="note">
-Git tools require `basemind serve` to be running inside a git repository. The history index
+Git tools require `hacienda-mcp serve` to be running inside a git repository. The history index
 auto-builds on first use; if it is fresh (matching HEAD), the tools use it. Otherwise they
 walk history directly, so results are always current.
 </Aside>

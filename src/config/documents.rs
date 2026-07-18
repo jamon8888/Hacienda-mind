@@ -623,15 +623,15 @@ mod tests {
     fn api_key_env_reads_environment() {
         // SAFETY: scoped to this single test; the env var name is uniquely
         unsafe {
-            std::env::set_var("BASEMIND_TEST_API_KEY_PRESENT", "value-123");
+            std::env::set_var("HACIENDA_MCP_TEST_API_KEY_PRESENT", "value-123");
         }
         let k = ApiKey::Env {
-            env: "BASEMIND_TEST_API_KEY_PRESENT".to_string(),
+            env: "HACIENDA_MCP_TEST_API_KEY_PRESENT".to_string(),
         };
         let resolved = k.resolve().expect("env resolves");
         assert_eq!(resolved.expose(), "value-123");
         unsafe {
-            std::env::remove_var("BASEMIND_TEST_API_KEY_PRESENT");
+            std::env::remove_var("HACIENDA_MCP_TEST_API_KEY_PRESENT");
         }
     }
 
@@ -639,10 +639,10 @@ mod tests {
     fn api_key_env_missing_resolves_to_none() {
         // SAFETY: the variable is removed before the test so the env lookup
         unsafe {
-            std::env::remove_var("BASEMIND_TEST_API_KEY_MISSING");
+            std::env::remove_var("HACIENDA_MCP_TEST_API_KEY_MISSING");
         }
         let k = ApiKey::Env {
-            env: "BASEMIND_TEST_API_KEY_MISSING".to_string(),
+            env: "HACIENDA_MCP_TEST_API_KEY_MISSING".to_string(),
         };
         assert!(k.resolve().is_none());
     }

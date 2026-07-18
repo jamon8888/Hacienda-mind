@@ -1,20 +1,20 @@
 ---
 title: Introduction
 description: >-
-  What basemind is and why it exists — the context layer that lets agents answer
+  What hacienda-mcp is and why it exists — the context layer that lets agents answer
   from structure instead of burning tokens on grep and whole-file reads.
 ---
 
 import { Aside, Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-basemind turns any repository into an always-current map of its code, documents,
+hacienda-mcp turns any repository into an always-current map of its code, documents,
 history, and memory — so agents answer from **structure and search** instead of
 burning their context window on `grep` and file reads, and gives a team of agents
 a **shared channel to coordinate** while they work.
 
 One server does both.
 
-## The problem basemind solves
+## The problem hacienda-mcp solves
 
 When an agent needs to understand code, it has three expensive options:
 
@@ -25,7 +25,7 @@ When an agent needs to understand code, it has three expensive options:
 3. **Navigate back and forth** — opening one file to find a call, opening another
    to find the definition, parsing manually to understand the shape.
 
-basemind does all three jobs in **milliseconds**, and answers with **paths, line
+hacienda-mcp does all three jobs in **milliseconds**, and answers with **paths, line
 numbers, and signatures** — a fraction of the tokens, and no manual parsing.
 
 Once an agent knows a symbol lives at `src/parser.rs:142`, it can `read_file` that
@@ -46,9 +46,9 @@ guessing. Once it knows what changed yesterday, it stops reading git logs.
 | **Agent shells** | Let agents open, type into, and watch terminal sessions in the background. |
 | **Token saving** | Hand an agent a file's outline instead of its full text, pull back only the one function it needs, diff a re-read instead of resending it whole. |
 
-## The operating rule: basemind first, shell/grep/git fallback
+## The operating rule: hacienda-mcp first, shell/grep/git fallback
 
-basemind is built on one discipline: **prefer structure over content**.
+hacienda-mcp is built on one discipline: **prefer structure over content**.
 
 - **`outline` a file before you open it.** Read only the exact span you need from
   the outline, not the whole file.
@@ -60,16 +60,16 @@ basemind is built on one discipline: **prefer structure over content**.
   `git blame`.** History at symbol resolution, in tens of microseconds.
 - **`rescan` after you edit code**, not a server reconnect. Optionally limit it to
   the files you touched.
-- **Do not re-read a file basemind already mapped.** If the outline answered the
+- **Do not re-read a file hacienda-mcp already mapped.** If the outline answered the
   question, stop.
 
 ## Two jobs from one server
 
 ### 1. Indexed context layer
 
-`basemind scan` reads your project once, in parallel, and forwards the result to a
-background daemon that manages a machine-global cache under `~/.local/share/basemind/`.
-All repos/worktrees on one machine share this cache. After scanning, `basemind serve`
+`hacienda-mcp scan` reads your project once, in parallel, and forwards the result to a
+background daemon that manages a machine-global cache under `~/.local/share/hacienda-mcp/`.
+All repos/worktrees on one machine share this cache. After scanning, `hacienda-mcp serve`
 loads the map into memory and answers questions instantly — no re-reading the project
 for each one. When files change, it signals the daemon to update only what changed.
 
@@ -95,7 +95,7 @@ server or standalone CLI.
   <LinkCard
     title="Installation"
     href="/start/installation/"
-    description="Three ways to run basemind — pick your tool."
+    description="Three ways to run hacienda-mcp — pick your tool."
   />
   <LinkCard
     title="Quickstart"

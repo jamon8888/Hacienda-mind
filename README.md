@@ -1,11 +1,11 @@
 <!-- markdownlint-disable MD033 MD041 -->
 <div align="center">
 
-<img src="docs/media/basemind-banner.svg" alt="basemind — cybernetic core" width="820">
+<img src="docs/media/hacienda-mcp-banner.svg" alt="hacienda-mcp — cybernetic core" width="820">
 
 **The context and communication layer for coding agents.**
 
-basemind turns any repo into an always-current map of its code, documents, history, and memory —
+hacienda-mcp turns any repo into an always-current map of its code, documents, history, and memory —
 so agents answer from **structure and search** instead of burning their context window on `grep` and
 file reads — and gives a team of agents a **shared channel to coordinate** while they work. One
 server does both.
@@ -13,14 +13,14 @@ server does both.
 Code map across **300+ languages** · documents in **90+ formats** · semantic + full-text search ·
 git history & blame · shared memory · web crawl · agent-to-agent comms
 
-[![Docs](https://img.shields.io/badge/docs-basemind.ai-965aff?style=flat-square)](https://basemind.ai)
-[![crates.io](https://img.shields.io/crates/v/basemind?style=flat-square)](https://crates.io/crates/basemind)
-[![npm](https://img.shields.io/npm/v/basemind?style=flat-square)](https://www.npmjs.com/package/basemind)
-[![PyPI](https://img.shields.io/pypi/v/basemind?style=flat-square)](https://pypi.org/project/basemind/)
-[![CI](https://img.shields.io/github/actions/workflow/status/Goldziher/basemind/ci.yaml?style=flat-square)](https://github.com/Goldziher/basemind/actions/workflows/ci.yaml)
+[![Docs](https://img.shields.io/badge/docs-github.com/jamon8888/Hacienda-mind-965aff?style=flat-square)](https://github.com/jamon8888/Hacienda-mind)
+[![crates.io](https://img.shields.io/crates/v/hacienda-mcp?style=flat-square)](https://crates.io/crates/hacienda-mcp)
+[![npm](https://img.shields.io/npm/v/hacienda-mcp?style=flat-square)](https://www.npmjs.com/package/hacienda-mcp)
+[![PyPI](https://img.shields.io/pypi/v/hacienda-mcp?style=flat-square)](https://pypi.org/project/basemind/)
+[![CI](https://img.shields.io/github/actions/workflow/status/jamon8888/Hacienda-mind/ci.yaml?style=flat-square)](https://github.com/jamon8888/Hacienda-mind/actions/workflows/ci.yaml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 
-[Docs](https://basemind.ai) · [Install](#installation) · [Features](#what-you-get) · [How it works](#how-it-works) · [Performance](#performance) · [CLI](#cli-reference)
+[Docs](https://github.com/jamon8888/Hacienda-mind) · [Install](#installation) · [Features](#what-you-get) · [How it works](#how-it-works) · [Performance](#performance) · [CLI](#cli-reference)
 
 </div>
 
@@ -37,7 +37,7 @@ git history & blame · shared memory · web crawl · agent-to-agent comms
 
 ## What you get
 
-basemind answers with **file paths, line numbers, and signatures — not whole files** — so a question
+hacienda-mcp answers with **file paths, line numbers, and signatures — not whole files** — so a question
 about your code costs a small fraction of the tokens it takes to read the source.
 
 <!-- markdownlint-disable MD013 -->
@@ -54,6 +54,7 @@ about your code costs a small fraction of the tokens it takes to read the source
 | **Agent comms** | Threads for agents working the same repo: each addressed by at least two of subject / path-glob / members, discovered by scope (member, cwd path-match, or subject filter — never global), with a recency-filtered inbox. The creator manages membership and archives; idle threads auto-archive. One orchestrator can drive many named subagents (`as_agent`). | `thread_start` · `thread_post` · `thread_list` · `inbox_read` · `agent_list` |
 | **Agent shells** | Let agents open, type into, and watch terminal sessions in the background. | `shell_spawn` · `shell_send` · `shell_capture` · `shell_list` |
 | **Token saving** | Hand an agent a file's outline instead of its full text, pull back only the one function it needs, diff a re-read instead of resending it whole, checkpoint a session, and flag wasteful tool use. | `compress` · `expand` · `delta` · `checkpoint` · `detect_waste` |
+| **PII redaction (NER + LoRA)** | In-process **GLiNER2 + Candle (PEFT LoRA)** model that redacts **PERSON / ORGANIZATION / LOCATION** from extracted document text — the entities xberg's pattern engine can't catch. Local, no external service, fails soft (scan still runs if the model is absent). Needs a `pii` build. | `search_documents` (redacted output) |
 | **Admin** | Refresh the index, see what's been queried, and check or clean up the on-disk cache. | `rescan` · `telemetry_summary` · `cache_stats` |
 | **Machine registry** | Machine-wide repo/worktree/branch coordination, backed by the daemon's always-on registry. Advisory claims let agent sessions avoid colliding on the same worktree. | `workspaces` · `worktrees` · `branches` · `worktree_claim` · `worktree_release` |
 
@@ -63,10 +64,10 @@ about your code costs a small fraction of the tokens it takes to read the source
 
 ## Installation
 
-Three ways to run basemind, easiest first. All three share the same local index and are safe to run
+Three ways to run hacienda-mcp, easiest first. All three share the same local index and are safe to run
 side by side.
 
-> **The plugin downloads the basemind program for you** on first use. The MCP-server and CLI paths
+> **The plugin downloads the hacienda-mcp program for you** on first use. The MCP-server and CLI paths
 > need it installed yourself — see [Install the program](#install-the-program).
 
 ### 1. As a plugin (recommended)
@@ -80,12 +81,12 @@ the slash commands. Pick your coding tool.
 In the session (not your shell), run in order:
 
 ```text
-/plugin marketplace add Goldziher/basemind
-/plugin install basemind@basemind
+/plugin marketplace add jamon8888/Hacienda-mind
+/plugin install hacienda-mcp@hacienda-mcp
 ```
 
 Restart, then run `/bm-statusline` once to turn on the live statusline (a one-time step — see
-[Statusline](#install-the-program)). Recommended: turn on auto-update for the `basemind`
+[Statusline](#install-the-program)). Recommended: turn on auto-update for the `hacienda-mcp`
 marketplace (Claude Code's plugin manager) so you always get the current index format and tool
 set — or update it regularly by hand if you'd rather control timing.
 
@@ -95,19 +96,19 @@ set — or update it regularly by hand if you'd rather control timing.
 <summary><strong>Codex</strong></summary>
 
 ```bash
-codex plugin marketplace add Goldziher/basemind
-codex plugin add basemind@basemind
+codex plugin marketplace add jamon8888/Hacienda-mind
+codex plugin add hacienda-mcp@hacienda-mcp
 ```
 
-In the app: open the **Plugins** sidebar and add basemind. The CLI and IDE share one config file.
+In the app: open the **Plugins** sidebar and add hacienda-mcp. The CLI and IDE share one config file.
 
 </details>
 
 <details>
 <summary><strong>Cursor</strong></summary>
 
-In Agent chat: `/add-plugin basemind` (once listed), or go to **Dashboard → Settings → Plugins →
-Team Marketplaces → Import from Repo** and point it at `https://github.com/Goldziher/basemind`.
+In Agent chat: `/add-plugin hacienda-mcp` (once listed), or go to **Dashboard → Settings → Plugins →
+Team Marketplaces → Import from Repo** and point it at `https://github.com/jamon8888/Hacienda-mind`.
 
 </details>
 
@@ -115,10 +116,10 @@ Team Marketplaces → Import from Repo** and point it at `https://github.com/Gol
 <summary><strong>Gemini CLI</strong></summary>
 
 ```bash
-gemini extensions install https://github.com/Goldziher/basemind
+gemini extensions install https://github.com/jamon8888/Hacienda-mind
 ```
 
-Update later with `gemini extensions update basemind`.
+Update later with `gemini extensions update hacienda-mcp`.
 
 </details>
 
@@ -126,8 +127,8 @@ Update later with `gemini extensions update basemind`.
 <summary><strong>Factory Droid</strong></summary>
 
 ```bash
-droid plugin marketplace add https://github.com/Goldziher/basemind
-droid plugin install basemind@basemind
+droid plugin marketplace add https://github.com/jamon8888/Hacienda-mind
+droid plugin install hacienda-mcp@hacienda-mcp
 ```
 
 </details>
@@ -136,8 +137,8 @@ droid plugin install basemind@basemind
 <summary><strong>GitHub Copilot CLI</strong></summary>
 
 ```bash
-copilot plugin marketplace add Goldziher/basemind
-copilot plugin install basemind@basemind
+copilot plugin marketplace add jamon8888/Hacienda-mind
+copilot plugin install hacienda-mcp@hacienda-mcp
 ```
 
 </details>
@@ -157,7 +158,7 @@ Add to `opencode.json` (project) or `~/.config/opencode/opencode.json` (global):
 <summary><strong>Kimi Code</strong></summary>
 
 ```text
-/plugins install https://github.com/Goldziher/basemind
+/plugins install https://github.com/jamon8888/Hacienda-mind
 ```
 
 Kimi doesn't support the comms auto-notifications, but the chat tools still work.
@@ -167,7 +168,7 @@ Kimi doesn't support the comms auto-notifications, but the chat tools still work
 <details>
 <summary><strong>Hermes</strong></summary>
 
-Hermes exposes MCP servers through config, so basemind's tools are wired there. Two steps — the
+Hermes exposes MCP servers through config, so hacienda-mcp's tools are wired there. Two steps — the
 binary + MCP wiring gives you the tools; a small standalone plugin package adds the helper skills,
 slash commands, and comms notifications.
 
@@ -176,8 +177,8 @@ then add the server to `~/.hermes/config.yaml` (this is what gives you the 60+ t
 
 ```yaml
 mcp_servers:
-  basemind:
-    command: basemind
+  hacienda-mcp:
+    command: hacienda-mcp
     args: [serve]
 ```
 
@@ -186,10 +187,10 @@ into the same Python environment Hermes runs in, then enable it (general plugins
 
 ```bash
 pip install basemind-hermes-plugin
-hermes plugins enable basemind
+hermes plugins enable hacienda-mcp
 ```
 
-The plugin is pure-Python and ships no binary — it shells out to the `basemind` you installed above.
+The plugin is pure-Python and ships no binary — it shells out to the `hacienda-mcp` you installed above.
 Comms auto-notifications are best-effort; the chat tools work regardless.
 
 </details>
@@ -201,7 +202,7 @@ Comms auto-notifications are best-effort; the chat tools work regardless.
 [generic MCP block](#2-as-an-mcp-server). If you already use the Gemini extension,
 `agy plugin import gemini` brings it across.
 
-**pi**: `pi install git:github.com/Goldziher/basemind`. pi has no MCP support, so basemind runs
+**pi**: `pi install git:github.com/jamon8888/Hacienda-mind`. pi has no MCP support, so hacienda-mcp runs
 through its [CLI](#3-as-a-cli) here.
 
 </details>
@@ -214,37 +215,37 @@ then register it:
 ```json
 {
   "mcpServers": {
-    "basemind": { "command": "basemind", "args": ["serve"] }
+    "hacienda-mcp": { "command": "hacienda-mcp", "args": ["serve"] }
   }
 }
 ```
 
 Each tool says whether it only reads or can change things, so your client can auto-approve the safe
-ones and ask before the rest. If `basemind` isn't found, use the full path from `which basemind`.
+ones and ask before the rest. If `hacienda-mcp` isn't found, use the full path from `which hacienda-mcp`.
 
 <details>
 <summary><strong>Per-tool specifics</strong> (Claude Code · Cursor · Windsurf · Codex · Gemini · Copilot · Droid · Cline · Continue · OpenCode · Hermes)</summary>
 
-- **Claude Code** — `claude mcp add basemind -- basemind serve` (add `--scope user` for all
+- **Claude Code** — `claude mcp add hacienda-mcp -- hacienda-mcp serve` (add `--scope user` for all
   projects; the `--` is required). Or commit a `.mcp.json` at the repo root with the block above.
 - **Cursor** — put the block above in `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global).
 - **Windsurf** — `~/.codeium/windsurf/mcp_config.json` (or Cascade → MCP servers → manage), then
   **Refresh**.
-- **Codex** — `codex mcp add basemind -- basemind serve`, shared by the CLI and IDE.
-- **Gemini CLI** — `gemini mcp add basemind basemind serve`, or the block above in
+- **Codex** — `codex mcp add hacienda-mcp -- hacienda-mcp serve`, shared by the CLI and IDE.
+- **Gemini CLI** — `gemini mcp add hacienda-mcp hacienda-mcp serve`, or the block above in
   `~/.gemini/settings.json`.
 - **GitHub Copilot CLI** — `/mcp add` in-session, or `~/.copilot/mcp-config.json` with
   `"type": "local"` and `"tools": ["*"]`.
-- **Factory Droid** — `droid mcp add basemind "basemind serve"`, or `~/.factory/mcp.json`.
+- **Factory Droid** — `droid mcp add hacienda-mcp "hacienda-mcp serve"`, or `~/.factory/mcp.json`.
 - **Cline** — MCP Servers icon → Configure → add the block above.
-- **Continue** — `.continue/mcpServers/basemind.yaml` with `command: basemind`, `args: [serve]`.
+- **Continue** — `.continue/mcpServers/hacienda-mcp.yaml` with `command: hacienda-mcp`, `args: [serve]`.
 - **OpenCode (without the plugin)** — `opencode.json` under key `mcp`, with `command` as an array
-  `["basemind", "serve"]`.
-- **Hermes** — `mcp_servers.basemind` in `~/.hermes/config.yaml` (YAML: `command: basemind`,
+  `["hacienda-mcp", "serve"]`.
+- **Hermes** — `mcp_servers.hacienda-mcp` in `~/.hermes/config.yaml` (YAML: `command: hacienda-mcp`,
   `args: [serve]`). For helper skills + comms notifications, `pip install basemind-hermes-plugin`
-  (a standalone pure-Python plugin, no binary), then `hermes plugins enable basemind` — see the
+  (a standalone pure-Python plugin, no binary), then `hermes plugins enable hacienda-mcp` — see the
   Hermes plugin section above.
-- **Any other tool** — point it at the command `basemind` with the argument `serve`.
+- **Any other tool** — point it at the command `hacienda-mcp` with the argument `serve`.
 
 </details>
 
@@ -253,29 +254,29 @@ ones and ask before the rest. If `basemind` isn't found, use the full path from 
 The standalone program, for scripts, headless runs, and CI. [Install it](#install-the-program), then:
 
 ```bash
-basemind scan                          # index the project once
-basemind query symbol "parseQuery"     # find a symbol by name
-basemind query references "processFile" # find everywhere it's called
-basemind git blame-file src/main.rs    # who last changed each line
-basemind watch                         # keep the index fresh as files change
+hacienda-mcp scan                          # index the project once
+hacienda-mcp query symbol "parseQuery"     # find a symbol by name
+hacienda-mcp query references "processFile" # find everywhere it's called
+hacienda-mcp git blame-file src/main.rs    # who last changed each line
+hacienda-mcp watch                         # keep the index fresh as files change
 ```
 
 Full command list in the [CLI reference](#cli-reference).
 
 ### Install the program
 
-The MCP and CLI paths need `basemind` available on your system. (The plugin does this for you.)
+The MCP and CLI paths need `hacienda-mcp` available on your system. (The plugin does this for you.)
 
 <!-- markdownlint-disable MD013 -->
 
 | Channel | Command | Includes |
 |---|---|---|
-| Homebrew | `brew install Goldziher/tap/basemind` | everything |
-| npm | `npm install -g basemind` | everything |
-| pip | `pip install basemind` | everything |
-| cargo | `cargo install basemind --locked` | code + git only |
-| cargo (full) | `cargo install basemind --features full --locked` | everything |
-| GitHub releases | [Download a binary](https://github.com/Goldziher/basemind/releases) | everything |
+| Homebrew | `brew install Goldziher/tap/hacienda-mcp` | everything |
+| npm | `npm install -g hacienda-mcp` | everything |
+| pip | `pip install hacienda-mcp` | everything |
+| cargo | `cargo install hacienda-mcp --locked` | code + git only |
+| cargo (full) | `cargo install hacienda-mcp --features full --locked` | everything |
+| GitHub releases | [Download a binary](https://github.com/jamon8888/Hacienda-mind/releases) | everything |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -285,7 +286,7 @@ needs. The plain `cargo install` builds the code-map and git tools only.
 
 ### Get started
 
-After installing, run **`basemind init`** (CLI) — or **`/bm-init`** if your tool supports slash
+After installing, run **`hacienda-mcp init`** (CLI) — or **`/bm-init`** if your tool supports slash
 commands — from the repo root. It's re-runnable and safe to call again later:
 
 - Writes a commented `basemind.toml` scaffold at the repo root, if one doesn't already exist.
@@ -293,10 +294,10 @@ commands — from the repo root. It's re-runnable and safe to call again later:
   with `--yes`, `--with <capability>`, `--without <capability>`). Capability slugs:
   `code-search-navigation`, `code-mapping-architecture`, `git-history`, `agent-comms`,
   `documents-rag`, `semantic-search`.
-- Injects a "prefer basemind over grep/read/git" rules block into your repo's agent-instructions
+- Injects a "prefer hacienda-mcp over grep/read/git" rules block into your repo's agent-instructions
   file — `.ai-rulez/rules/basemind-usage.md` if `.ai-rulez/config.toml` is present (run
   `ai-rulez generate` afterward), else `CLAUDE.md`, else `AGENTS.md`, else a new `CLAUDE.md`. The
-  block is delimited (`<!-- BEGIN basemind ... -->` / `<!-- END basemind -->`) so re-running
+  block is delimited (`<!-- BEGIN hacienda-mcp ... -->` / `<!-- END hacienda-mcp -->`) so re-running
   replaces it in place instead of duplicating it.
 
 Preview changes without writing with `--print`; skip the rules step with `--no-rules`; steer the
@@ -306,19 +307,19 @@ target explicitly with `--rules-target <auto|claude|agents|ai-rulez|none>`.
 <summary><strong>Statusline</strong> (Claude Code)</summary>
 
 Run `/bm-statusline` once. This is a one-time step because Claude Code doesn't let plugins set the
-main statusline themselves — so basemind asks the assistant to make the one-line settings change on
+main statusline themselves — so hacienda-mcp asks the assistant to make the one-line settings change on
 your behalf, and it sticks from then on.
 
 It shows two lines:
 
 ```text
-Opus · basemind · ⎇ main · 12% ctx
-◆ basemind  ●  1,247 files · 23m ago  │  312 calls · 180 srch · 44 git · 12 docs  │  1.4M saved  │  ✉ 3 @reviewer
+Opus · hacienda-mcp · ⎇ main · 12% ctx
+◆ hacienda-mcp  ●  1,247 files · 23m ago  │  312 calls · 180 srch · 44 git · 12 docs  │  1.4M saved  │  ✉ 3 @reviewer
 ```
 
-The dot is green when basemind is live and fresh, amber when idle, red when stale. The middle shows
+The dot is green when hacienda-mcp is live and fresh, amber when idle, red when stale. The middle shows
 activity by type, then tokens saved, then unread messages. Adjust with
-`BASEMIND_STATUSLINE=full|compact|minimal`, or hide the top line with `BASEMIND_STATUSLINE_CONTEXT=0`.
+`HACIENDA_MCP_STATUSLINE=full|compact|minimal`, or hide the top line with `HACIENDA_MCP_STATUSLINE_CONTEXT=0`.
 
 </details>
 
@@ -328,14 +329,14 @@ activity by type, then tokens saved, then unread messages. Adjust with
 
 <!-- markdownlint-disable MD013 -->
 
-<p align="center"><img src="docs/media/demo.gif" alt="basemind CLI: scan, then symbol / reference / call-graph / blame queries" width="760"></p>
+<p align="center"><img src="docs/media/demo.gif" alt="hacienda-mcp CLI: scan, then symbol / reference / call-graph / blame queries" width="760"></p>
 <p align="center"><em>The same engine from the CLI — <code>scan</code>, then symbol / reference / call-graph / blame queries.</em></p>
 
 <p align="center"><img src="docs/media/semantic-demo.gif" alt="Semantic search over the documents store" width="820"></p>
 <p align="center"><em>Searching documents by meaning, not keywords, across 90+ formats.</em></p>
 
 <p align="center"><img src="docs/demos/code-review-panel.gif" alt="Three named reviewer agents posting findings to a shared repo room, DMing each other, and an orchestrator synthesizing a verdict over the comms CLI" width="820"></p>
-<p align="center"><em>Multi-agent code-review panel: named reviewers coordinate in a repo-scoped comms room (post, direct-message, synthesize) — entirely over <code>basemind comms</code>.</em></p>
+<p align="center"><em>Multi-agent code-review panel: named reviewers coordinate in a repo-scoped comms room (post, direct-message, synthesize) — entirely over <code>hacienda-mcp comms</code>.</em></p>
 
 <!-- markdownlint-enable MD013 -->
 
@@ -346,17 +347,17 @@ activity by type, then tokens saved, then unread messages. Adjust with
 <details>
 <summary><strong>From one scan to instant answers</strong></summary>
 
-`basemind scan` reads your project once, in parallel. It maps your code with
+`hacienda-mcp scan` reads your project once, in parallel. It maps your code with
 [tree-sitter] (across [300+ languages][tslp]) and pulls text out of your documents with
 [xberg], then saves the result to a global cache under the XDG data directory, keyed by workspace —
-nothing is written into your repo. After that, `basemind serve` keeps the map in memory and answers
+nothing is written into your repo. After that, `hacienda-mcp serve` keeps the map in memory and answers
 questions instantly — no re-reading the project for each one. When files change, it updates only what
 changed. A single background daemon on the machine is the sole writer to that cache, so multiple
 `serve` sessions on the same repo (or on different worktrees of it) all read and write concurrently
 instead of one falling back read-only. See [Global cache & the daemon](#how-it-works) below.
 
 Navigation is **scope- and import-aware** for JavaScript/TypeScript, **Python, and Java**: instead of
-matching references by name, basemind resolves each use to the definition it actually binds to, so a
+matching references by name, hacienda-mcp resolves each use to the definition it actually binds to, so a
 shadowed local isn't confused with an import and `goto_definition` / `find_references` / `find_callers`
 report precise, `resolved` results (including across files for imports). Every other language still
 gets fast tree-sitter scope binding. Precise Python/Java resolution runs GitHub stack-graphs-style
@@ -372,9 +373,9 @@ too, so `find_references "#project"` lists every note carrying that tag.
 flowchart LR
   A(["Coding agent"])
   R["Your project<br/>code · documents · git"]
-  S["basemind scan<br/>map code & read documents"]
-  D[("Global cache<br/>~/.local/share/basemind")]
-  V["basemind serve<br/>answers questions"]
+  S["hacienda-mcp scan<br/>map code & read documents"]
+  D[("Global cache<br/>~/.local/share/hacienda-mcp")]
+  V["hacienda-mcp serve<br/>answers questions"]
   R --> S --> D --> V
   A <-->|asks questions| V
   classDef accent fill:#2563eb,stroke:#1e40af,color:#fff
@@ -388,7 +389,7 @@ Search and memory are powered by a vector store ([LanceDB]).
 <details>
 <summary><strong>Index lifecycle &amp; freshness</strong></summary>
 
-`basemind serve` answers the MCP handshake immediately and warms the code map into memory in the
+`hacienda-mcp serve` answers the MCP handshake immediately and warms the code map into memory in the
 background, so a client never blocks waiting for a large repo to load. The `status` tool reports
 `warming` (still loading) and, once done, `warm_ms`; a first-time index build similarly reports
 `indexing` / `index_build_ms`.
@@ -410,12 +411,12 @@ Treat an empty or partial result carrying a `notice` as "retry shortly," not "no
 <details>
 <summary><strong>Global cache &amp; the daemon</strong></summary>
 
-Index state lives under a single global cache — `~/.local/share/basemind/` on Linux/macOS
-(override with `BASEMIND_DATA_HOME`) — keyed by workspace, never inside your repo. The
+Index state lives under a single global cache — `~/.local/share/hacienda-mcp/` on Linux/macOS
+(override with `HACIENDA_MCP_DATA_HOME`) — keyed by workspace, never inside your repo. The
 content-addressed blob store is machine-wide too: identical file content scanned from different repos
 or worktrees is extracted and stored once.
 
-A single background daemon per machine is the sole writer to that cache. `basemind serve` opens its
+A single background daemon per machine is the sole writer to that cache. `hacienda-mcp serve` opens its
 store read-only and forwards writes (scan / rescan) to the daemon over a local socket, so N `serve`
 sessions on the same repo — or on different worktrees of it — all read and write concurrently instead
 of a second session silently falling back to a stale, read-only view. The daemon also keeps a cheap,
@@ -423,7 +424,7 @@ always-on registry of repos, worktrees, and branches (`workspaces` / `worktrees`
 `worktree_claim` / `worktree_release` give agent sessions an advisory way to avoid colliding on the
 same worktree.
 
-`basemind statusline` queries the daemon for the workspaces currently active and prints a compact
+`hacienda-mcp statusline` queries the daemon for the workspaces currently active and prints a compact
 line for your shell prompt; it prints nothing when no daemon is running.
 
 </details>
@@ -466,6 +467,32 @@ watch along. A spawned session and the agent that started it can message each ot
 
 ---
 
+## PII redaction (GLiNER2 + Candle + LoRA)
+
+hacienda-mcp can redact **personally identifiable information** from the documents it indexes, using an
+**in-process GLiNER2 model backed by Candle** (Rust ML runtime — no Python, no external service) with an
+optional **PEFT LoRA adapter** for domain tuning. It runs as a pass over extracted document text, catching
+**PERSON / ORGANIZATION / LOCATION** mentions that xberg's pure-Rust pattern redaction engine misses.
+
+```toml
+# hacienda-mcp.toml
+[pii]
+enabled = true
+model_dir = "/path/to/gliner2-model"          # tokenizer.json + model.safetensors
+# lora_adapter_dir = "/path/to/adapter"       # optional PEFT LoRA adapter
+strategy = "mask"                              # mask | hash | token_replace | drop
+threshold = 0.5
+```
+
+- **Local & private** — the model runs on your machine; nothing leaves the process.
+- **Graceful** — if `model_dir` is unset or the model fails to load, the pass is skipped (with a warning) and the scan still completes.
+- **Strategy** — `mask` → `[REDACTED]`, `hash` → stable per-span hash, `token_replace` → `«PERSON»` etc., `drop` → remove the span.
+- **Build** — needs a `pii` build (`--features pii`). The `pii-candle` crate is vendored under `crates/pii-candle`.
+
+See [Configuration → PII](docs/reference/configuration.md#pii) for every key.
+
+---
+
 ## Token saving
 
 <details>
@@ -477,15 +504,15 @@ The plugin nudges agents toward the cheap path by default:
 - Search for a definition instead of grepping for it.
 - Look up who calls a function instead of grepping for call sites.
 - Refresh the index after edits instead of restarting the server.
-- Don't re-read a file basemind already mapped.
+- Don't re-read a file hacienda-mcp already mapped.
 
 Optional guardrails enforce this at the moment a tool is used:
 
-- **Guard** — gently redirects `grep`-style searches to the matching basemind tool. On by default;
-  set `BASEMIND_GUARD=off` to disable, or `redirect` to block instead of nudge.
-- **Output compressor** — `BASEMIND_COMPRESS_OUTPUT=1` shrinks long command output. It never touches
+- **Guard** — gently redirects `grep`-style searches to the matching hacienda-mcp tool. On by default;
+  set `HACIENDA_MCP_GUARD=off` to disable, or `redirect` to block instead of nudge.
+- **Output compressor** — `HACIENDA_MCP_COMPRESS_OUTPUT=1` shrinks long command output. It never touches
   anything that looks like a credential and leaves output alone if it can't help.
-- **Re-read shortcut** — `BASEMIND_DELTA_READS=1` shows just what changed when an agent re-reads a
+- **Re-read shortcut** — `HACIENDA_MCP_DELTA_READS=1` shows just what changed when an agent re-reads a
   file it already read this session.
 
 </details>
@@ -493,7 +520,7 @@ Optional guardrails enforce this at the moment a tool is used:
 <details>
 <summary><strong>Compression that understands code</strong></summary>
 
-basemind shrinks code by keeping the shape and dropping the bodies — function signatures and imports
+hacienda-mcp shrinks code by keeping the shape and dropping the bodies — function signatures and imports
 stay, the implementations go — because a signature is useless without its shape. For prose it does a
 light cleanup (extra whitespace, filler, repeated paragraphs). It reports honest before/after token
 counts, and the code version is exact — nothing is lost, just set aside. `expand` brings any one
@@ -535,7 +562,7 @@ rather than read from disk each time.
 <details>
 <summary><strong>Git history queries</strong></summary>
 
-basemind precomputes a per-repo git-history index (path → commit posting lists, stored newest-first)
+hacienda-mcp precomputes a per-repo git-history index (path → commit posting lists, stored newest-first)
 so the history tools — `commits_touching`, `recent_changes`, `hot_files`, `find_commits_by_path`,
 and `symbol_history`'s commit walk — are posting-list lookups. Warm in-process query latency on the
 same M4:
@@ -568,9 +595,9 @@ when history is rewritten (filter-repo / rebase / force-push). Reproduce with
 The config lives at the **repo root** as `basemind.toml` (committed). The cache it drives is derived
 state — held in the global cache under the XDG data directory, wiped and rebuilt on schema bumps —
 so config never belongs there and nothing basemind-owned is written into your repo. Run
-`basemind init` to drop a fully-commented scaffold (documenting every option) at the root. The legacy
-in-cache path (`.basemind/basemind.toml`, from before the global-cache move) is still read as a
-fallback for older checkouts. The full schema is at `schema/basemind-config-v1.schema.json`:
+`hacienda-mcp init` to drop a fully-commented scaffold (documenting every option) at the root. The legacy
+in-cache path (`.hacienda-mcp/basemind.toml`, from before the global-cache move) is still read as a
+fallback for older checkouts. The full schema is at `schema/hacienda-mcp-config-v1.schema.json`:
 
 ```toml
 # basemind.toml  (repo root — commit this)
@@ -583,12 +610,12 @@ respect_gitignore = true
 follow_symlinks = false
 # `exclude` is ADDED ON TOP of an always-on floor (node_modules, target, dist, build, out, .venv,
 # venv, __pycache__, *.pyc, .pytest_cache/.mypy_cache/.ruff_cache/.tox, .next/.nuxt/.svelte-kit,
-# vendor, .gradle, .terraform, coverage, bazel-*, .git, .basemind, .idea, .DS_Store). You can add to
+# vendor, .gradle, .terraform, coverage, bazel-*, .git, .hacienda-mcp, .idea, .DS_Store). You can add to
 # it but not remove a floor entry.
 exclude = []
 # Index directories outside the repo root too — e.g. a Bazel external repo cache — so their
 # symbols resolve in search / references / outlines. External files are keyed by absolute path;
-# (re-)indexed on a full `basemind scan` only (not live-watched). extra_roots always follow symlinks.
+# (re-)indexed on a full `hacienda-mcp scan` only (not live-watched). extra_roots always follow symlinks.
 extra_roots = ["/private/var/tmp/_bazel_you/abc123/external"]
 
 [code_intel]
@@ -622,7 +649,7 @@ embed_exclude = []
 ```
 
 Any tool call can override these settings for that one request, and settings map to environment
-variables in the obvious way: `--llm-api-key` becomes `BASEMIND_LLM_API_KEY`.
+variables in the obvious way: `--llm-api-key` becomes `HACIENDA_MCP_LLM_API_KEY`.
 
 </details>
 
@@ -638,7 +665,7 @@ machine-readable output.
 
 <!-- markdownlint-disable MD013 -->
 
-**Query (`basemind query`)**
+**Query (`hacienda-mcp query`)**
 
 | Command | Purpose |
 |---|---|
@@ -659,7 +686,7 @@ machine-readable output.
 | `get-chunk <path> [--chunk-id --byte-start]` | Fetch one code chunk's source body (the `search-code` fetch half). |
 | `expand <path> <name> [--kind]` | A symbol's raw source body (the inverse of an outline entry). |
 
-**Git (`basemind git`)**
+**Git (`hacienda-mcp git`)**
 
 | Command | Purpose |
 |---|---|
@@ -672,7 +699,7 @@ machine-readable output.
 | `blame-file <path>` / `blame-symbol <path> <name>` | Who last changed each line / a symbol. |
 | `symbol-history <path> <name>` | When a symbol's body changed over time. |
 
-**Memory (`basemind memory`)**
+**Memory (`hacienda-mcp memory`)**
 
 | Command | Purpose |
 |---|---|
@@ -681,7 +708,7 @@ machine-readable output.
 | `search <query>` | Search stored values by meaning. |
 | `search-documents <query>` | Search documents and memory together. |
 
-**Suggestions (`basemind governance`)**
+**Suggestions (`hacienda-mcp governance`)**
 
 | Command | Purpose |
 |---|---|
@@ -690,7 +717,7 @@ machine-readable output.
 | `accept <id> [--key]` / `reject <id> [--reason]` | Keep a suggestion / dismiss it for good. |
 | `audit [--key --individual --dry-run --include-archived]` | Recompute memory importance, archive stale entries, refresh verdicts. |
 
-**Cache (`basemind cache`)**
+**Cache (`hacienda-mcp cache`)**
 
 | Command | Purpose |
 |---|---|
@@ -698,7 +725,7 @@ machine-readable output.
 | `gc` | Reclaim unused space (safe while the server runs). |
 | `clear --component <comp>` | Clear part of the cache (`views`, `blobs`, `git-cache`, `all`, …). |
 
-**Web (`basemind web`)**
+**Web (`hacienda-mcp web`)**
 
 | Command | Purpose |
 |---|---|
@@ -706,7 +733,7 @@ machine-readable output.
 | `crawl <seed-url>` | Follow links from a starting URL. |
 | `map <url>` | Discover a site's pages without fetching bodies. |
 
-**Comms (`basemind comms`)**
+**Comms (`hacienda-mcp comms`)**
 
 | Command | Purpose |
 |---|---|
@@ -717,7 +744,7 @@ machine-readable output.
 | `register --name <handle>` / `agents` | Set your handle / list active agents. |
 | `status` / `start` / `stop` | The shared service: check, start, or stop it. |
 
-**Shells (`basemind shells`, `--features shells`)**
+**Shells (`hacienda-mcp shells`, `--features shells`)**
 
 | Command | Purpose |
 |---|---|

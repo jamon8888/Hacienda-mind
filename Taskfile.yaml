@@ -14,7 +14,7 @@ tasks:
       - echo "Setup complete"
 
   build:
-    desc: Build the basemind binary
+    desc: Build the hacienda-mcp binary
     cmds:
       - cargo build --release
 
@@ -30,8 +30,8 @@ tasks:
       PYTHONPATH: .hermes/package/src
     cmds:
       - uv run --with pytest python -m pytest pip-package-hermes/tests/test_hermes_register.py
-      - rm -rf /tmp/basemind-hermes-wheel
-      - uv build --wheel --out-dir /tmp/basemind-hermes-wheel .hermes/package
+      - rm -rf /tmp/hacienda-mcp-hermes-wheel
+      - uv build --wheel --out-dir /tmp/hacienda-mcp-hermes-wheel .hermes/package
 
   test:verbose:
     desc: Run tests with verbose output

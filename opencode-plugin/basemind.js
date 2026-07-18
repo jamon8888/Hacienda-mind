@@ -1,7 +1,7 @@
 /**
- * basemind plugin for OpenCode.ai
+ * hacienda-mcp plugin for OpenCode.ai
  *
- * Registers the basemind MCP server (`basemind serve`) and the skills
+ * Registers the hacienda-mcp MCP server (`hacienda-mcp serve`) and the skills
  * directory shipped with the repo. OpenCode discovers the plugin via the
  * `plugin` array in `opencode.json`; the function exported here is called
  * once at startup with the live client + directory and returns a config
@@ -65,7 +65,7 @@ const hooks = ({ client, directory } = {}) => {
       }
     } catch {}
     // eslint-disable-next-line no-console
-    console.error(`[basemind] ${message}`);
+    console.error(`[hacienda-mcp] ${message}`);
   };
 
   return {
@@ -77,10 +77,10 @@ const hooks = ({ client, directory } = {}) => {
       }
 
       config.mcp = config.mcp || {};
-      if (!config.mcp.basemind) {
-        config.mcp.basemind = {
+      if (!config.mcp.hacienda-mcp) {
+        config.mcp.hacienda-mcp = {
           type: "local",
-          command: ["basemind", "serve"],
+          command: ["hacienda-mcp", "serve"],
           enabled: true,
         };
       }

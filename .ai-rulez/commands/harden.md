@@ -12,7 +12,7 @@ Run the harden harness (real-OSS clones + tool sweep + canaries) and summarize.
 1. Run:
 
    ```bash
-   BASEMIND_HARDEN_NO_BUILD=1 \
+   HACIENDA_MCP_HARDEN_NO_BUILD=1 \
      cargo test --release --test harden -- --ignored --nocapture \
      2>&1 | tee /tmp/basemind-harden-$(date +%s).log
    ```
@@ -24,4 +24,4 @@ Run the harden harness (real-OSS clones + tool sweep + canaries) and summarize.
    - Any per-repo scan-time delta > 20% vs the documented baseline (`typescript ~23 s eager-L2-on`, `tokio < 2 s`, `django < 3 s`).
 4. Exit with the harness exit code.
 
-If the user runs `/harden full`, drop `BASEMIND_HARDEN_NO_BUILD=1` and rebuild release first.
+If the user runs `/harden full`, drop `HACIENDA_MCP_HARDEN_NO_BUILD=1` and rebuild release first.

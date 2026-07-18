@@ -1,6 +1,6 @@
 //! Reusable MCP prompt templates (`prompts/list` + `prompts/get`).
 //!
-//! Prompts are short, parameterized workflows that teach a client how to drive basemind's tools
+//! Prompts are short, parameterized workflows that teach a client how to drive hacienda-mcp's tools
 //! for a common task — "get oriented in this repo", "trace a symbol", "review my uncommitted
 //! changes". They complement the big `instructions` string in [`super`]`::get_info` with concrete,
 //! selectable starting points, and their typed arguments (`symbol`, `path`) are the references the
@@ -8,7 +8,7 @@
 //!
 //! The router is built by the `#[prompt_router]` macro into `Self::prompt_router()` and stored on
 //! [`super::BasemindServer`]; `list_prompts` / `get_prompt` in `super` delegate to it manually
-//! (basemind hand-writes its `ServerHandler` impl for lean-mode, so it cannot use the blanket
+//! (hacienda-mcp hand-writes its `ServerHandler` impl for lean-mode, so it cannot use the blanket
 //! `#[prompt_handler]` macro, which would regenerate `get_info`).
 
 use rmcp::handler::server::wrapper::Parameters;
@@ -41,13 +41,13 @@ impl BasemindServer {
     /// Orientation workflow for a repository the agent has not seen before. No arguments.
     #[prompt(
         name = "onboard-repo",
-        description = "Get oriented in this repository using basemind: language mix, hot files, \
+        description = "Get oriented in this repository using hacienda-mcp: language mix, hot files, \
                        and recent activity — structure first, source second."
     )]
     pub async fn onboard_repo_prompt(&self) -> Vec<PromptMessage> {
         vec![PromptMessage::new_text(
             Role::User,
-            "Help me get oriented in this repository. Work structure-first, using basemind \
+            "Help me get oriented in this repository. Work structure-first, using hacienda-mcp \
              tools rather than reading files:\n\
              1. Call `repo_info` and `status` for the language mix, file count, and index state.\n\
              2. Call `hot_files` to find the most-churned files — the code that matters most.\n\
@@ -69,7 +69,7 @@ impl BasemindServer {
         vec![PromptMessage::new_text(
             Role::User,
             format!(
-                "Trace the symbol `{symbol}` through this codebase using basemind:\n\
+                "Trace the symbol `{symbol}` through this codebase using hacienda-mcp:\n\
                  1. `search_symbols` for `{symbol}` to find its definition(s) — note path + \
                  signature.\n\
                  2. `find_references` for `{symbol}` to see every call site.\n\
@@ -92,7 +92,7 @@ impl BasemindServer {
         vec![PromptMessage::new_text(
             Role::User,
             format!(
-                "Explain the file `{path}` using basemind, structure-first:\n\
+                "Explain the file `{path}` using hacienda-mcp, structure-first:\n\
                  1. `outline` `{path}` (add `l2: true`) for its symbols, signatures, imports, and \
                  calls — do NOT read the whole file yet.\n\
                  2. From the outline, identify the few symbols that carry the file's purpose.\n\
@@ -112,7 +112,7 @@ impl BasemindServer {
     pub async fn review_working_tree_prompt(&self) -> Vec<PromptMessage> {
         vec![PromptMessage::new_text(
             Role::User,
-            "Review my uncommitted changes using basemind:\n\
+            "Review my uncommitted changes using hacienda-mcp:\n\
              1. `working_tree_status` for the staged / unstaged / untracked breakdown.\n\
              2. For each changed file, `diff_outline` to see which symbols changed structurally \
              (not just line noise).\n\

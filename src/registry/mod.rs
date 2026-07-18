@@ -6,7 +6,7 @@
 //! via [`crate::git`]) — no working-tree walk — so registering a workspace costs microseconds and
 //! scales to every repo on a machine.
 //!
-//! The registry is a single msgpack snapshot under `$BASEMIND_DATA_HOME/registry/registry.msgpack`,
+//! The registry is a single msgpack snapshot under `$HACIENDA_MCP_DATA_HOME/registry/registry.msgpack`,
 //! rewritten atomically (temp + rename) after every mutation. The daemon is the sole writer, so no
 //! in-file locking is needed; readers load a fresh [`Registry`] or share one behind the daemon's own
 //! synchronization. This module is the persistence + population layer only — daemon wiring, watchers,

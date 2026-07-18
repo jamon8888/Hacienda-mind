@@ -2,7 +2,7 @@
 //!
 //! oxc parses JS/TS with its own parser (no tree-sitter grammar needed) and hands us a fully
 //! resolved scope + symbol + reference model (`oxc_semantic::Scoping`). This module turns that
-//! into basemind's shape: per-file **resolved references** (each use linked to its definition by
+//! into hacienda-mcp's shape: per-file **resolved references** (each use linked to its definition by
 //! byte span, shadowing already applied) plus the **import/export** edges the scanner's
 //! cross-file second pass stitches through `oxc_resolver`.
 //!

@@ -6,11 +6,11 @@
 //! `#[ignore]`-gated like `harden.rs` — run explicitly:
 //!
 //! ```bash
-//! BASEMIND_GIT_PARITY_REPO=/abs/path/to/repo \
+//! HACIENDA_MCP_GIT_PARITY_REPO=/abs/path/to/repo \
 //!   cargo test --release --test git_parity -- --ignored --nocapture
 //! ```
 //!
-//! With no `BASEMIND_GIT_PARITY_REPO` set the test skips (prints a note) so it stays a no-op in
+//! With no `HACIENDA_MCP_GIT_PARITY_REPO` set the test skips (prints a note) so it stays a no-op in
 //! environments without a target repo. The target repo is referenced **only** through this env var
 //! — never hardcoded — so no specific repository name lives in the tree.
 //!
@@ -23,10 +23,10 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use basemind::git::Repo;
-use basemind::git_history::GitHistoryIndex;
-use basemind::git_history::builder;
-use basemind::git_history::fts::FtsScope;
+use hacienda_mcp::git::Repo;
+use hacienda_mcp::git_history::GitHistoryIndex;
+use hacienda_mcp::git_history::builder;
+use hacienda_mcp::git_history::fts::FtsScope;
 
 /// `git -C <repo> <args>` → trimmed stdout lines (drops the trailing empty line).
 fn git_lines(repo: &Path, args: &[&str]) -> Vec<String> {
@@ -55,17 +55,17 @@ fn git_one(repo: &Path, args: &[&str]) -> Option<String> {
 
 /// The repo under test, or `None` to skip.
 fn target_repo() -> Option<PathBuf> {
-    let raw = std::env::var("BASEMIND_GIT_PARITY_REPO").ok()?;
+    let raw = std::env::var("HACIENDA_MCP_GIT_PARITY_REPO").ok()?;
     let path = PathBuf::from(raw);
     assert!(
         path.join(".git").exists(),
-        "BASEMIND_GIT_PARITY_REPO={} is not a git repo (no .git)",
+        "HACIENDA_MCP_GIT_PARITY_REPO={} is not a git repo (no .git)",
         path.display()
     );
     Some(path)
 }
 
-/// Build a fresh git-history index for `repo` in a throwaway `.basemind/` (never touches the repo's
+/// Build a fresh git-history index for `repo` in a throwaway `.hacienda-mcp/` (never touches the repo's
 /// real cache), synced to HEAD, and return it with the exact sha it indexed. All git oracles use
 /// that sha so a commit landing mid-build can't race the comparison.
 fn build_index(repo: &Path, scratch: &Path) -> (GitHistoryIndex, String) {
@@ -84,10 +84,10 @@ fn build_index(repo: &Path, scratch: &Path) -> (GitHistoryIndex, String) {
 }
 
 #[test]
-#[ignore = "requires BASEMIND_GIT_PARITY_REPO to point at a real repo"]
+#[ignore = "requires HACIENDA_MCP_GIT_PARITY_REPO to point at a real repo"]
 fn author_search_matches_real_git_at_full_depth() {
     let Some(repo) = target_repo() else {
-        eprintln!("git_parity: BASEMIND_GIT_PARITY_REPO unset — skipping");
+        eprintln!("git_parity: HACIENDA_MCP_GIT_PARITY_REPO unset — skipping");
         return;
     };
     let scratch = tempfile::tempdir().expect("tempdir");
@@ -130,10 +130,10 @@ fn author_search_matches_real_git_at_full_depth() {
 }
 
 #[test]
-#[ignore = "requires BASEMIND_GIT_PARITY_REPO to point at a real repo"]
+#[ignore = "requires HACIENDA_MCP_GIT_PARITY_REPO to point at a real repo"]
 fn recent_and_path_history_match_real_git() {
     let Some(repo) = target_repo() else {
-        eprintln!("git_parity: BASEMIND_GIT_PARITY_REPO unset — skipping");
+        eprintln!("git_parity: HACIENDA_MCP_GIT_PARITY_REPO unset — skipping");
         return;
     };
     let scratch = tempfile::tempdir().expect("tempdir");

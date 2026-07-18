@@ -1,28 +1,28 @@
 # Architecture
 
-basemind is a single Rust crate that builds one binary (`basemind`) and exposes
-its internals as a library. The binary serves three roles: `basemind scan` indexes
-a workspace, `basemind serve` runs the MCP stdio server, and the daemon
-(`basemind comms daemon`, auto-spawned; singleton per user) is the sole writer managing a
+hacienda-mcp is a single Rust crate that builds one binary (`hacienda-mcp`) and exposes
+its internals as a library. The binary serves three roles: `hacienda-mcp scan` indexes
+a workspace, `hacienda-mcp serve` runs the MCP stdio server, and the daemon
+(`hacienda-mcp comms daemon`, auto-spawned; singleton per user) is the sole writer managing a
 machine-global cache.
 
 ```text
                     ┌─────────────┐
-                    │ basemind    │
+                    │ hacienda-mcp    │
                     │ scan        │
                     └─────┬───────┘
                           │
                           │ IPC (UDS)
                           ▼
         ┌──────────────────────────────────┐
-        │  basemind daemon (per-user)      │
+        │  hacienda-mcp daemon (per-user)      │
         │                                  │
         │  ┌─────────┐ ┌─────────────┐    │
         │  │ Fjall   │ │ LanceDB     │    │
         │  │ writer  │ │ writer      │    │
         │  └─────────┘ └─────────────┘    │
         │        (sole writer per machine) │
-        │  ~/.local/share/basemind/       │
+        │  ~/.local/share/hacienda-mcp/       │
         └────┬────────────────────────┬───┘
              │                        │
    ┌─────────▼──────┐    ┌───────────▼────────┐
@@ -35,7 +35,7 @@ machine-global cache.
                    │ (all repos/worktrees share)    │
                    ▼                                ▼
            ┌────────────────┐              ┌─────────────────┐
-           │ basemind serve │              │ basemind serve  │
+           │ hacienda-mcp serve │              │ hacienda-mcp serve  │
            │ (session 1)    │  (read-only) │ (session 2)     │
            └────────┬───────┘              └────────┬────────┘
                     │                               │
@@ -126,6 +126,12 @@ Walker (gitignore-aware)
         prune deleted files via IndexWriter::remove_file
 ```
 
+Document-tier scan (`scanner_docs.rs`) extracts 90+ formats (xberg) into LanceDB; when built with
+`--features pii`, an in-process **GLiNER2 + Candle (PEFT LoRA)** redaction pass
+(`extract::pii`) runs over the extracted text and masks PERSON / ORGANIZATION / LOCATION mentions
+before the text is stored. The PII pass is independent of the `[documents]` RAG pipeline and of
+xberg's `[redaction]` block, and degrades gracefully (skipped) when its model is absent.
+
 The daemon is the sole writer to Fjall and LanceDB. Scan processes forward their extraction
 results to the daemon, which applies index updates atomically.
 
@@ -145,7 +151,7 @@ Key invariants:
 
 ## Inverted index
 
-A Fjall LSM keyspace at `~/.local/share/basemind/views/<workspace_hash>/<view>/index.fjall/`.
+A Fjall LSM keyspace at `~/.local/share/hacienda-mcp/views/<workspace_hash>/<view>/index.fjall/`.
 Daemon-managed; all serving sessions read concurrently from a read-only handle. Source:
 `src/index/{mod,keys,writer}.rs`.
 
@@ -191,12 +197,12 @@ Bump cadence:
 - Patch release (`0.1.0` → `0.1.1`) MUST be cache-compatible — never bump from
   a patch commit.
 
-Wipe-on-mismatch is the migration story; the next `basemind scan` rebuilds from
+Wipe-on-mismatch is the migration story; the next `hacienda-mcp scan` rebuilds from
 source.
 
 ## MCP surface
 
-`basemind serve` exposes a stdio MCP server (`rmcp`). The live contract is
+`hacienda-mcp serve` exposes a stdio MCP server (`rmcp`). The live contract is
 `tests/mcp_smoke.rs`.
 
 Conventions:
@@ -216,19 +222,19 @@ Conventions:
 
 ## Git layer
 
-`gix`-backed log, blame, diff, and status. The git cache at `~/.local/share/basemind/git-cache/<workspace_hash>/`
+`gix`-backed log, blame, diff, and status. The git cache at `~/.local/share/hacienda-mcp/git-cache/<workspace_hash>/`
 has two tiers:
 
 - An in-process LRU (1024 entries per category by default; tune via
-  `basemind serve --git-cache-mem`).
+  `hacienda-mcp serve --git-cache-mem`).
 - A sha-keyed disk store: `commit_files/<sha>.msgpack`,
   `log/<head_sha>__<scope>.msgpack`, `blame/<sha>__<path_hash>.msgpack`.
 
 Commits are immutable, so once a sha-keyed entry is on disk it's valid forever.
 HEAD-keyed entries (`log`) roll off naturally when HEAD moves.
 
-Drop the disk cache with `basemind cache clear`. Disable per-run with
-`basemind serve --no-git-cache-disk`.
+Drop the disk cache with `hacienda-mcp cache clear`. Disable per-run with
+`hacienda-mcp serve --no-git-cache-disk`.
 
 ## Hardening
 
@@ -240,7 +246,7 @@ cargo test --release --test harden -- --ignored --nocapture
 
 It clones 8 upstream repos under `/tmp/basemind-harden/` (`ripgrep`, `tokio`,
 `typescript`, `react`, `django`, `requests`, `gin`, plus a shallow `ripgrep`
-variant), runs `basemind scan` on each, then sweeps every MCP code-map tool plus
+variant), runs `hacienda-mcp scan` on each, then sweeps every MCP code-map tool plus
 a representative subset of git tools. Canary assertions catch regressions:
 
 - **tokio**: `find_references("spawn")` returns ≥ 200 hits
@@ -261,18 +267,18 @@ flowchart TB
     A2["Agent B — repo Y (same workspace)"]
     HK["SessionStart hook\n(boot-subscribe + inject)"]
   end
-  subgraph serve["basemind serve (per session)"]
+  subgraph serve["hacienda-mcp serve (per session)"]
     MT["MCP tools: memory_* + thread_*"]
     CC["CommsClient (proxy)"]
     PEER["rmcp Peer (push, best-effort)"]
   end
-  subgraph daemon["basemind daemon (singleton, user-global)"]
+  subgraph daemon["hacienda-mcp daemon (singleton, user-global)"]
     FE["Front-ends: UDS"]
     THR["Thread registry\n(scope: repo | path-glob | subject)"]
     BR["Broker: explicit join, fan-out, refcount"]
     CS["CommsStore (Fjall):\nthreads · members · messages_by_thread(front-matter)\n· message_body · subs · cursors · agents · registry"]
   end
-  subgraph cache["Global cache\n~/.local/share/basemind"]
+  subgraph cache["Global cache\n~/.local/share/hacienda-mcp"]
     MEM["memory_by_key (scope, visibility, owner)"]
     LAN["LanceDB memory (+agent_id +visibility)"]
   end
@@ -286,7 +292,7 @@ flowchart TB
 
 ### Why a separate daemon
 
-The daemon is the sole Fjall writer (across all repos on the machine). This allows N `basemind serve`
+The daemon is the sole Fjall writer (across all repos on the machine). This allows N `hacienda-mcp serve`
 sessions on the same repo to read concurrently without downgrade-to-read-only races. The daemon is
 a singleton enforced by socket-bind-as-lock (a Unix domain socket whose successful bind IS the lock);
 stale sockets are reclaimed probe-before-unlink. It auto-starts on first need and stops on explicit `comms stop`.

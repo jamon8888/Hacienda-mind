@@ -2,9 +2,9 @@
 
 set -euo pipefail
 
-ROOT="${BASEMIND_HARDEN_ROOT:-/tmp/basemind-harden}"
+ROOT="${HACIENDA_MCP_HARDEN_ROOT:-/tmp/basemind-harden}"
 RESULTS="${ROOT}/results.ndjson"
-FEATURES="${BASEMIND_HARDEN_FEATURES-full}"
+FEATURES="${HACIENDA_MCP_HARDEN_FEATURES-full}"
 feature_args=()
 if [ -n "${FEATURES}" ]; then feature_args=(--features "${FEATURES}"); fi
 mkdir -p "${ROOT}"
@@ -12,14 +12,14 @@ mkdir -p "${ROOT}"
 
 # Isolate the index cache AND any comms daemon a `full` (comms) build spawns to a harness-owned
 # directory, so a hardening run never writes 8 giant OSS repos into the developer's live global
-# cache (~/Library/Application Support/basemind) or collides with their running daemon. The index no
-# longer lives in each repo's `.basemind/` — it is machine-global under `BASEMIND_DATA_HOME`, keyed
+# cache (~/Library/Application Support/hacienda-mcp) or collides with their running daemon. The index no
+# longer lives in each repo's `.hacienda-mcp/` — it is machine-global under `HACIENDA_MCP_DATA_HOME`, keyed
 # by workspace path — so a clean run wipes THAT, not a per-repo directory. Both are overridable.
-export BASEMIND_DATA_HOME="${BASEMIND_DATA_HOME:-${ROOT}/cache}"
-export BASEMIND_COMMS_DIR="${BASEMIND_COMMS_DIR:-${ROOT}/comms}"
-if [ -z "${BASEMIND_HARDEN_KEEP:-}" ]; then
-	echo "==> wiping prior global index cache at ${BASEMIND_DATA_HOME}"
-	rm -rf "${BASEMIND_DATA_HOME}"
+export HACIENDA_MCP_DATA_HOME="${HACIENDA_MCP_DATA_HOME:-${ROOT}/cache}"
+export HACIENDA_MCP_COMMS_DIR="${HACIENDA_MCP_COMMS_DIR:-${ROOT}/comms}"
+if [ -z "${HACIENDA_MCP_HARDEN_KEEP:-}" ]; then
+	echo "==> wiping prior global index cache at ${HACIENDA_MCP_DATA_HOME}"
+	rm -rf "${HACIENDA_MCP_DATA_HOME}"
 fi
 
 REPOS=(
@@ -41,9 +41,9 @@ should_run() {
 	return 1
 }
 
-if [ -z "${BASEMIND_HARDEN_NO_BUILD:-}" ]; then
-	echo "==> building basemind (release, features: ${FEATURES:-default})"
-	cargo build --release --quiet ${feature_args[@]+"${feature_args[@]}"} --bin basemind
+if [ -z "${HACIENDA_MCP_HARDEN_NO_BUILD:-}" ]; then
+	echo "==> building hacienda-mcp (release, features: ${FEATURES:-default})"
+	cargo build --release --quiet ${feature_args[@]+"${feature_args[@]}"} --bin hacienda-mcp
 fi
 
 failed=()
@@ -67,9 +67,9 @@ for entry in "${REPOS[@]}"; do
 		echo "==> reusing existing clone at ${dest}"
 	fi
 
-	if BASEMIND_HARDEN_REPO="${dest}" \
-		BASEMIND_HARDEN_REPO_NAME="${name}" \
-		BASEMIND_HARDEN_RESULTS="${RESULTS}" \
+	if HACIENDA_MCP_HARDEN_REPO="${dest}" \
+		HACIENDA_MCP_HARDEN_REPO_NAME="${name}" \
+		HACIENDA_MCP_HARDEN_RESULTS="${RESULTS}" \
 		cargo test --release ${feature_args[@]+"${feature_args[@]}"} --test harden -- \
 		--ignored --nocapture --test-threads=1 --exact harden_repo; then
 		passed+=("${name}")

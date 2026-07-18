@@ -1,15 +1,15 @@
 //! Query read-path microbenchmarks.
 //!
 //! Builds a small synthetic repo in a tempdir, scans it once via the public
-//! `basemind::scanner::scan` into a `basemind::store::Store`, then benches the
+//! `hacienda_mcp::scanner::scan` into a `hacienda_mcp::store::Store`, then benches the
 //! three read-side helpers agents hit most: `search_symbols`, `file_outline`,
 //! and `dependents_of`. The store is built once in `setup` so the bench measures
 //! the query path, not the scan.
 
-use basemind::config::ConfigV1;
-use basemind::query::{dependents_of, file_outline, search_symbols};
-use basemind::scanner::{EmbedMode, ScanSource, scan};
-use basemind::store::{Store, VIEW_WORKING};
+use hacienda_mcp::config::ConfigV1;
+use hacienda_mcp::query::{dependents_of, file_outline, search_symbols};
+use hacienda_mcp::scanner::{EmbedMode, ScanSource, scan};
+use hacienda_mcp::store::{Store, VIEW_WORKING};
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 use tempfile::TempDir;

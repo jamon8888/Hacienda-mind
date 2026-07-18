@@ -10,7 +10,7 @@ use std::process::Command;
 use tempfile::TempDir;
 
 fn bin() -> &'static str {
-    env!("CARGO_BIN_EXE_basemind")
+    env!("CARGO_BIN_EXE_hacienda-mcp")
 }
 
 fn git(repo: &Path, args: &[&str]) {
@@ -26,10 +26,10 @@ fn git(repo: &Path, args: &[&str]) {
     assert!(status.success(), "git {args:?} failed");
 }
 
-/// Tiny repo with one Rust file; deliberately no `.basemind/basemind.toml` and a
+/// Tiny repo with one Rust file; deliberately no `.hacienda-mcp/basemind.toml` and a
 /// fresh index dir so the scan emits subsystem INFO ("Creating database", etc.).
 fn build_repo() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     git(root, &["init", "-q"]);
@@ -44,7 +44,7 @@ fn build_repo() -> TempDir {
 fn scan_stderr(root: &Path, extra: &[&str], rust_log: Option<&str>) -> String {
     // Wipe this workspace's (global-cache) state so the scan rebuilds the DB and emits the
     // subsystem "Creating database" INFO lines the test observes.
-    let _ = std::fs::remove_dir_all(basemind::store::workspace_cache_dir(root));
+    let _ = std::fs::remove_dir_all(hacienda_mcp::store::workspace_cache_dir(root));
     let mut args = vec!["--root", root.to_str().unwrap(), "scan"];
     args.extend_from_slice(extra);
     let mut cmd = Command::new(bin());
@@ -52,7 +52,7 @@ fn scan_stderr(root: &Path, extra: &[&str], rust_log: Option<&str>) -> String {
     if let Some(v) = rust_log {
         cmd.env("RUST_LOG", v);
     }
-    let output = cmd.output().expect("run basemind scan");
+    let output = cmd.output().expect("run hacienda-mcp scan");
     assert!(output.status.success(), "scan exited non-zero");
     String::from_utf8_lossy(&output.stderr).into_owned()
 }

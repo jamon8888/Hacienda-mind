@@ -4,7 +4,7 @@ set -euo pipefail
 
 FORK="Goldziher/openai-codex-plugins"
 DEFAULT_BASE="main"
-DEST_REL="plugins/basemind"
+DEST_REL="plugins/hacienda-mcp"
 
 EXCLUDES=(
 	"/.ai-rulez/"
@@ -183,7 +183,7 @@ case "$UPSTREAM_REMOTE_RAW" in
 git@github.com:*) UPSTREAM_URL="https://github.com/${UPSTREAM_REMOTE_RAW#git@github.com:}" ;;
 ssh://git@github.com/*) UPSTREAM_URL="https://github.com/${UPSTREAM_REMOTE_RAW#ssh://git@github.com/}" ;;
 https://*) UPSTREAM_URL="$UPSTREAM_REMOTE_RAW" ;;
-*) UPSTREAM_URL="https://github.com/Goldziher/basemind" ;;
+*) UPSTREAM_URL="https://github.com/jamon8888/Hacienda-mind" ;;
 esac
 UPSTREAM_URL="${UPSTREAM_URL%.git}"
 
@@ -406,8 +406,8 @@ fi
 git add "$DEST_REL"
 
 if [[ $BOOTSTRAP -eq 1 ]]; then
-	COMMIT_TITLE="bootstrap basemind v$UPSTREAM_VERSION from upstream main @ $UPSTREAM_SHORT"
-	PR_BODY="Initial bootstrap of the basemind plugin from upstream \`main\` @ \`$UPSTREAM_SHORT\` (v$UPSTREAM_VERSION).
+	COMMIT_TITLE="bootstrap hacienda-mcp v$UPSTREAM_VERSION from upstream main @ $UPSTREAM_SHORT"
+	PR_BODY="Initial bootstrap of the hacienda-mcp plugin from upstream \`main\` @ \`$UPSTREAM_SHORT\` (v$UPSTREAM_VERSION).
 
 Creates \`plugins/basemind/\` by copying the tracked plugin files from upstream, including \`.codex-plugin/plugin.json\` and \`assets/\`.
 
@@ -416,8 +416,8 @@ Upstream commit: ${UPSTREAM_URL}/commit/$UPSTREAM_SHA
 
 This is a one-time bootstrap. Subsequent syncs will be normal (non-bootstrap) runs using the same tracked upstream plugin files."
 else
-	COMMIT_TITLE="sync basemind v$UPSTREAM_VERSION from upstream main @ $UPSTREAM_SHORT"
-	PR_BODY="Automated sync from basemind upstream \`main\` @ \`$UPSTREAM_SHORT\` (v$UPSTREAM_VERSION).
+	COMMIT_TITLE="sync hacienda-mcp v$UPSTREAM_VERSION from upstream main @ $UPSTREAM_SHORT"
+	PR_BODY="Automated sync from hacienda-mcp upstream \`main\` @ \`$UPSTREAM_SHORT\` (v$UPSTREAM_VERSION).
 
 Copies the tracked plugin files from upstream, including the committed Codex manifest and assets.
 

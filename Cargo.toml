@@ -6,22 +6,22 @@ members = [
     "crates/pii-candle",
 ]
 
-# Shared lint policy for the owned forks under crates/*. The root basemind package opts in via
+# Shared lint policy for the owned forks under crates/*. The root hacienda-mcp package opts in via
 # its own `[lints] workspace = true` below; each fork crate does the same in its Cargo.toml.
 [workspace.lints.clippy]
 all = "warn"
 
 [package]
-name = "basemind"
+name = "hacienda-mcp"
 version = "0.22.0"
 authors = ["Na'aman Hirschfeld <nhirschfeld@gmail.com>"]
 edition = "2024"
-description = "Full AI context layer over MCP — tree-sitter code-map, document RAG (PDF/Office/HTML/email + OCR + reranker), shared agent memory, on-demand web crawl, git history + blame + per-symbol diff. 300+ languages, 10+ coding-agent harnesses, content-addressed Fjall + LanceDB."
+description = "Full AI context layer over MCP — tree-sitter code-map, document RAG (PDF/Office/HTML/email + OCR + reranker), in-process GLiNER2 + Candle (LoRA) PII redaction, shared agent memory, on-demand web crawl, git history + blame + per-symbol diff. 300+ languages, 10+ coding-agent harnesses, content-addressed Fjall + LanceDB."
 readme = "README.md"
 license = "MIT"
-repository = "https://github.com/Goldziher/basemind"
-documentation = "https://docs.rs/basemind"
-homepage = "https://basemind.ai"
+repository = "https://github.com/jamon8888/Hacienda-mind"
+documentation = "https://docs.rs/hacienda-mcp"
+homepage = "https://github.com/jamon8888/Hacienda-mind"
 keywords = ["mcp", "agent-context", "rag", "code-map", "tree-sitter"]
 categories = ["command-line-utilities", "development-tools"]
 
@@ -29,11 +29,11 @@ categories = ["command-line-utilities", "development-tools"]
 ignored = ["serde_toon_format"]
 
 [lib]
-name = "basemind"
+name = "hacienda_mcp"
 path = "src/lib.rs"
 
 [[bin]]
-name = "basemind"
+name = "hacienda-mcp"
 path = "src/main.rs"
 
 [features]
@@ -93,8 +93,8 @@ code-intel = ["code-intel-js", "code-intel-stack"]
 full = ["documents", "memory", "crawl", "comms", "shells", "code-intel", "code-search"]
 
 # Exposes `store::init_isolated_cache()` so integration tests (in `tests/`) can redirect
-# `BASEMIND_DATA_HOME` to a per-process temp dir. Integration-test binaries get it via the
-# `basemind` dev-dependency below (which enables this feature).
+# `HACIENDA_MCP_DATA_HOME` to a per-process temp dir. Integration-test binaries get it via the
+# `hacienda-mcp` dev-dependency below (which enables this feature).
 test-support = ["dep:tempfile"]
 
 ort-dynamic = ["xberg?/ort-dynamic"]
@@ -178,7 +178,7 @@ xberg = { version = "1.0.0-rc.21", default-features = false, features = [
 # Our forked tree-sitter-stack-graphs (crates/, tree-sitter 0.26 port) and the crates.io
 # `stack-graphs` dep both use `lsp-positions`. They must resolve to the SAME crate instance
 # so their `lsp_positions::Span` types unify — and the upstream crates.io `lsp-positions`
-# pins tree-sitter 0.24, which is incompatible with basemind's 0.26. Redirect it to our
+# pins tree-sitter 0.24, which is incompatible with hacienda-mcp's 0.26. Redirect it to our
 # owned, 0.26-ported fork for the whole graph.
 [patch.crates-io]
 lsp-positions = { path = "crates/lsp-positions" }
@@ -188,9 +188,9 @@ mach2 = "0.6"
 
 [dev-dependencies]
 # The crate depends on itself with `test-support` so every integration-test binary can call
-# `basemind::store::init_isolated_cache()` to redirect `BASEMIND_DATA_HOME` at a per-process temp
+# `hacienda_mcp::store::init_isolated_cache()` to redirect `HACIENDA_MCP_DATA_HOME` at a per-process temp
 # dir — keeping tests off the real user XDG cache without each test re-declaring the plumbing.
-basemind = { path = ".", features = ["test-support"] }
+hacienda-mcp = { path = ".", features = ["test-support"] }
 criterion = { version = "0.8", features = ["html_reports"] }
 insta = "1"
 proptest = "1"

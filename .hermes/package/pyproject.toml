@@ -11,15 +11,15 @@ keywords = ['mcp', 'agent-context', 'rag', 'code-map', 'tree-sitter']
 
 [project.entry-points]
 [project.entry-points.'hermes_agent.plugins']
-basemind = 'basemind_hermes_plugin'
+hacienda-mcp = 'hacienda_mcp_hermes_plugin'
 
 [project.urls]
-Homepage = 'https://github.com/Goldziher/basemind'
-Repository = 'https://github.com/Goldziher/basemind'
+Homepage = 'https://github.com/jamon8888/Hacienda-mind'
+Repository = 'https://github.com/jamon8888/Hacienda-mind'
 
 [tool]
 [tool.hatch]
 [tool.hatch.build]
 [tool.hatch.build.targets]
 [tool.hatch.build.targets.wheel]
-packages = ['src/basemind_hermes_plugin']
+packages = ['src/hacienda_mcp_hermes_plugin']

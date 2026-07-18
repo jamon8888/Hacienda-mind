@@ -9,7 +9,7 @@ LAUNCH="${SCRIPT_DIR}/mcp-launch.sh"
 command -v jq >/dev/null 2>&1 || exit 0
 [ -x "$LAUNCH" ] || exit 0
 
-INTERVAL="${BASEMIND_COMMS_POLL_SECS:-15}"
+INTERVAL="${HACIENDA_MCP_COMMS_POLL_SECS:-15}"
 case "$INTERVAL" in
 '' | *[!0-9]*) INTERVAL=15 ;;
 esac
@@ -32,7 +32,7 @@ poll_once() {
 
 	new="$(printf '%s' "$json" |
 		jq -r --argjson hwm "$hwm" \
-			'.messages[] | select(.ts_micros > $hwm) | "basemind comms — new message [\(.subject)] from \(.from) (id: \(.id)); call message_get to read the body"' \
+			'.messages[] | select(.ts_micros > $hwm) | "hacienda-mcp comms — new message [\(.subject)] from \(.from) (id: \(.id)); call message_get to read the body"' \
 			2>/dev/null)"
 
 	if [ -n "$new" ]; then

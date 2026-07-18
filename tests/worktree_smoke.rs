@@ -9,9 +9,9 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
-use basemind::config::ConfigV1;
-use basemind::scanner::{ScanSource, scan};
-use basemind::store::Store;
+use hacienda_mcp::config::ConfigV1;
+use hacienda_mcp::scanner::{ScanSource, scan};
+use hacienda_mcp::store::Store;
 
 fn git(args: &[&str], cwd: &Path) {
     let out = Command::new("git")
@@ -32,7 +32,7 @@ fn canon(p: &Path) -> std::path::PathBuf {
 
 #[test]
 fn linked_worktrees_share_the_global_blob_cache() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let tmp = tempfile::tempdir().expect("tempdir");
     let main = tmp.path().join("main");
     fs::create_dir(&main).unwrap();
@@ -47,10 +47,10 @@ fn linked_worktrees_share_the_global_blob_cache() {
     git(&["commit", "-qm", "init"], &main);
 
     let cfg = ConfigV1::with_defaults();
-    let global_blobs = basemind::store::global_blobs_dir();
+    let global_blobs = hacienda_mcp::store::global_blobs_dir();
 
     {
-        let mut store = Store::open(&main, basemind::store::VIEW_WORKING).unwrap();
+        let mut store = Store::open(&main, hacienda_mcp::store::VIEW_WORKING).unwrap();
         assert!(
             store.blobs_shared,
             "blobs are machine-global now → the standalone Store always flags shared (auto-GC off)"
@@ -65,7 +65,7 @@ fn linked_worktrees_share_the_global_blob_cache() {
             &mut store,
             &cfg,
             ScanSource::WorkingTree,
-            basemind::scanner::EmbedMode::Inline,
+            hacienda_mcp::scanner::EmbedMode::Inline,
         )
         .unwrap();
     }
@@ -87,7 +87,7 @@ fn linked_worktrees_share_the_global_blob_cache() {
     );
 
     {
-        let store2 = Store::open(&wt2, basemind::store::VIEW_WORKING).unwrap();
+        let store2 = Store::open(&wt2, hacienda_mcp::store::VIEW_WORKING).unwrap();
         assert_eq!(
             canon(&store2.blobs_dir),
             canon(&global_blobs),
@@ -96,13 +96,13 @@ fn linked_worktrees_share_the_global_blob_cache() {
     }
 
     {
-        let mut store2 = Store::open(&wt2, basemind::store::VIEW_WORKING).unwrap();
+        let mut store2 = Store::open(&wt2, hacienda_mcp::store::VIEW_WORKING).unwrap();
         let report = scan(
             &wt2,
             &mut store2,
             &cfg,
             ScanSource::WorkingTree,
-            basemind::scanner::EmbedMode::Inline,
+            hacienda_mcp::scanner::EmbedMode::Inline,
         )
         .unwrap();
         // `a.rs` is byte-identical across the worktrees, so its blob already exists globally: the
@@ -113,13 +113,13 @@ fn linked_worktrees_share_the_global_blob_cache() {
         );
     }
 
-    // Neither worktree created an in-repo `.basemind/` — the cache is entirely out-of-repo now.
+    // Neither worktree created an in-repo `.hacienda-mcp/` — the cache is entirely out-of-repo now.
     assert!(
-        !main.join(".basemind").exists(),
+        !main.join(".hacienda-mcp").exists(),
         "no in-repo cache under the main worktree"
     );
     assert!(
-        !wt2.join(".basemind").exists(),
+        !wt2.join(".hacienda-mcp").exists(),
         "no in-repo cache under the linked worktree"
     );
 }

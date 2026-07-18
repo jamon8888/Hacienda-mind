@@ -1,4 +1,4 @@
-//! In-process CLI that gives `basemind` 1:1 parity with the MCP tool surface.
+//! In-process CLI that gives `hacienda-mcp` 1:1 parity with the MCP tool surface.
 //!
 //! Every tool subcommand builds the matching `*Params` struct, constructs a
 //! one-shot [`crate::mcp::BasemindServer`] (no background facilities), and calls

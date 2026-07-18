@@ -30,7 +30,7 @@ x86_64-pc-windows-msvc)
 esac
 
 RELEASE_DIR="target/${TRIPLE}/release"
-BINARY_PATH="${RELEASE_DIR}/basemind${BINEXT}"
+BINARY_PATH="${RELEASE_DIR}/hacienda-mcp${BINEXT}"
 
 if [ ! -f "$BINARY_PATH" ]; then
 	echo "Binary not found at $BINARY_PATH" >&2
@@ -40,8 +40,8 @@ fi
 STAGING_DIR="basemind-staging-${TRIPLE}"
 rm -rf "$STAGING_DIR"
 mkdir -p "$STAGING_DIR/lib"
-cp "$BINARY_PATH" "$STAGING_DIR/basemind${BINEXT}"
-BIN_IN_STAGING="$STAGING_DIR/basemind${BINEXT}"
+cp "$BINARY_PATH" "$STAGING_DIR/hacienda-mcp${BINEXT}"
+BIN_IN_STAGING="$STAGING_DIR/hacienda-mcp${BINEXT}"
 
 case "$SYSTEM" in
 linux)

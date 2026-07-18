@@ -9,7 +9,7 @@ use super::{MapCache, ServerState};
 ///
 /// Uses the UNLOCKED `store_gc` primitives (`collect_referenced_hashes` + `gc_blobs`)
 /// under a `blocking_read()` store guard — NEVER `store_gc::run_gc`, which re-acquires
-/// the `.basemind/.lock` flock that `serve` already holds (that would deadlock). The
+/// the `.hacienda-mcp/.lock` flock that `serve` already holds (that would deadlock). The
 /// held read guard blocks the only in-process writer (`scan_and_refresh`) for the
 /// mark+sweep; cross-process scans are impossible because serve holds the flock.
 pub(super) async fn run_background_gc(state: Arc<ServerState>) {
@@ -19,7 +19,7 @@ pub(super) async fn run_background_gc(state: Arc<ServerState>) {
     }
     let result = tokio::task::spawn_blocking(move || {
         let store = state.store.blocking_read();
-        let referenced = crate::store_gc::collect_referenced_hashes(&store.basemind_dir)?;
+        let referenced = crate::store_gc::collect_referenced_hashes(&store.hacienda_mcp_dir)?;
         crate::store_gc::gc_blobs(&referenced)
     })
     .await;
@@ -187,7 +187,7 @@ fn refresh_batch(
 /// directly and funnels every debounced batch of changed paths into the
 /// canonical in-process refresh, [`helpers::scan_and_refresh`]. That re-scans
 /// under serve's already-open `Store` (its `RwLock`), so we never open a second
-/// `.basemind/.lock` flock — the reason we cannot reuse `watcher::watch`, which
+/// `.hacienda-mcp/.lock` flock — the reason we cannot reuse `watcher::watch`, which
 /// owns its own `Store`.
 ///
 /// Threading bridge: `watcher::watch_paths` runs the debouncer on a blocking std
@@ -250,14 +250,14 @@ fn reopen_read_only(state: &ServerState, view: &str) -> Result<crate::store::Sto
 }
 
 pub(super) fn spawn_view_watcher(state: Arc<ServerState>) {
-    let (basemind_dir, view) = {
+    let (hacienda_mcp_dir, view) = {
         let store = match state.store.try_read() {
             Ok(g) => g,
             Err(_) => return,
         };
-        (store.basemind_dir.clone(), store.view.clone())
+        (store.hacienda_mcp_dir.clone(), store.view.clone())
     };
-    let view_dir = basemind_dir.join(crate::store::VIEWS_DIR).join(&view);
+    let view_dir = hacienda_mcp_dir.join(crate::store::VIEWS_DIR).join(&view);
     let target = view_dir.join(crate::store::INDEX_FILE);
 
     std::thread::Builder::new()

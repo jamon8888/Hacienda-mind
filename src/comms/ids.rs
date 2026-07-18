@@ -117,7 +117,7 @@ macro_rules! id_newtype {
 id_newtype!(
     AgentId,
     "AgentId",
-    "Validated identity handle for an opaque agent (e.g. from `BASEMIND_AGENT_ID`)."
+    "Validated identity handle for an opaque agent (e.g. from `HACIENDA_MCP_AGENT_ID`)."
 );
 id_newtype!(ThreadId, "ThreadId", "Validated id of a comms thread.");
 

@@ -9,10 +9,10 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use basemind::git::Repo;
-use basemind::git_history::GitHistoryIndex;
-use basemind::git_history::builder::{self, RebuildOutcome};
-use basemind::git_history::fts::FtsScope;
+use hacienda_mcp::git::Repo;
+use hacienda_mcp::git_history::GitHistoryIndex;
+use hacienda_mcp::git_history::builder::{self, RebuildOutcome};
+use hacienda_mcp::git_history::fts::FtsScope;
 
 fn run(repo: &Path, args: &[&str]) {
     let status = Command::new("git")
@@ -53,8 +53,8 @@ fn commit_file(root: &Path, path: &str, content: &str, msg: &str) {
     run(root, &["commit", "-qm", msg]);
 }
 
-fn basemind_dir(root: &Path) -> PathBuf {
-    let dir = root.join(".basemind");
+fn hacienda_mcp_dir(root: &Path) -> PathBuf {
+    let dir = root.join(".hacienda-mcp");
     fs::create_dir_all(&dir).unwrap();
     dir
 }
@@ -62,7 +62,7 @@ fn basemind_dir(root: &Path) -> PathBuf {
 /// Open the index and bring it in sync with HEAD.
 fn sync(root: &Path) -> (GitHistoryIndex, RebuildOutcome) {
     let repo = Repo::discover(root).expect("repo discover");
-    let bdir = basemind_dir(root);
+    let bdir = hacienda_mcp_dir(root);
     let index = GitHistoryIndex::open(&bdir).expect("open git-history index");
     let outcome = builder::sync(&index, &repo, &bdir).expect("sync");
     (index, outcome)
@@ -224,20 +224,20 @@ fn recent_commits_newest_first_matches_git() {
 }
 
 /// Warm in-process query latency against a prebuilt index (no per-call process startup, unlike the
-/// CLI). Point `BASEMIND_BENCH_REPO` at a scanned repo to run it; skips cleanly when that env var is
+/// CLI). Point `HACIENDA_MCP_BENCH_REPO` at a scanned repo to run it; skips cleanly when that env var is
 /// unset or the index isn't present. Run with:
-/// `BASEMIND_BENCH_REPO=/path/to/repo cargo test --release --test git_history_smoke -- --ignored \
+/// `HACIENDA_MCP_BENCH_REPO=/path/to/repo cargo test --release --test git_history_smoke -- --ignored \
 ///   --nocapture bench_warm_query_latency`
 #[test]
 #[ignore]
 fn bench_warm_query_latency() {
-    let Ok(repo_root) = std::env::var("BASEMIND_BENCH_REPO") else {
-        eprintln!("set BASEMIND_BENCH_REPO to a scanned repo to run this bench — skipping");
+    let Ok(repo_root) = std::env::var("HACIENDA_MCP_BENCH_REPO") else {
+        eprintln!("set HACIENDA_MCP_BENCH_REPO to a scanned repo to run this bench — skipping");
         return;
     };
-    let bdir = Path::new(&repo_root).join(".basemind");
+    let bdir = Path::new(&repo_root).join(".hacienda-mcp");
     if !bdir.join("git-history.fjall").exists() {
-        eprintln!("no git-history index at {repo_root}; run `basemind scan` there first — skipping");
+        eprintln!("no git-history index at {repo_root}; run `hacienda-mcp scan` there first — skipping");
         return;
     }
     let index = GitHistoryIndex::open(&bdir).expect("open index");
@@ -269,17 +269,17 @@ fn bench_warm_query_latency() {
 }
 
 /// Manual peak-RSS / wall-time harness for a full rebuild against a real repo. Clears and rebuilds
-/// the git-history index for the repo named by `BASEMIND_BENCH_REPO`, so wrap it in a memory profiler
+/// the git-history index for the repo named by `HACIENDA_MCP_BENCH_REPO`, so wrap it in a memory profiler
 /// to see the builder's peak resident set:
-/// `BASEMIND_BENCH_REPO=/path/to/repo /usr/bin/time -l cargo test --release \
+/// `HACIENDA_MCP_BENCH_REPO=/path/to/repo /usr/bin/time -l cargo test --release \
 ///   --test git_history_smoke -- --ignored --nocapture bench_rebuild_peak_rss`
 /// The chunked fold (see `builder::RECORD_CHUNK`) caps resident commit records at one chunk. Skips
 /// cleanly when the env var is unset or the repo isn't present.
 #[test]
 #[ignore]
 fn bench_rebuild_peak_rss() {
-    let Ok(repo_root) = std::env::var("BASEMIND_BENCH_REPO") else {
-        eprintln!("set BASEMIND_BENCH_REPO to a git repo to run this bench — skipping");
+    let Ok(repo_root) = std::env::var("HACIENDA_MCP_BENCH_REPO") else {
+        eprintln!("set HACIENDA_MCP_BENCH_REPO to a git repo to run this bench — skipping");
         return;
     };
     let root = Path::new(&repo_root);
@@ -288,7 +288,7 @@ fn bench_rebuild_peak_rss() {
         return;
     }
     let repo = Repo::discover(root).expect("discover");
-    let bdir = root.join(".basemind");
+    let bdir = root.join(".hacienda-mcp");
     std::fs::create_dir_all(&bdir).unwrap();
     let index = GitHistoryIndex::open(&bdir).expect("open");
     index.clear(&bdir).expect("clear");
@@ -416,7 +416,7 @@ fn empty_index_before_sync_falls_back() {
     let dir = init_repo();
     let root = dir.path();
     commit_file(root, "a.rs", "fn a() {}\n", "c1");
-    let bdir = basemind_dir(root);
+    let bdir = hacienda_mcp_dir(root);
     let index = GitHistoryIndex::open(&bdir).expect("open");
     assert!(index.is_empty());
     assert_eq!(index.last_indexed_head_hex(), None);

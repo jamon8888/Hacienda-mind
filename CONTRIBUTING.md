@@ -1,12 +1,12 @@
-# Contributing to basemind
+# Contributing to hacienda-mcp
 
-Thanks for taking the time to contribute! basemind is a pure-Rust project with a
+Thanks for taking the time to contribute! hacienda-mcp is a pure-Rust project with a
 small surface area and a sharp commit-quality bar.
 
 ## Quickstart
 
 ```sh
-git clone https://github.com/Goldziher/basemind && cd basemind
+git clone https://github.com/jamon8888/Hacienda-mind && cd hacienda-mcp
 task setup     # cargo fetch + prek install (one-time)
 task check     # lint + test
 ```
@@ -51,7 +51,7 @@ the commit-msg hook validates the message. Run all hooks manually with
 
 ## Performance
 
-basemind is a hot-path scanner. Before merging diffs that touch
+hacienda-mcp is a hot-path scanner. Before merging diffs that touch
 `src/scanner.rs`, `src/extract/`, `src/store.rs`, `src/index/`, or
 `src/mcp/helpers.rs`:
 
@@ -86,14 +86,14 @@ the relevant constant:
 - `INDEX_SCHEMA_VER` in `src/index/mod.rs` — Fjall partition / key encoding
 - `SCHEMA_VER` in `src/extract/mod.rs` — msgpack blob format
 
-Both auto-wipe on version mismatch; the next `basemind scan` rebuilds from
+Both auto-wipe on version mismatch; the next `hacienda-mcp scan` rebuilds from
 source. Mention the bump in the commit body.
 
 ## Reporting bugs
 
-[Open an issue](https://github.com/Goldziher/basemind/issues/new) with:
+[Open an issue](https://github.com/jamon8888/Hacienda-mind/issues/new) with:
 
-- basemind version (`basemind --version`)
+- hacienda-mcp version (`hacienda-mcp --version`)
 - Repro steps
 - OS / arch
 - A pointer to the repo where it reproduces, if public

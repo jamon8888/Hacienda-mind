@@ -195,7 +195,7 @@ jobs:
           fi
 
           npm_exists=false
-          if npm view "basemind@${version}" version >/dev/null 2>&1; then
+          if npm view "hacienda-mcp@${version}" version >/dev/null 2>&1; then
             npm_exists=true
           fi
 
@@ -320,7 +320,7 @@ jobs:
       - name: Build release binary
         shell: bash
         run: |
-          cargo build --release --features "${{ matrix.features || 'full' }}" --bin basemind \
+          cargo build --release --features "${{ matrix.features || 'full' }}" --bin hacienda-mcp \
             --target "${{ matrix.triple }}"
 
       - name: Package release
@@ -336,7 +336,7 @@ jobs:
           tar xzf "basemind-x86_64-apple-darwin.tar.gz" -C "$dir"
           # Binary + its otool-discovered lib/ closure load, and the ad-hoc signature is
           # valid (a bad install_name_tool rewrite would get the process SIGKILLed).
-          "$dir/basemind" --version
+          "$dir/hacienda-mcp" --version
           # ONNX Runtime is vendored next to the binary; ort/load-dynamic resolves it
           # relative to the executable. dlopen the vendored dylib + its full @loader_path
           # closure — the exact load ort performs at runtime — so a missing closure
@@ -492,18 +492,18 @@ jobs:
           gcc -O2 -fPIC -c scripts/glibc228_compat.c -o "$shim_obj"
           rustflags_var="CARGO_TARGET_$(echo "$TRIPLE" | tr 'a-z-' 'A-Z_')_RUSTFLAGS"
           export "${rustflags_var}=-C link-arg=${shim_obj}"
-          cargo build --release --features full --bin basemind --target "$TRIPLE"
+          cargo build --release --features full --bin hacienda-mcp --target "$TRIPLE"
 
       - name: Verify glibc floor (<= 2.28)
         shell: bash
         run: |
           set -euo pipefail
-          bin="target/${{ matrix.triple }}/release/basemind"
+          bin="target/${{ matrix.triple }}/release/hacienda-mcp"
           max="$(objdump -T "$bin" | grep -oE 'GLIBC_[0-9]+\.[0-9]+' | sort -V | tail -1 || true)"
           echo "highest glibc symbol required: ${max:-none}"
           if [ -n "$max" ] && \
              [ "$(printf '%s\nGLIBC_2.28\n' "$max" | sort -V | tail -1)" != "GLIBC_2.28" ]; then
-            echo "::error::basemind requires $max (> GLIBC_2.28); a dependency pulled a newer glibc symbol"
+            echo "::error::hacienda-mcp requires $max (> GLIBC_2.28); a dependency pulled a newer glibc symbol"
             exit 1
           fi
           echo "✓ glibc floor verified: ${max:-none} <= GLIBC_2.28"
@@ -527,7 +527,7 @@ jobs:
           # The container runs as root but the workspace is owned by the runner
           # uid; gh shells out to git, which refuses with "dubious ownership".
           # Mark it safe and pass --repo so gh never needs the local git remote.
-          git config --global --add safe.directory "${GITHUB_WORKSPACE:-/__w/basemind/basemind}"
+          git config --global --add safe.directory "${GITHUB_WORKSPACE:-/__w/basemind/hacienda-mcp}"
           gh release upload "$tag" "$archive" --clobber --repo "$GITHUB_REPOSITORY"
 
   checksums:
@@ -588,17 +588,17 @@ jobs:
           done
 
           # Generate checksums file with explicit platform list for clarity
-          sha256sum basemind-*.tar.gz basemind-*.zip | sort > "basemind_${{ needs.meta.outputs.version }}_checksums.txt"
+          sha256sum basemind-*.tar.gz basemind-*.zip | sort > "hacienda_mcp_${{ needs.meta.outputs.version }}_checksums.txt"
 
           echo "✓ Generated checksums file"
-          cat "basemind_${{ needs.meta.outputs.version }}_checksums.txt"
+          cat "hacienda_mcp_${{ needs.meta.outputs.version }}_checksums.txt"
 
       - name: Upload checksums to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${{ needs.meta.outputs.tag }}"
-          gh release upload "$tag" basemind_${{ needs.meta.outputs.version }}_checksums.txt --clobber
+          gh release upload "$tag" hacienda_mcp_${{ needs.meta.outputs.version }}_checksums.txt --clobber
           echo "✓ Uploaded checksums to release"
 
   finalize_release:
@@ -623,7 +623,7 @@ jobs:
             "basemind-aarch64-apple-darwin.tar.gz"
             "basemind-x86_64-apple-darwin.tar.gz"
             "basemind-x86_64-pc-windows-msvc.zip"
-            "basemind_${version}_checksums.txt"
+            "hacienda_mcp_${version}_checksums.txt"
           )
 
           gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets -q '.assets[].name' \
@@ -837,18 +837,18 @@ jobs:
           fi
           tag="${{ needs.meta.outputs.tag }}"
           version="${{ needs.meta.outputs.version }}"
-          gh release download "$tag" -p "basemind_${version}_checksums.txt" -O checksums.txt
-          ./scripts/update-homebrew-formula.sh "$version" checksums.txt > basemind.rb
+          gh release download "$tag" -p "hacienda_mcp_${version}_checksums.txt" -O checksums.txt
+          ./scripts/update-homebrew-formula.sh "$version" checksums.txt > hacienda-mcp.rb
 
           git clone --depth 1 "https://x-access-token:${HOMEBREW_TOKEN}@github.com/Goldziher/homebrew-tap.git" tap
-          cp basemind.rb tap/Formula/basemind.rb
+          cp hacienda-mcp.rb tap/Formula/hacienda-mcp.rb
           cd tap
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Formula/basemind.rb
+          git add Formula/hacienda-mcp.rb
           if git diff --cached --quiet; then
             echo "Formula already up to date."
           else
-            git commit -m "basemind ${version}"
+            git commit -m "hacienda-mcp ${version}"
             git push
           fi

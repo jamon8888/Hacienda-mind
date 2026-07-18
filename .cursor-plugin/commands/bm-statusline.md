@@ -1,16 +1,16 @@
 ---
 name: bm-statusline
-description: Enable the basemind status line in your Claude Code user settings (one-time setup).
+description: Enable the hacienda-mcp status line in your Claude Code user settings (one-time setup).
 ---
 
-# bm-statusline — enable the basemind status line
+# bm-statusline — enable the hacienda-mcp status line
 
-Wire the basemind status line into the user's global Claude Code settings, then confirm it
+Wire the hacienda-mcp status line into the user's global Claude Code settings, then confirm it
 renders.
 
 ## When to use
 
-Run this once per machine to enable the basemind status line in Claude Code. Re-run only if the
+Run this once per machine to enable the hacienda-mcp status line in Claude Code. Re-run only if the
 bar goes blank after an unusual settings edit.
 
 ## How to use
@@ -24,16 +24,16 @@ any files.
    - a match of
      `~/.claude/plugins/cache/basemind/basemind/*/.claude-plugin/statusline.sh`
 
-   If none exists, tell the user the basemind plugin isn't installed and stop.
+   If none exists, tell the user the hacienda-mcp plugin isn't installed and stop.
 
 2. **Update `~/.claude/settings.json`** (treat a missing file as `{}`). Set its
    `statusLine` key to this **version-independent resolver** — do NOT hardcode a
-   version-pinned path, which breaks on the next basemind update when the old
+   version-pinned path, which breaks on the next hacienda-mcp update when the old
    version dir is pruned:
 
    ```json
    { "type": "command",
-     "command": "bash -c 's=$(ls -d \"$HOME\"/.claude/plugins/cache/basemind/basemind/*/.claude-plugin/statusline.sh 2>/dev/null | sort -V | tail -1); [ -f \"$s\" ] || s=\"$HOME/.claude/plugins/marketplaces/basemind/.claude-plugin/statusline.sh\"; [ -f \"$s\" ] && exec bash \"$s\" || printf \"%s\" \"◆ basemind: run /bm-statusline\"'",
+     "command": "bash -c 's=$(ls -d \"$HOME\"/.claude/plugins/cache/basemind/basemind/*/.claude-plugin/statusline.sh 2>/dev/null | sort -V | tail -1); [ -f \"$s\" ] || s=\"$HOME/.claude/plugins/marketplaces/basemind/.claude-plugin/statusline.sh\"; [ -f \"$s\" ] && exec bash \"$s\" || printf \"%s\" \"◆ hacienda-mcp: run /bm-statusline\"'",
      "refreshInterval": 5 }
    ```
 
@@ -50,7 +50,7 @@ any files.
 3. **Confirm it renders** by running the resolver once:
 
    ```bash
-   printf '{"workspace":{"current_dir":"%s"}}' "$PWD" | bash -c 's=$(ls -d "$HOME"/.claude/plugins/cache/basemind/basemind/*/.claude-plugin/statusline.sh 2>/dev/null | sort -V | tail -1); [ -f "$s" ] || s="$HOME/.claude/plugins/marketplaces/basemind/.claude-plugin/statusline.sh"; [ -f "$s" ] && exec bash "$s" || printf "%s" "◆ basemind: run /bm-statusline"'
+   printf '{"workspace":{"current_dir":"%s"}}' "$PWD" | bash -c 's=$(ls -d "$HOME"/.claude/plugins/cache/basemind/basemind/*/.claude-plugin/statusline.sh 2>/dev/null | sort -V | tail -1); [ -f "$s" ] || s="$HOME/.claude/plugins/marketplaces/basemind/.claude-plugin/statusline.sh"; [ -f "$s" ] && exec bash "$s" || printf "%s" "◆ hacienda-mcp: run /bm-statusline"'
    ```
 
 4. Tell the user it's enabled, and that any other running sessions need a

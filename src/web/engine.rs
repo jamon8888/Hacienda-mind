@@ -11,7 +11,7 @@ use crawlberg::{CrawlConfig as KcCrawlConfig, CrawlEngineHandle, SsrfPolicy, cre
 
 use crate::config::CrawlConfig;
 
-/// Translate basemind's `CrawlConfig` into crawlberg's runtime config and
+/// Translate hacienda-mcp's `CrawlConfig` into crawlberg's runtime config and
 /// instantiate the engine. Returns an error when the user-supplied user-agent
 /// is empty or crawlberg rejects the validated config — both indicate a
 /// configuration bug rather than a transient network issue.
@@ -21,7 +21,7 @@ pub fn build_engine(cfg: &CrawlConfig) -> Result<CrawlEngineHandle> {
     let max_body_size = usize::try_from(cfg.max_body_size).context("max_body_size exceeds usize")?;
 
     if !cfg.respect_robots_txt {
-        tracing::warn!("crawl.respect_robots_txt is disabled — basemind will fetch URLs that robots.txt forbids");
+        tracing::warn!("crawl.respect_robots_txt is disabled — hacienda-mcp will fetch URLs that robots.txt forbids");
     }
 
     let kc_cfg = KcCrawlConfig {

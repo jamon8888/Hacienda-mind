@@ -13,9 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.22.0] — 2026-07-12
 
 > **Index rebuild on upgrade.** This release bumps the index/blob/comms schema (21 → 22), so every
-> existing `.basemind/` (legacy, per-repo) and the new global cache wipe and rebuild from source on
-> the next `basemind scan`. The cache location itself also moves: state no longer lives under a
-> repo's `.basemind/` — it lives in a single global, content-addressed store under the XDG data
+> existing `.hacienda-mcp/` (legacy, per-repo) and the new global cache wipe and rebuild from source on
+> the next `hacienda-mcp scan`. The cache location itself also moves: state no longer lives under a
+> repo's `.hacienda-mcp/` — it lives in a single global, content-addressed store under the XDG data
 > directory (see below). This is the intended migration path; nothing you need to do beyond letting
 > the next scan run.
 
@@ -28,11 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (scan / rescan) to the daemon over a Unix domain socket (named pipe on Windows); the daemon starts
   on demand and is shared by every session on the machine. N sessions on one repo now all read and
   write without downgrade.
-- **Global XDG cache + `BASEMIND_DATA_HOME`.** Index data (content-addressed blobs, per-workspace
-  views, LanceDB) moves out of the repo and into `~/.local/share/basemind/` (overridable with
-  `BASEMIND_DATA_HOME`), keyed by workspace. The blob store is now a single global, content-addressed
+- **Global XDG cache + `HACIENDA_MCP_DATA_HOME`.** Index data (content-addressed blobs, per-workspace
+  views, LanceDB) moves out of the repo and into `~/.local/share/hacienda-mcp/` (overridable with
+  `HACIENDA_MCP_DATA_HOME`), keyed by workspace. The blob store is now a single global, content-addressed
   cache that dedupes identical files across **every** repo and worktree on the machine, not just
-  within one repo. `.basemind/` is no longer created in repos — the gitignore dance from `init` is
+  within one repo. `.hacienda-mcp/` is no longer created in repos — the gitignore dance from `init` is
   gone.
 - **Registry + worktree coordination tools.** The daemon keeps a cheap, always-on registry of
   repos, worktrees, and branches built from git plumbing, exposed as new MCP tools: `workspaces`
@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   don't collide working the same worktree at once.
 - **`find_files`** — fuzzy, fzf/fd-style filename/path search across indexed files, ranked by match
   score. Complements the existing substring `list_files`.
-- **`basemind statusline`** — a CLI subcommand that queries the daemon for the workspaces currently
+- **`hacienda-mcp statusline`** — a CLI subcommand that queries the daemon for the workspaces currently
   active and prints a compact status line; prints nothing (idle) when no daemon is running.
 - **Thread comms replace room comms.** Agent coordination now uses threads instead of rooms: each
   thread is addressed by at least two of subject / path-glob / members, discovered by scope (member,
@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `code-intel-stack`, included in `full` and the release binary). Until now only JavaScript/TypeScript
   resolved precisely (via oxc); every other language fell back to heuristic name matching, so
   `find_references` / `find_callers` / `goto_definition` could not tell a shadowed local from an
-  import. basemind now runs GitHub stack-graphs-style `.tsg` name-binding rules — executed by an
+  import. hacienda-mcp now runs GitHub stack-graphs-style `.tsg` name-binding rules — executed by an
   in-tree, tree-sitter-0.26 fork of the `tree-sitter-graph` / `tree-sitter-stack-graphs` engines
   (maintained under `crates/`) — to build a per-file scope/definition graph and resolve references to
   their true definitions. Delivers **intra-file** precision (shadowing, per-function/method parameter
@@ -69,7 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Cache moved out of the repo.** Everything the scanner and index used to write under a repo's
-  `.basemind/` now lives under the global XDG cache, keyed by workspace — a repo checkout no longer
+  `.hacienda-mcp/` now lives under the global XDG cache, keyed by workspace — a repo checkout no longer
   gains any basemind-owned files or directories.
 - **Blobs are global and deduped across repos.** The content-addressed blob store used to be
   per-repo; it is now one machine-wide store, so identical file content scanned from different repos
@@ -77,26 +77,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- **Per-repo `.basemind/` writes.** basemind no longer creates or gitignores a `.basemind/` directory
-  inside a repo; `basemind init` no longer adds it to `.gitignore`.
+- **Per-repo `.hacienda-mcp/` writes.** hacienda-mcp no longer creates or gitignores a `.hacienda-mcp/` directory
+  inside a repo; `hacienda-mcp init` no longer adds it to `.gitignore`.
 - **Room comms API.** `room_list` / `room_join` / `room_leave` / `room_post` / `room_history` and the
-  CLI `basemind comms rooms` / `join` / `leave` / `room-create` / `post` / `history` surface are
+  CLI `hacienda-mcp comms rooms` / `join` / `leave` / `room-create` / `post` / `history` surface are
   replaced by thread comms (see Added above).
 
 ### Fixed
 
-- **`basemind init` no longer scaffolds into a parent directory.** `init` resolved its target with
-  the same ancestor-`.basemind/` walk the other commands use to *attach* to an existing index, so
-  running it inside a repo whose parent already had a `.basemind/` wrote `basemind.toml`, `.gitignore`,
+- **`hacienda-mcp init` no longer scaffolds into a parent directory.** `init` resolved its target with
+  the same ancestor-`.hacienda-mcp/` walk the other commands use to *attach* to an existing index, so
+  running it inside a repo whose parent already had a `.hacienda-mcp/` wrote `basemind.toml`, `.gitignore`,
   and the rules block into the parent instead of the current repo. `init` now anchors to the closest
   enclosing git repository (falling back to the working directory when not in a repo), so it always
   scaffolds the project you run it in.
-- **Root discovery no longer climbs across a nested subrepo boundary.** `discover_root_with_basemind`
-  walked up looking for an ancestor `.basemind/` without a ceiling, so running from inside a nested
-  git subrepo (checked out under a polyrepo that has its own root `.basemind/`) wrongly attached to
+- **Root discovery no longer climbs across a nested subrepo boundary.** `discover_root_with_hacienda-mcp`
+  walked up looking for an ancestor `.hacienda-mcp/` without a ceiling, so running from inside a nested
+  git subrepo (checked out under a polyrepo that has its own root `.hacienda-mcp/`) wrongly attached to
   the parent polyrepo's index. The upward walk is now bounded by the closest enclosing git repository
   — the subrepo's own root is the ceiling. A non-git monorepo (no git boundary anywhere) still walks
-  freely to an ancestor `.basemind/`.
+  freely to an ancestor `.hacienda-mcp/`.
 - Fixed Codex plugin MCP startup by using the required root `.mcp.json` shape and resolving the
   launcher relative to the installed plugin instead of an unsupported `${PLUGIN_ROOT}` placeholder.
 
@@ -106,17 +106,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Extracted the Hermes Agent plugin into a standalone `basemind-hermes-plugin` PyPI package.** The
   helper skills, slash commands, `plugin.yaml`, and the `hermes_agent.plugins` entry point now live in
-  the pure-Python `pip-package-hermes/` (import package `basemind_hermes_plugin`), which ships no
-  binary and shells out to the `basemind` on `PATH`. The `basemind` pip package is now a pure
+  the pure-Python `pip-package-hermes/` (import package `hacienda_mcp_hermes_plugin`), which ships no
+  binary and shells out to the `hacienda-mcp` on `PATH`. The `hacienda-mcp` pip package is now a pure
   binary-wrapper (no plugin, no entry point). Install the binary via Homebrew/npm/cargo/release and
-  `pip install basemind-hermes-plugin` for the plugin, then `hermes plugins enable basemind`. The
-  entry-point name stays `basemind`, so the enable command is unchanged.
+  `pip install basemind-hermes-plugin` for the plugin, then `hermes plugins enable hacienda-mcp`. The
+  entry-point name stays `hacienda-mcp`, so the enable command is unchanged.
 
 ### Fixed
 
 - **Binary download no longer crashes when `/tmp` and `$HOME` are on different filesystems (#38).**
   `ensure_binary` staged the extracted binary in the system temp dir and then atomically renamed it
-  into `~/.cache/basemind`, which raised `OSError: [Errno 18] Invalid cross-device link` on hosts
+  into `~/.cache/hacienda-mcp`, which raised `OSError: [Errno 18] Invalid cross-device link` on hosts
   where those are separate mounts. Staging now happens under the cache root so the rename stays on one
   device.
 
@@ -129,23 +129,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.21.0] — 2026-07-10
 
-Minor bump: `RELEASE_MINOR` advances 20 → 21, so the `.basemind/` index + blob cache is wiped and
-rebuilt from source on the next `basemind scan` (expected — the msgpack blob store is content-
+Minor bump: `RELEASE_MINOR` advances 20 → 21, so the `.hacienda-mcp/` index + blob cache is wiped and
+rebuilt from source on the next `hacienda-mcp scan` (expected — the msgpack blob store is content-
 addressed and rebuilds losslessly).
 
 ### Added
 
-- **`basemind init` onboarding + `/bm-init` slash command.** A re-runnable setup flow that scaffolds
-  the root `basemind.toml`, gitignores `.basemind/`, and injects an idempotent, clearly-delimited
+- **`hacienda-mcp init` onboarding + `/bm-init` slash command.** A re-runnable setup flow that scaffolds
+  the root `basemind.toml`, gitignores `.hacienda-mcp/`, and injects an idempotent, clearly-delimited
   rules block into the repo's agent guidance (`CLAUDE.md` / `AGENTS.md`, or an `.ai-rulez` rule file
-  when that's the source of truth) teaching agents to prefer basemind over grep/read/git per
+  when that's the source of truth) teaching agents to prefer hacienda-mcp over grep/read/git per
   capability. Interactive by default; `--yes` plus `--with`/`--without`, `--rules-target`,
   `--no-rules`, and `--print` (dry-run) drive it non-interactively. The block is spliced between
-  stable `<!-- BEGIN/END basemind -->` markers so re-running never duplicates it and never touches
+  stable `<!-- BEGIN/END hacienda-mcp -->` markers so re-running never duplicates it and never touches
   content outside the markers.
-- **Monorepo-aware root resolution.** basemind now walks up from the working directory to the nearest
-  ancestor containing `.basemind/` (the way git finds `.git/`), so running an agent from a subfolder
-  of a monorepo attaches to the root index instead of finding nothing. `.basemind` discovery takes
+- **Monorepo-aware root resolution.** hacienda-mcp now walks up from the working directory to the nearest
+  ancestor containing `.hacienda-mcp/` (the way git finds `.git/`), so running an agent from a subfolder
+  of a monorepo attaches to the root index instead of finding nothing. `.hacienda-mcp` discovery takes
   precedence over git-root discovery; `--root` still overrides.
 - **Index lifecycle signalling on MCP responses + `status`.** Read tools attach a `notice`
   (`warming_up` / `building_index` / `rescanning`) with an actionable retry hint so an agent never
@@ -162,7 +162,7 @@ addressed and rebuilds losslessly).
   still returns complete data rather than an empty snapshot. `diff_outline`, `blame_symbol`,
   `memory_audit`, and `proposal_accept` — which read the map directly — now await warm too, closing a
   window where they returned a wrong diff, a spurious "not indexed" error, or a false stale verdict.
-- **`basemind init` refuses to splice into a file with malformed markers.** A stray or unpaired
+- **`hacienda-mcp init` refuses to splice into a file with malformed markers.** A stray or unpaired
   `BEGIN`/`END` marker (a hand-edit or bad merge) could make a re-run replace everything between an
   orphaned marker and an unrelated pair, silently deleting the user's own content. init now bails on
   any malformed marker state instead of guessing, and absorbs a CRLF trailing newline so a
@@ -170,17 +170,17 @@ addressed and rebuilds losslessly).
 
 ## [0.20.0] — 2026-07-08
 
-Minor bump: `RELEASE_MINOR` advances 19 → 20, so the `.basemind/` index + blob cache is wiped and
-rebuilt from source on the next `basemind scan` (expected — the msgpack blob store is content-
+Minor bump: `RELEASE_MINOR` advances 19 → 20, so the `.hacienda-mcp/` index + blob cache is wiped and
+rebuilt from source on the next `hacienda-mcp scan` (expected — the msgpack blob store is content-
 addressed and rebuilds losslessly).
 
 ### Added
 
 - **Root config at `<root>/basemind.toml` (committable).** Config moved out of the wipe-on-schema-bump
-  `.basemind/` cache to the repo root so it survives cache wipes and can be committed. The legacy
-  `.basemind/basemind.toml` is still read as a fallback; the root file wins when both exist.
-  `basemind init` now scaffolds a fully-documented root config (every value is the built-in default)
-  and adds `.basemind/` to `.gitignore`. It refuses to overwrite an existing config and refuses to
+  `.hacienda-mcp/` cache to the repo root so it survives cache wipes and can be committed. The legacy
+  `.hacienda-mcp/basemind.toml` is still read as a fallback; the root file wins when both exist.
+  `hacienda-mcp init` now scaffolds a fully-documented root config (every value is the built-in default)
+  and adds `.hacienda-mcp/` to `.gitignore`. It refuses to overwrite an existing config and refuses to
   shadow a legacy in-cache config rather than silently stranding your settings.
 - **`scan.follow_symlinks`** (default `false`). Symlinks often escape the repo (e.g. Bazel's
   `bazel-*` convenience symlinks); the walker no longer follows them unless you opt in. `extra_roots`
@@ -200,7 +200,7 @@ addressed and rebuilds losslessly).
   on vector search over code must set `code_search.embed = true` to keep it.
 - **Always-on exclude floor.** A hard floor of near-universal build-artifact / dependency-cache / VCS
   / editor directories (`node_modules`, `target`, `dist`, `build`, `out`, `.venv`, `__pycache__`,
-  `.pytest_cache`, `bazel-*`, `.git`, `.basemind`, `.idea`, `.DS_Store`, …) is applied on top of
+  `.pytest_cache`, `bazel-*`, `.git`, `.hacienda-mcp`, `.idea`, `.DS_Store`, …) is applied on top of
   `scan.exclude` — narrowing the user list can add to it but never drops a floor entry.
 
 ### Fixed
@@ -209,7 +209,7 @@ addressed and rebuilds losslessly).
   longer re-parses files whose extraction already lives in the shared (main-worktree) blob store —
   the scanner deserializes the cached L1/L2 frame instead of re-running tree-sitter. The git-history
   index is likewise shared: it is derived entirely from the shared `.git` object database, so a
-  linked worktree resolves it to the main worktree's `.basemind` (mirroring the blob store) rather
+  linked worktree resolves it to the main worktree's `.hacienda-mcp` (mirroring the blob store) rather
   than rebuilding its own. On a large monorepo a cold worktree scan drops from ~181s to ~25s (~7×)
   with ~2.6× less peak memory. The scan summary gains a `reused` counter reporting cache hits.
 - **Re-embed on same-dim preset model swaps.** The per-file embedding cache keyed on vector dimension
@@ -272,15 +272,15 @@ addressed and rebuilds losslessly).
 
 ## [0.19.0] — 2026-07-07
 
-> Minor release — the index + blob schema version bumps (`RELEASE_MINOR` 18 → 19), so `.basemind/`
+> Minor release — the index + blob schema version bumps (`RELEASE_MINOR` 18 → 19), so `.hacienda-mcp/`
 > is wiped and rebuilt on the next scan.
 
 ### Added
 
-- **Hermes Agent plugin.** basemind now integrates with [Hermes Agent](https://hermes-agent.nousresearch.com):
-  `pip install basemind` exposes a Hermes plugin (discovered via the `hermes_agent.plugins` entry
+- **Hermes Agent plugin.** hacienda-mcp now integrates with [Hermes Agent](https://hermes-agent.nousresearch.com):
+  `pip install hacienda-mcp` exposes a Hermes plugin (discovered via the `hermes_agent.plugins` entry
   point) that bundles the helper skills, slash commands, and agent-comms notifications. Tools are
-  wired through Hermes's MCP config (`mcp_servers.basemind` in `~/.hermes/config.yaml`) — a Hermes
+  wired through Hermes's MCP config (`mcp_servers.hacienda-mcp` in `~/.hermes/config.yaml`) — a Hermes
   plugin cannot declare an MCP server. See the README "Hermes" install section. Closes #36.
 
 ### Changed
@@ -288,7 +288,7 @@ addressed and rebuilds losslessly).
 - **Claude status line survives version bumps.** `/bm-statusline` now writes a version-independent
   resolver as the `statusLine` command (re-resolving the newest installed `statusline.sh` at each
   render) instead of a version-pinned path that broke on update. The bar also shows the running
-  basemind version (`v<version>`, full/compact tiers; opt out with `BASEMIND_STATUSLINE_VERSION=0`).
+  hacienda-mcp version (`v<version>`, full/compact tiers; opt out with `HACIENDA_MCP_STATUSLINE_VERSION=0`).
 
 ### Performance
 
@@ -322,7 +322,7 @@ determinism assertions are unchanged.
 
 ## [0.18.1] — 2026-07-06
 
-> **Patch release — blob + index format unchanged.** `RELEASE_MINOR` stays 18; no `.basemind/`
+> **Patch release — blob + index format unchanged.** `RELEASE_MINOR` stays 18; no `.hacienda-mcp/`
 > rebuild. Query-side only.
 
 ### Changed
@@ -345,7 +345,7 @@ determinism assertions are unchanged.
 ## [0.18.0] — 2026-07-06
 
 > **Minor release — cache rebuild.** `RELEASE_MINOR` bumps to 18, so both the Fjall index and the
-> content-addressed blob store are wiped and rebuilt from source on the next `basemind scan` (the
+> content-addressed blob store are wiped and rebuilt from source on the next `hacienda-mcp scan` (the
 > standard minor-release migration). No config or on-wire tool-response change.
 
 ### Added
@@ -368,7 +368,7 @@ determinism assertions are unchanged.
 ## [0.17.0] — 2026-07-05
 
 > **Minor release — cache rebuild.** `RELEASE_MINOR` bumps to 17, so both the Fjall index and the
-> content-addressed blob store are wiped and rebuilt from source on the next `basemind scan` (the
+> content-addressed blob store are wiped and rebuilt from source on the next `hacienda-mcp scan` (the
 > standard minor-release migration). No config or on-wire tool-response change.
 
 ### Added
@@ -382,7 +382,7 @@ determinism assertions are unchanged.
   documents/memory tables (shared embedding preset). CLI: `query search-code` / `query get-chunk`.
   Behind the `code-search` cargo feature (folded into `full`); BM25 keyword + RRF hybrid fusion land
   in later phases. The `code_chunks` table is created lazily on open, so it rides the existing
-  minor-release `.basemind/` rebuild — no separate schema bump.
+  minor-release `.hacienda-mcp/` rebuild — no separate schema bump.
 - **Keyword code search (Phase 2, native BM25).** `search_code` gains a `mode` parameter:
   `semantic` (the default vector lane) or `keyword`, a native Okapi BM25 (`k1 = 1.2`, `b = 0.75`)
   lane over each chunk's symbol + signature + doc + body text. Postings live in two new Fjall
@@ -427,7 +427,7 @@ determinism assertions are unchanged.
   now have their LanceDB rows and tracking entry pruned. `doc_files` is `#[serde(default)]` — additive,
   no schema bump.
 - **Shared blob cache across git worktrees.** Linked worktrees now resolve their content-addressed
-  blob directory to the main worktree's `.basemind/blobs` (via gix `common_dir`), so a file's
+  blob directory to the main worktree's `.hacienda-mcp/blobs` (via gix `common_dir`), so a file's
   extraction + embedding is computed once and shared across every worktree of the clone; views +
   LanceDB stay per-worktree. Auto-GC is disabled while a shared cache exists (a single-worktree sweep
   could reap a sibling's blobs).
@@ -452,12 +452,12 @@ determinism assertions are unchanged.
   `search_symbols` / keyword `search_code` are queryable almost immediately instead of waiting on the
   embed of every file. A detached second pass then re-scans in `EmbedMode::Inline` to fill the vectors
   in (reusing the fast pass' content-addressed caches so only not-yet-embedded content is embedded,
-  bounded by `embed.max_threads`), followed by GC. The CLI `basemind scan`, the watcher, and manual
+  bounded by `embed.max_threads`), followed by GC. The CLI `hacienda-mcp scan`, the watcher, and manual
   `rescan` stay `Inline` so scripted/CI use remains deterministic. No schema or config change.
 - **Index schema revision — new `refs_by_def` / `refs_by_path` Fjall partitions** back the resolved
   edges; per-file resolution facts persist as content-addressed `<hash>.rref.msgpack` blobs. This
   ships as a minor-release cut: `RELEASE_MINOR` bumps at release time, wiping and rebuilding every
-  `.basemind/` index + blob store on the next `basemind scan` (the resolve pass repopulates the new
+  `.hacienda-mcp/` index + blob store on the next `hacienda-mcp scan` (the resolve pass repopulates the new
   partitions). The `code_bm25_postings` / `code_bm25_by_path` partitions for the BM25 keyword lane
   (`INDEX_PARTITION_REVISION` → 4) ride the same index rebuild — the blobs are unchanged, so
   re-embedding is skipped and only the secondary index repopulates.
@@ -486,7 +486,7 @@ determinism assertions are unchanged.
 - **Archives and binaries are no longer unpacked + embedded during a scan.** `should_extract_document`
   rejected nothing by default, so xberg recursively unpacked `.zip/.tar/.jar/.whl/...` and embedded
   every entry, and binary blobs (`.so/.wasm/.class/...`) were embedded to no purpose — a large,
-  pointless cost that pinned ~11 cores and grew `.basemind` to gigabytes on a monorepo. A built-in
+  pointless cost that pinned ~11 cores and grew `.hacienda-mcp` to gigabytes on a monorepo. A built-in
   extension + MIME denylist now skips them before any xberg work (images stay allowed for OCR).
 - **Document blobs are no longer reaped by the blob GC.** Because docs weren't tracked in the index,
   `collect_referenced_hashes` never marked their `.doc.msgpack` blobs live, so the boot/background GC
@@ -500,13 +500,13 @@ determinism assertions are unchanged.
 
 ## [0.16.0] — 2026-07-02
 
-Minor release: `RELEASE_MINOR` bumps 15 → 16, so every `.basemind/` index + blob store (including
-`git-history.fjall/`) is wiped and rebuilt on the next `basemind scan`.
+Minor release: `RELEASE_MINOR` bumps 15 → 16, so every `.hacienda-mcp/` index + blob store (including
+`git-history.fjall/`) is wiped and rebuilt on the next `hacienda-mcp scan`.
 
 ### Added
 
 - **Resource footprint in `cache_stats` (disk + RAM).** The `cache_stats` MCP tool and
-  `basemind cache stats` CLI now report a `total_bytes` that reconciles with `du` exactly, a
+  `hacienda-mcp cache stats` CLI now report a `total_bytes` that reconciles with `du` exactly, a
   per-component breakdown that **includes the `git-history.fjall/` index** (previously uncounted —
   the "1.15 GB reported vs 1.5 GB on disk" gap), an `other_bytes` catch-all so an uncounted
   directory can never silently vanish again, and process memory (`rss_bytes` + `peak_rss_bytes`) via
@@ -527,10 +527,10 @@ Minor release: `RELEASE_MINOR` bumps 15 → 16, so every `.basemind/` index + bl
   keyed by their **absolute** path — repo files stay repo-relative, so the two namespaces never
   collide and `find_references` resolves across the boundary. Missing/unreadable roots are skipped
   with a warning; a root inside the repo is ignored. Symlinks are followed (Bazel `external/` is
-  symlink-heavy). Extra roots are (re-)indexed on a full `basemind scan` only — the live watcher
+  symlink-heavy). Extra roots are (re-)indexed on a full `hacienda-mcp scan` only — the live watcher
   does not track them — and git blame short-circuits with a clear error for external (untracked)
   files. The feature itself changes no index/blob format; a re-scan populates external files (and
-  this release's `RELEASE_MINOR` bump wipes + rebuilds `.basemind/` anyway).
+  this release's `RELEASE_MINOR` bump wipes + rebuilds `.hacienda-mcp/` anyway).
 
 ### Fixed
 
@@ -538,8 +538,8 @@ Minor release: `RELEASE_MINOR` bumps 15 → 16, so every `.basemind/` index + bl
   descriptions now state their contracts sharply — author/"what did X do"/keyword questions belong
   to the full-depth `search_git_history` (scans every commit reachable from HEAD), not the bounded
   100-commit `recent_changes` window. Precision is verified against real `git` at full branch depth
-  by the new `tests/git_parity.rs` harness (opt-in via `BASEMIND_GIT_PARITY_REPO`).
-- **Double-run lock UX.** `basemind scan` / `rescan` now pre-detect a live `basemind serve`/`watch`
+  by the new `tests/git_parity.rs` harness (opt-in via `HACIENDA_MCP_GIT_PARITY_REPO`).
+- **Double-run lock UX.** `hacienda-mcp scan` / `rescan` now pre-detect a live `hacienda-mcp serve`/`watch`
   holding the store lock (via a non-blocking `probe_writer_lock`) and print an actionable notice
   naming the holder, exiting cleanly instead of colliding with a raw lock error.
 - **Misleading `status` latency.** `status` uses a non-blocking read, so a multi-minute rebuild
@@ -549,19 +549,19 @@ Minor release: `RELEASE_MINOR` bumps 15 → 16, so every `.basemind/` index + bl
   flags `blob_accounting_ok: false` when orphan accounting had to be skipped (e.g. a schema-version
   mismatch), instead of erroring out.
 - **`/bm-stats` works offline.** The plugin command is now CLI-first (like `/bm-doctor`), reading
-  `basemind cache stats` / `basemind telemetry` when the MCP server is disconnected.
+  `hacienda-mcp cache stats` / `hacienda-mcp telemetry` when the MCP server is disconnected.
 
-[#34]: https://github.com/Goldziher/basemind/issues/34
+[#34]: https://github.com/jamon8888/Hacienda-mind/issues/34
 
 ## [0.15.1] — 2026-07-02
 
 Patch release: docs / skills / plugin-manifest only. No schema or `RELEASE_MINOR` change, so
-existing `.basemind/` caches are untouched on upgrade.
+existing `.hacienda-mcp/` caches are untouched on upgrade.
 
 ### Added
 
-- **Dedicated per-capability skills.** Split the "use basemind" guidance into three new
-  narrowly-triggerable skills alongside the existing umbrella `basemind` and `basemind-comms`:
+- **Dedicated per-capability skills.** Split the "use hacienda-mcp" guidance into three new
+  narrowly-triggerable skills alongside the existing umbrella `hacienda-mcp` and `basemind-comms`:
   `basemind-code-search` (symbol search / outline / references / callers / call graph /
   implementations / `workspace_grep`), `basemind-git-history` (history / blame / diffs / churn /
   `search_git_history`), and `basemind-documents` (semantic + full-text document search, NER /
@@ -572,8 +572,8 @@ existing `.basemind/` caches are untouched on upgrade.
 
 ## [0.15.0] — 2026-07-02
 
-Minor release: `RELEASE_MINOR` bumps 14 → 15, so every `.basemind/` index + blob store (including
-`git-history.fjall/`) is wiped and rebuilt on the next `basemind scan` — which is also how existing
+Minor release: `RELEASE_MINOR` bumps 14 → 15, so every `.hacienda-mcp/` index + blob store (including
+`git-history.fjall/`) is wiped and rebuilt on the next `hacienda-mcp scan` — which is also how existing
 repos populate the new git-history full-text search index.
 
 ### Added
@@ -591,12 +591,12 @@ repos populate the new git-history full-text search index.
 
 ### Fixed
 
-- **Multi-session MCP contention: the writer→read-only downgrade race.** A `basemind serve` that
-  rightfully held the `.basemind/.lock` write lock could still come up read-only when a concurrent
+- **Multi-session MCP contention: the writer→read-only downgrade race.** A `hacienda-mcp serve` that
+  rightfully held the `.hacienda-mcp/.lock` write lock could still come up read-only when a concurrent
   reader transiently held Fjall's single-holder index lock — leaving the repo with _zero_ writers
   (no auto-scan / watcher / rescan → a silently stale index). Fixed on both single-holder Fjall
-  stores: the writer now **retries** a transient `Locked` on open (it already owns `.basemind/.lock`,
-  so the contention always clears), read-only openers **probe `.basemind/.lock` and skip the Fjall
+  stores: the writer now **retries** a transient `Locked` on open (it already owns `.hacienda-mcp/.lock`,
+  so the contention always clears), read-only openers **probe `.hacienda-mcp/.lock` and skip the Fjall
   open** entirely when a writer is live (serving from the concurrently-readable blobs), and the
   schema-version check no longer does a throwaway **double-open** that widened the race window. The
   downgrade log now names the real lock holder instead of always blaming "another serve".
@@ -605,19 +605,19 @@ repos populate the new git-history full-text search index.
 
 - **git-history / index / comms Fjall opens** collapsed to a single `Database` open + inline schema
   read (was: a throwaway peek-open before the real open). `GIT_HISTORY_SCHEMA` bumps `+4 → +5` for
-  the FTS commit-meta layout, wiping and rebuilding `.basemind/git-history.fjall/` on the next scan
+  the FTS commit-meta layout, wiping and rebuilding `.hacienda-mcp/git-history.fjall/` on the next scan
   — a no-op for released users (the git-history index only became user-visible with this release).
 
 ## [0.14.0] — 2026-06-30
 
 Minor release: `RELEASE_MINOR` bumps 13 → 14 (a new `SymbolKind::Heading` variant), so every
-`.basemind/` index + blob store is wiped and rebuilt on the next `basemind scan` — which is also how
+`.hacienda-mcp/` index + blob store is wiped and rebuilt on the next `hacienda-mcp scan` — which is also how
 existing repos pick up Markdown headings.
 
 ### Added — Markdown / Obsidian support
 
 Markdown files (already parsed, but previously yielding no symbols) are now a first-class surface:
-point basemind at an Obsidian vault or any Markdown notes directory and the code-map tools work over
+point hacienda-mcp at an Obsidian vault or any Markdown notes directory and the code-map tools work over
 it the same way they do over source. All of this is on by default — `.md` is scanned like any other
 file, headings ship via a `src/queries/markdown.scm` override, and the reference graph is harvested
 by a fence-aware byte-scan in `extract/l2.rs` (the tree-sitter block grammar models none of these
@@ -641,19 +641,19 @@ aliases / arbitrary properties, and task/callout items.
 
 ## [0.13.0] — 2026-06-30
 
-Minor release: `RELEASE_MINOR` bumps 12 → 13, so every `.basemind/` index + blob store is
-wiped and rebuilt on the next `basemind scan` (intentional; no action needed).
+Minor release: `RELEASE_MINOR` bumps 12 → 13, so every `.hacienda-mcp/` index + blob store is
+wiped and rebuilt on the next `hacienda-mcp scan` (intentional; no action needed).
 
 ### Fixed
 
-- **`serve` watcher no longer pegs multi-core CPU on gitignored / nested-`.basemind` churn
+- **`serve` watcher no longer pegs multi-core CPU on gitignored / nested-`.hacienda-mcp` churn
   (#33).** A writer `serve` watching an umbrella repo woke on every filesystem event except those
-  under its _own_ `.basemind/`, then ran a no-op incremental scan that still re-serialized the
+  under its _own_ `.hacienda-mcp/`, then ran a no-op incremental scan that still re-serialized the
   index (`store.flush`) and rebuilt the **entire** `MapCache` over the whole corpus — on every
-  debounced batch. With nested child repos each flushing their own `.basemind/` in a mutual loop
+  debounced batch. With nested child repos each flushing their own `.hacienda-mcp/` in a mutual loop
   (or any `node_modules` / build churn) this rebuilt the cache indefinitely. Three fixes:
   - The watcher now drops every event a full scan would never index — including **nested**
-    child-repo `.basemind/` writes — before waking a rescan, honoring the **full nested
+    child-repo `.hacienda-mcp/` writes — before waking a rescan, honoring the **full nested
     `.gitignore` hierarchy** (via the `ignore` crate) plus the configured exclude globs. The
     incremental `scan_paths` is now gitignore-aware too, matching full-scan semantics.
   - `scan_paths` short-circuits when a batch changes nothing indexable — no `store.flush`, no
@@ -673,13 +673,13 @@ wiped and rebuilt on the next `basemind scan` (intentional; no action needed).
 ## [0.12.2] — 2026-06-29
 
 Patch release: blob and index formats are unchanged (`RELEASE_MINOR` stays 12), so no
-`.basemind/` rebuild.
+`.hacienda-mcp/` rebuild.
 
 ### Changed
 
 - **`tree-sitter-language-pack` `1.9.0-rc.45` → `1.12.0`.** The grammar bootstrap
   (`ensure_grammars`) now uses tslp's `prefetch`, which probes real on-disk loadability
-  instead of the in-memory `has_language` registry — replacing basemind's hand-rolled
+  instead of the in-memory `has_language` registry — replacing hacienda-mcp's hand-rolled
   `DownloadManager::ensure_languages` workaround for the pre-1.12 `download()` short-circuit.
   tslp 1.12's lock-free static `get_language` fast path also removes a global-mutex hop on the
   per-thread parser pool's hot path (tree-sitter is ~30% of scan time). Validated against the
@@ -687,12 +687,12 @@ Patch release: blob and index formats are unchanged (`RELEASE_MINOR` stays 12), 
   under baseline.
 
 Patch release: blob and index formats are unchanged (`RELEASE_MINOR` stays 12), so no
-`.basemind/` rebuild.
+`.hacienda-mcp/` rebuild.
 
 ### Fixed
 
 - **Multiple concurrent sessions on one repo no longer break code-map navigation.** fjall takes
-  an exclusive directory lock, so only one `basemind serve` process can open a repo's index at a
+  an exclusive directory lock, so only one `hacienda-mcp serve` process can open a repo's index at a
   time; additional editor/agent sessions fall back to read-only and previously got an error
   (`read_only_index_unavailable`) from every fjall-backed tool — the reported "blocked / not
   responsive". `find_references`, `find_callers`, `find_implementations`, and `call_graph` now
@@ -704,8 +704,8 @@ Patch release: blob and index formats are unchanged (`RELEASE_MINOR` stays 12), 
 
 Minor release: the document/RAG and web-crawl engines move to their renamed,
 MIT-relicensed crates. `RELEASE_MINOR` bumps to 12, so the blob + index formats
-are considered incompatible — `.basemind/` is wiped and rebuilt from source on
-the next `basemind scan`.
+are considered incompatible — `.hacienda-mcp/` is wiped and rebuilt from source on
+the next `hacienda-mcp scan`.
 
 ### Changed
 
@@ -729,7 +729,7 @@ the next `basemind scan`.
 
 ### Fixed
 
-- **Status line no longer renders blank on Linux** — `build_basemind_line` read file mtimes
+- **Status line no longer renders blank on Linux** — `build_hacienda_mcp_line` read file mtimes
   with BSD `stat -f %m` first. On GNU coreutils `-f` means "display filesystem status" and
   _succeeds_, printing a multi-line blob instead of failing, so the `|| stat -c %Y` fallback
   never ran; under `set -euo pipefail` the blob's bare `File` word aborted the command
@@ -738,7 +738,7 @@ the next `basemind scan`.
   fails (macOS), used at both mtime call sites (#32).
 
 Patch release: blob and index formats are unchanged (`RELEASE_MINOR` stays 11), so no
-`.basemind/` rebuild. A `tar` security bump on the npm installer, a Homebrew-tap fix, and
+`.hacienda-mcp/` rebuild. A `tar` security bump on the npm installer, a Homebrew-tap fix, and
 raised runtime floors.
 
 ### Security
@@ -752,7 +752,7 @@ raised runtime floors.
 
 - **Homebrew tap no longer breaks on Intel hosts** — the generated formula's `on_intel` block called
   `odie` at formula-load time, which aborted every `brew` command that read the tap on an Intel Mac
-  (poisoning bottle builds and installs for _all_ formulae in the tap, not just basemind). The
+  (poisoning bottle builds and installs for _all_ formulae in the tap, not just hacienda-mcp). The
   Apple-Silicon-only constraint is now expressed via `depends_on arch: :arm64`, evaluated at install
   time instead of load time.
 
@@ -765,7 +765,7 @@ raised runtime floors.
 ## [0.11.0] — 2026-06-26
 
 Minor release: `RELEASE_MINOR` bumps to 11, so the blob and Fjall index formats are considered
-stale and every `.basemind/` is wiped and rebuilt from source on the next `basemind scan` (one-time,
+stale and every `.hacienda-mcp/` is wiped and rebuilt from source on the next `hacienda-mcp scan` (one-time,
 intentional). The headline is a precomputed git-history index that turns the history MCP tools from
 full-walk-per-query into sub-millisecond lookups, plus an install fix that unblocks Apple Silicon
 Macs running an x86_64 shell, Node, or Python under Rosetta.
@@ -812,7 +812,7 @@ Macs running an x86_64 shell, Node, or Python under Rosetta.
 ## [0.10.3] — 2026-06-25
 
 Patch release: blob and index formats are unchanged (`RELEASE_MINOR` stays 10), so no
-`.basemind/` rebuild. Three Windows-only correctness fixes surfaced once the comms suite and the
+`.hacienda-mcp/` rebuild. Three Windows-only correctness fixes surfaced once the comms suite and the
 full tool sweep run on the `windows-latest` CI leg, plus install/release hardening so a partial
 publish can no longer leave the plugin launcher unable to install.
 
@@ -826,11 +826,11 @@ publish can no longer leave the plugin launcher unable to install.
   the extra allocation is Windows-only and never touches the Unix hot path.
 - **Windows comms named pipe now isolates by `comms_dir`** — `comms_socket_path` derived the
   Windows pipe name from the username only (`\\.\pipe\basemind-comms-<user>`), ignoring
-  `BASEMIND_COMMS_DIR`, so every comms dir on a host collapsed onto one per-user singleton pipe.
+  `HACIENDA_MCP_COMMS_DIR`, so every comms dir on a host collapsed onto one per-user singleton pipe.
   Parallel comms suites (each isolated to its own tempdir) collided — daemons cross-contaminated,
   one test's teardown killed another's daemon, and concurrent `comms start` races hung to the CI
   timeout. The pipe name now mixes in a hash of `comms_dir`, mirroring the per-dir Unix socket;
-  production (which leaves `BASEMIND_COMMS_DIR` unset) keeps a single stable per-user broker. A
+  production (which leaves `HACIENDA_MCP_COMMS_DIR` unset) keeps a single stable per-user broker. A
   `timeout-minutes: 30` backstop on the CI test job prevents any future hang from blocking the
   queue-not-cancel main concurrency.
 - **Windows `comms start` no longer hangs** — the detached broker daemon inherited the launcher's
@@ -857,7 +857,7 @@ publish can no longer leave the plugin launcher unable to install.
 ## [0.10.2] — 2026-06-25
 
 Patch release: blob and index formats are unchanged (`RELEASE_MINOR` stays 10), so no
-`.basemind/` rebuild. Fixes the Linux release archive, which 0.10.1 shipped broken on a clean host.
+`.hacienda-mcp/` rebuild. Fixes the Linux release archive, which 0.10.1 shipped broken on a clean host.
 
 ### Fixed
 
@@ -865,7 +865,7 @@ Patch release: blob and index formats are unchanged (`RELEASE_MINOR` stays 10), 
   bundles native `.so`s (libheif, libaom, …) into `lib/`, but only the main binary carried the
   `$ORIGIN/lib` rpath. A bundled lib with a sibling dependency (`libheif.so.1` → `libaom.so.3`,
   both in `lib/`) had no rpath of its own, so on a clean host the loader failed with
-  `libaom.so.3: cannot open shared object file` — even on `basemind --version`. The in-container
+  `libaom.so.3: cannot open shared object file` — even on `hacienda-mcp --version`. The in-container
   packaging smoke missed it because the build container has those codecs system-installed.
   `package-release.sh` now sets `$ORIGIN` on every bundled lib so sibling-to-sibling deps resolve,
   verified by running the real release artifact on a clean glibc-2.28 host.
@@ -873,7 +873,7 @@ Patch release: blob and index formats are unchanged (`RELEASE_MINOR` stays 10), 
 ## [0.10.1] — 2026-06-25
 
 Patch release: blob and index formats are unchanged (`RELEASE_MINOR` stays 10), so no
-`.basemind/` rebuild. This release completes the 0.10.0 distribution — it ships the Linux
+`.hacienda-mcp/` rebuild. This release completes the 0.10.0 distribution — it ships the Linux
 binaries and the npm / PyPI / Homebrew packages that 0.10.0 could not produce.
 
 ### Fixed
@@ -891,7 +891,7 @@ binaries and the npm / PyPI / Homebrew packages that 0.10.0 could not produce.
 ## [0.10.0] — 2026-06-24
 
 Minor release: `RELEASE_MINOR` bumps 9 → 10, so the on-disk index version changes and every
-`.basemind/` cache rebuilds from source on the next `scan`. This rebuild is **one-time and
+`.hacienda-mcp/` cache rebuilds from source on the next `scan`. This rebuild is **one-time and
 harmless** — the blob and index formats are unchanged.
 
 ### Added
@@ -899,17 +899,17 @@ harmless** — the blob and index formats are unchanged.
 - **Agent shells: embedded rmux daemon + six MCP tools** — spawn detached headless shell sessions
   via `shell_spawn` with optional cwd, env overrides, and title. Drive sessions with `shell_send`
   (write stdin), `shell_capture` (visible screen), `shell_broadcast` (multicast input), `shell_list`
-  (enumerate with liveness), and `shell_kill` (terminate). basemind embeds the daemon (re-execs
+  (enumerate with liveness), and `shell_kill` (terminate). hacienda-mcp embeds the daemon (re-execs
   itself with `--__internal-daemon` — no external `rmux` binary). Sessions are long-lived across
   tool calls and driven headless via MCP.
 - **Visual attach** (Unix + Windows) — when `[shells].visual` is not `headless`, `shell_spawn` opens
-  the session in a terminal tab/window attached to it via a hidden `basemind --__internal-attach`
-  re-exec (macOS / Linux emulators or Windows Terminal `wt.exe`; basemind ships no external `rmux`
+  the session in a terminal tab/window attached to it via a hidden `hacienda-mcp --__internal-attach`
+  re-exec (macOS / Linux emulators or Windows Terminal `wt.exe`; hacienda-mcp ships no external `rmux`
   binary). Presentation is best-effort — a spawn never fails just because no terminal could be driven
   — and the response's `attach_command` is returned for manual re-attach.
 - **Comms-coupled session rooms** (Unix + Windows, `comms` feature) — spawned children auto-join a
-  session-scoped comms room via inherited `BASEMIND_SESSION_ID` / `BASEMIND_PARENT_AGENT_ID` /
-  `BASEMIND_AGENT_ID`, enabling bidirectional parent↔child messaging and forming parent→child
+  session-scoped comms room via inherited `HACIENDA_MCP_SESSION_ID` / `HACIENDA_MCP_PARENT_AGENT_ID` /
+  `HACIENDA_MCP_AGENT_ID`, enabling bidirectional parent↔child messaging and forming parent→child
   inheritance chains across agents.
 - **`[shells]` configuration sub-tree** — controls visual presentation mode (`current` / `window` /
   `web` / `headless`; default `current` = new tab in open terminal), terminal emulator choice
@@ -920,7 +920,7 @@ harmless** — the blob and index formats are unchanged.
   single connection via a per-call `as_agent` parameter, backed by a per-identity broker-client
   registry parented to the orchestrator. New `dm_send` delivers a direct message into another
   agent's inbox over a private pairwise room; `agent_register` / `agent_list` advertise and discover
-  the live roster. The whole surface is mirrored on the CLI (`basemind comms … --as-agent`, `dm`,
+  the live roster. The whole surface is mirrored on the CLI (`hacienda-mcp comms … --as-agent`, `dm`,
   `room-for-path`), and a `multi-agent-room` skill + a code-review-panel demo show the pattern.
 - **Per-repo comms rooms + recency** — agents auto-join a default room keyed by the repo, created on
   demand via `get_or_create_chat_room_for_path`; `Global` is repurposed for machine-wide ops
@@ -937,7 +937,7 @@ harmless** — the blob and index formats are unchanged.
 
 - **Dependency refresh** — kreuzberg `5.0.0-rc.30` → `rc.35` (document-tier extraction stack) and
   `rmcp` `1.7` → `1.8`. `arrow` stays at 58 (lock-step with lancedb 0.30). rmcp 1.8 deprecates MCP
-  logging (SEP-2577); basemind keeps the capability for now since the status line and `rescan`
+  logging (SEP-2577); hacienda-mcp keeps the capability for now since the status line and `rescan`
   progress depend on it.
 - **Linux release binaries target glibc 2.28** (RHEL 8 / Debian 11 / Ubuntu 20.04+ / Amazon Linux
   2023) — the two `*-unknown-linux-gnu` artifacts are built with `cargo-zigbuild` (zig as the
@@ -948,7 +948,7 @@ harmless** — the blob and index formats are unchanged.
 ### Removed
 
 - **Experimental A2A server (`--features a2a`)** — the gRPC + JSON-RPC/SSE Agent-to-Agent server,
-  its protobuf codegen + `proto/`, the `basemind a2a serve` command, the buf CI job, and the
+  its protobuf codegen + `proto/`, the `hacienda-mcp a2a serve` command, the buf CI job, and the
   a2a-only dependency stack (tonic, prost, axum, axum-server, tower, tower-http, rustls, reqwest,
   subtle, rcgen, …) are removed. It was opt-in and never part of the shipped release surface; the
   maintenance cost (pinned codegen, held-back deps, a dedicated buf CI job) outweighed its
@@ -976,23 +976,23 @@ harmless** — the blob and index formats are unchanged.
   hid old messages; this reclaims their storage. Room records and per-room sequence counters are
   left intact so read cursors stay monotonic.
 - **Concurrent serve sessions no longer collide** (#26, #27) — the editor plugin spawns one
-  `basemind serve` per session, but the store write lock is single-holder. A contending serve now
+  `hacienda-mcp serve` per session, but the store write lock is single-holder. A contending serve now
   starts in a **read-only** mode (instead of exiting and handing the MCP client an opaque `-32000`),
   so its tools register and the session is usable: `outline`, `search_symbols`, `list_files`,
   `dependents`, `workspace_grep`, and the git tools answer from the in-RAM map and git. Fjall takes
   an exclusive lock on its index, so the call/reference tools (`find_references`, `find_callers`,
   `find_implementations`, `call_graph`) cannot read it from a second process — they now return a
-  clear "held by another basemind serve" error rather than a misleading empty result. The
+  clear "held by another hacienda-mcp serve" error rather than a misleading empty result. The
   lock-holding serve stays the sole writer; a read-only serve's `rescan` returns the same clear
   error. Lock contention fails fast with the clean lock message rather than the multi-GB busy-spin
   reported on 0.9.0 (#26).
 - **Agent-shells hardening** — `shell_spawn` now honours the `[shells].enabled` master switch,
   confines `cwd` to the repository root (rejecting `..` / absolute escapes), threads the configured
-  `default_cols` / `default_rows` into the spawned pty, validates `BASEMIND_SHELLS_SOCKET` on the
+  `default_cols` / `default_rows` into the spawned pty, validates `HACIENDA_MCP_SHELLS_SOCKET` on the
   client path, rejects carriage returns in env keys/values, and widens the loader-injection warning
   list (`LD_AUDIT`, `DYLD_FALLBACK_LIBRARY_PATH`). The shells and comms modules build cleanly on
   both Unix and Windows (see Added); a build without those features still excludes them entirely.
-- **Status line recognizes pre-0.9 indexes** — the basemind status line keyed its "scanned yet?"
+- **Status line recognizes pre-0.9 indexes** — the hacienda-mcp status line keyed its "scanned yet?"
   check on the fused `.fm` blob introduced in 0.9, so an index written by an earlier binary (split
   `.l1`/`.l2` blobs) showed "scanning…" indefinitely though it was healthy. It now accepts both
   layouts and never double-counts the secondary blob layer.
@@ -1007,7 +1007,7 @@ harmless** — the blob and index formats are unchanged.
 ## [0.9.0] — 2026-06-23
 
 Minor release: `RELEASE_MINOR` bumps 8 → 9, so the on-disk index version changes and every
-`.basemind/` cache rebuilds from source on the next `scan`. This rebuild is **structural** — the
+`.hacienda-mcp/` cache rebuilds from source on the next `scan`. This rebuild is **structural** — the
 per-file extraction blob format changed from two files (`<hash>.l1.msgpack` + `<hash>.l2.msgpack`)
 to one combined frame (`<hash>.fm.msgpack`); any old split blobs left on disk are reclaimed by
 `cache gc`. A scanner hot-path pass cuts cold-scan wall time ~22%. Bumps kreuzberg to `5.0.0-rc.30`.
@@ -1043,7 +1043,7 @@ to one combined frame (`<hash>.fm.msgpack`); any old split blobs left on disk ar
 ## [0.8.0] — 2026-06-22
 
 Minor release: `RELEASE_MINOR` bumps 7 → 8, so the on-disk index version changes and every
-`.basemind/` cache rebuilds from source on the next `scan` (one-time; the blob/index formats are
+`.hacienda-mcp/` cache rebuilds from source on the next `scan` (one-time; the blob/index formats are
 unchanged, so the rebuild is harmless). Deepens the MCP surface — prompts, argument completions,
 logging, and progress notifications — and hardens the consumer experience: cleaner document-tier
 scans, a cold-start scan path agents can invoke, serve diagnostics, and a recovery runbook. Bumps
@@ -1052,7 +1052,7 @@ kreuzberg to `5.0.0-rc.29`.
 ### Added
 
 - **MCP prompts** (`prompts/list` + `prompts/get`) — four reusable, parameterized workflows that
-  teach a client to drive basemind structure-first: `onboard-repo`, `trace-symbol`, `explain-file`,
+  teach a client to drive hacienda-mcp structure-first: `onboard-repo`, `trace-symbol`, `explain-file`,
   `review-working-tree`.
 - **MCP argument completion** (`completion/complete`) — autocompletes prompt arguments from the
   in-RAM code map: `trace-symbol`'s `symbol` against indexed symbol names, `explain-file`'s `path`
@@ -1063,11 +1063,11 @@ kreuzberg to `5.0.0-rc.29`.
   / `open_world_hint`) so clients (Claude Code et al.) can auto-approve read-only tools and only
   prompt for mutating ones.
 - **Cold-start indexing for agents** — a `bm-scan` command + `basemind-scan` skill that run
-  `basemind scan` via the CLI (no MCP server required), so an agent can build the index when
-  basemind reports "no index".
+  `hacienda-mcp scan` via the CLI (no MCP server required), so an agent can build the index when
+  hacienda-mcp reports "no index".
 - **Recovery runbook** — a `bm-doctor` command + `basemind-doctor` skill: diagnose the index, detect
   a stale lock via the `.lock.meta` holder pid, rebuild via scan, and reconnect the MCP server
-  (client-specific). Plus `basemind serve` now logs its lifecycle (startup pid/version/view and the
+  (client-specific). Plus `hacienda-mcp serve` now logs its lifecycle (startup pid/version/view and the
   exact exit reason) to its stderr / the client's MCP server logs.
 
 ### Changed
@@ -1086,7 +1086,7 @@ kreuzberg to `5.0.0-rc.29`.
 ## [0.7.0] — 2026-06-22
 
 Minor release: `RELEASE_MINOR` bumps 6 → 7, so the on-disk index version changes and every
-`.basemind/` cache rebuilds from source on the next `scan` (intentional, one-time). The headline is a
+`.hacienda-mcp/` cache rebuilds from source on the next `scan` (intentional, one-time). The headline is a
 first-class **code-aware token-reduction** surface (the `compress`/`expand` tools, per-call budgets,
 TOON encoding, behavioral output compression) plus **code-grounded memory/skill governance**
 (`memory_audit` + git-mined skill proposals). Also ships MCP tool annotations so clients can
@@ -1099,8 +1099,8 @@ auto-approve read-only tools, and a sweep of CLI/MCP bug fixes.
 - **Per-call `max_tokens` budgets** on high-volume tools (`outline`, `search_*`, `find_references`,
   `workspace_grep`, `search_documents`, …): rank-to-fit with an explicit truncation marker + cursor.
 - **Opt-in TOON encoding** (`format:"toon"`) for high-volume list responses, and an opt-in **lean
-  tool surface** (`BASEMIND_MCP_LEAN`) that advertises three wrapper tools instead of the full set.
-- **Behavioral output compression** (`basemind compress-output`/`delta`/`checkpoint`/`detect-waste`)
+  tool surface** (`HACIENDA_MCP_MCP_LEAN`) that advertises three wrapper tools instead of the full set.
+- **Behavioral output compression** (`hacienda-mcp compress-output`/`delta`/`checkpoint`/`detect-waste`)
   with credential-safe, fail-open semantics, plus opt-in plugin hooks (Bash-output compression,
   read-cache deltas).
 - **Code-grounded governance** — `memory_audit` verifies stored memories against the live code map
@@ -1132,7 +1132,7 @@ auto-approve read-only tools, and a sweep of CLI/MCP bug fixes.
   sidecar instead of always guessing `watch` (#11).
 - `query` commands resolve absolute and `./`-prefixed paths to the indexed key (#19); serving or
   querying a never-scanned named view now errors instead of silently returning empty (#18).
-- `comms status` gives an actionable "daemon not running — start with `basemind comms start`" message
+- `comms status` gives an actionable "daemon not running — start with `hacienda-mcp comms start`" message
   (#21); comms verbs no longer emit a false "`--json` has no effect" warning (#20).
 - `git_cache_bytes` documented as the disk layer only (#23); CLI lock / LanceStore-shutdown crashes
   and legacy comms front-matter decoding fixed.
@@ -1144,19 +1144,19 @@ auto-approve read-only tools, and a sweep of CLI/MCP bug fixes.
 
 Patch release: schema unchanged (`RELEASE_MINOR` stays 6). Reworks the plugin MCP launcher so it
 no longer depends on `npx`/`uvx` at runtime — fixing intermittent start-up failures when several
-agent sessions (or the comms-monitor poll loop) launch basemind concurrently.
+agent sessions (or the comms-monitor poll loop) launch hacienda-mcp concurrently.
 
 ### Fixed
 
-- **Plugin launcher npx/uvx race** — `scripts/mcp-launch.sh` previously exec'd `npx basemind@<ver>`
+- **Plugin launcher npx/uvx race** — `scripts/mcp-launch.sh` previously exec'd `npx hacienda-mcp@<ver>`
   (then `uvx`) as the runtime. npx stages into a shared, spec-hashed `~/.npm/_npx/<hash>` directory,
   so two concurrent launches raced on it and failed with `ENOENT … package.json`; the binary was also
   never cached, so every launch re-resolved over the network and inherited node/python start-up cost
   plus lavamoat postinstall blocks. The launcher now has a single install method: download the
   checksum-verified prebuilt release binary once into a stable per-user cache
   (`${XDG_CACHE_HOME:-~/.cache}/basemind/bin/<version>/`), serialized with an atomic lock, and exec it
-  directly on every subsequent launch. `npx`/`uvx` and the `BASEMIND_LAUNCHER` override are removed;
-  set `BASEMIND_BIN=/path/to/basemind` to point at a local dev build. The npm/PyPI/Homebrew/cargo
+  directly on every subsequent launch. `npx`/`uvx` and the `HACIENDA_MCP_LAUNCHER` override are removed;
+  set `HACIENDA_MCP_BIN=/path/to/hacienda-mcp` to point at a local dev build. The npm/PyPI/Homebrew/cargo
   install channels are unchanged.
 
 ## [0.6.2] — 2026-06-21
@@ -1179,7 +1179,7 @@ npm/PyPI/Homebrew/cargo wrappers actually run — 0.6.0 and 0.6.1 shipped an unr
 ## [0.6.1] — 2026-06-21
 
 Patch release: blob/index/comms schema unchanged (`RELEASE_MINOR` stays 6), so no
-`.basemind/` rebuild. Fixes the Windows release build that blocked the 0.6.0 wrapper publish.
+`.hacienda-mcp/` rebuild. Fixes the Windows release build that blocked the 0.6.0 wrapper publish.
 
 ### Fixed
 
@@ -1195,13 +1195,13 @@ Patch release: blob/index/comms schema unchanged (`RELEASE_MINOR` stays 6), so n
 ## [0.6.0] — 2026-06-20
 
 Minor release: `RELEASE_MINOR` bumps 5 → 6, so the blob, Fjall-index, and LanceDB schema versions
-advance — the first `basemind scan` / `serve` after upgrading **wipes and rebuilds the `.basemind/`
+advance — the first `hacienda-mcp scan` / `serve` after upgrading **wipes and rebuilds the `.hacienda-mcp/`
 cache and the LanceDB store in place**. Headline: an **experimental, opt-in Agent-to-Agent (A2A)
 task server**, plus scanner/query hot-path perf wins and release-pipeline hardening.
 
 ### Added
 
-- **Experimental A2A server** — `basemind a2a serve`, gated behind `--features a2a` and intentionally
+- **Experimental A2A server** — `hacienda-mcp a2a serve`, gated behind `--features a2a` and intentionally
   excluded from the default and `full` builds and from the shipped release binary. One axum listener
   serves the A2A task protocol three ways — gRPC `A2AService`, JSON-RPC 2.0, and SSE streaming — with
   the agent card at `/.well-known/agent-card.json`. Hardened surfaces: **bearer-token auth** (constant-
@@ -1231,8 +1231,8 @@ task server**, plus scanner/query hot-path perf wins and release-pipeline harden
 ## [0.5.0] — 2026-06-20
 
 Minor release: `RELEASE_MINOR` bumps 4 → 5, so the blob, Fjall-index, and LanceDB schema versions
-advance — the first `basemind scan` / `serve` after upgrading **wipes and rebuilds the `.basemind/`
-cache and the LanceDB store in place**. Headline: basemind becomes a multi-agent **communication
+advance — the first `hacienda-mcp scan` / `serve` after upgrading **wipes and rebuilds the `.hacienda-mcp/`
+cache and the LanceDB store in place**. Headline: hacienda-mcp becomes a multi-agent **communication
 substrate** (scoped rooms + per-agent inbox) on top of its context layer, with split memory and
 cross-harness delivery.
 
@@ -1245,23 +1245,23 @@ cross-harness delivery.
   `inbox_read` scan cheaply, plus a body fetched on demand by `message_get`. An agent's **own**
   posts are excluded from its inbox. New MCP tools `agent_register`, `agent_list`, `room_create`,
   `room_list`, `room_join`, `room_leave`, `room_post`, `room_history`, `message_get`, `inbox_read`,
-  with full `basemind comms …` CLI parity.
+  with full `hacienda-mcp comms …` CLI parity.
 - **Split memory.** Memory gains an **individual** (per-agent) tier alongside the existing
   **group** (shared) tier, selected by a `visibility` parameter; agent identity resolves from
-  `BASEMIND_AGENT_ID` → config → persisted `.basemind/agent-id` → `anon`.
-- **Cross-harness delivery.** The comms mandate and a "prefer basemind over grep/git/manual"
+  `HACIENDA_MCP_AGENT_ID` → config → persisted `.hacienda-mcp/agent-id` → `anon`.
+- **Cross-harness delivery.** The comms mandate and a "prefer hacienda-mcp over grep/git/manual"
   directive ship to every harness via the MCP server `instructions`, a new **`basemind-comms`
   skill**, and the generated per-harness instruction files. **SessionStart + UserPromptSubmit
   hooks** inject unread front-matter on boot and per turn; a **background monitor (~15 s)** surfaces
   new messages while an agent works or idles (Claude Code).
-- **Statusline comms segment.** The basemind statusline now shows the agent's unread message count
+- **Statusline comms segment.** The hacienda-mcp statusline now shows the agent's unread message count
   (bright when non-zero) and identity, gated on a running broker and TTL-cached so it stays cheap.
 
 ### Changed
 
 - **Schema bump: `RELEASE_MINOR` 4 → 5.** The blob, Fjall-index, and LanceDB `memory`/`documents`
-  schema versions advance, so the first `basemind scan` / `serve` after upgrading **wipes and
-  rebuilds the `.basemind/` cache and the LanceDB store in place** (the latter now guarded by a
+  schema versions advance, so the first `hacienda-mcp scan` / `serve` after upgrading **wipes and
+  rebuilds the `.hacienda-mcp/` cache and the LanceDB store in place** (the latter now guarded by a
   `memory_schema_ver` in `meta.json` so the memory-table column add never faults at query time).
   Stored memory is rebuildable scratch, not a source of truth — re-`memory_put` anything you want
   to keep, or expect it to be re-derived.
@@ -1269,12 +1269,12 @@ cross-harness delivery.
 ## [0.4.0] — 2026-06-19
 
 Minor release: `RELEASE_MINOR` bumps 3 → 4, so the blob + index schema versions advance.
-The first `basemind scan` / `serve` after upgrading rebuilds the cache in place. Prebuilt binaries
+The first `hacienda-mcp scan` / `serve` after upgrading rebuilds the cache in place. Prebuilt binaries
 now ship `--features full` (96 document formats, OCR, embeddings, reranker, semantic search, web
 crawl, shared memory). **Windows asset triple changed:** `x86_64-pc-windows-gnu` → `x86_64-pc-windows-msvc`
 (ONNX Runtime ships no MinGW prebuilts); anyone hard-coding the old asset name must update.
 **Intel macOS (`x86_64-apple-darwin`) is no longer shipped** — macOS prebuilts are Apple Silicon
-(`aarch64-apple-darwin`) only; Intel Mac users build from source (`cargo install basemind --features full`).
+(`aarch64-apple-darwin`) only; Intel Mac users build from source (`cargo install hacienda-mcp --features full`).
 
 ### Added
 
@@ -1285,7 +1285,7 @@ crawl, shared memory). **Windows asset triple changed:** `x86_64-pc-windows-gnu`
   models over the network; binaries are larger. Replaced goreleaser with a new native
   per-platform CI runner pipeline.
 - **Enforced binary checksum verification.** All install paths (npm, pip/uvx, direct download via
-  `mcp-launch.sh`) now verify the binary's sha256 against `basemind_<version>_checksums.txt` and
+  `mcp-launch.sh`) now verify the binary's sha256 against `hacienda_mcp_<version>_checksums.txt` and
   fail closed on mismatch or missing checksum. (This was previously claimed in the README but not
   implemented.)
 
@@ -1317,25 +1317,25 @@ crawl, shared memory). **Windows asset triple changed:** `x86_64-pc-windows-gnu`
 
 Minor release: `RELEASE_MINOR` bumps 2 → 3, so the blob + index schema versions advance.
 Unlike previous minor bumps, the cache is **no longer hard-wiped** — see "Durable cache
-refresh" below. The first `basemind scan` / `serve` after upgrading re-extracts in place.
+refresh" below. The first `hacienda-mcp scan` / `serve` after upgrading re-extracts in place.
 
 ### Added
 
-- **Full MCP↔CLI parity.** Every MCP tool now has a `basemind` CLI subcommand, running the
+- **Full MCP↔CLI parity.** Every MCP tool now has a `hacienda-mcp` CLI subcommand, running the
   identical in-process tool code against the same on-disk index (read-only, no lock — safe
-  to run alongside a live `basemind serve`). Human-readable output by default, `--json` for
-  the raw structured response. New groups: `basemind query` (outline, symbol, search,
+  to run alongside a live `hacienda-mcp serve`). Human-readable output by default, `--json` for
+  the raw structured response. New groups: `hacienda-mcp query` (outline, symbol, search,
   references, callers, implementations, call-graph, grep, list-files, status, repo-info,
-  dependents), `basemind git` (status, history, blame, diffs, churn, symbol-history),
-  `basemind memory`, `basemind web`, and `basemind telemetry`.
+  dependents), `hacienda-mcp git` (status, history, blame, diffs, churn, symbol-history),
+  `hacienda-mcp memory`, `hacienda-mcp web`, and `hacienda-mcp telemetry`.
 - **Cache garbage collection + cleanup.** New `cache_gc` (reclaim orphaned blobs no view
   references), `cache_stats` (on-disk size + orphan accounting), and `cache_clear` MCP
-  tools, plus `basemind cache gc|stats|clear` CLI commands. GC runs automatically in the
+  tools, plus `hacienda-mcp cache gc|stats|clear` CLI commands. GC runs automatically in the
   background on `serve` startup. Blobs are shared across views; GC only sweeps blobs no
   view's index references, under the store lock so it never races a scan.
-- **Continuous background watch.** `basemind serve` now watches the working tree and
+- **Continuous background watch.** `hacienda-mcp serve` now watches the working tree and
   incrementally refreshes its index in the background by default (debounced), keeping
-  queries fresh without manual `rescan`. Opt out with `basemind serve --no-watch` for very
+  queries fresh without manual `rescan`. Opt out with `hacienda-mcp serve --no-watch` for very
   large repos / CI.
 - **`basemind-cli` skill** documenting the CLI surface, and a restructured README with two
   equal install paths (MCP plugin vs CLI + skill).
@@ -1345,7 +1345,7 @@ refresh" below. The first `basemind scan` / `serve` after upgrading re-extracts 
 - **Durable cache refresh on schema bump.** A schema/version bump now refreshes the
   content-addressed blob store **in place** (re-extract overwrites blobs at their stable
   content-hash path; background GC reclaims the remainder) instead of deleting
-  `.basemind/blobs/`. No window where the expensive extraction cache is gone. The Fjall
+  `.hacienda-mcp/blobs/`. No window where the expensive extraction cache is gone. The Fjall
   secondary index (derived, cheap) still rebuilds from blobs on its own schema bump.
 - **Git-cache schema** is now tied to `RELEASE_MINOR` so a release refreshes it consistently
   (it auto-rebuilds from git).
@@ -1357,7 +1357,7 @@ refresh" below. The first `basemind scan` / `serve` after upgrading re-extracts 
   grep-style call). Baselines are now derived from the actual response payload, decoupled
   from corpus size.
 - **Read-only store degrades gracefully on a schema bump.** A CLI query run before the first
-  post-upgrade scan now reads an empty index ("run `basemind scan`") instead of erroring,
+  post-upgrade scan now reads an empty index ("run `hacienda-mcp scan`") instead of erroring,
   and never opens the stale Fjall index.
 
 ## [0.2.6] — 2026-06-18
@@ -1366,23 +1366,23 @@ refresh" below. The first `basemind scan` / `serve` after upgrading re-extracts 
 
 - **Responsive two-line statusline with per-capability metrics.** The status line now
   renders a context row (model · output-style · vim · dir · branch · context%) above the
-  basemind row, since a custom statusLine replaces Claude Code's default and cannot sit
-  below it. The basemind row breaks telemetry down per capability — searches, git, docs,
+  hacienda-mcp row, since a custom statusLine replaces Claude Code's default and cannot sit
+  below it. The hacienda-mcp row breaks telemetry down per capability — searches, git, docs,
   memory, web — showing only buckets with activity today, alongside calls and estimated
   tokens saved. Width comes from `$COLUMNS` with full/compact/minimal tiers; override with
-  `BASEMIND_STATUSLINE` and hide the context row with `BASEMIND_STATUSLINE_CONTEXT=0`.
+  `HACIENDA_MCP_STATUSLINE` and hide the context row with `HACIENDA_MCP_STATUSLINE_CONTEXT=0`.
 
 ## [0.2.5] — 2026-06-18
 
 ### Added
 
-- **PreToolUse guard hook drives basemind usage.** A configurable hook
+- **PreToolUse guard hook drives hacienda-mcp usage.** A configurable hook
   (`hooks/pre-tool-guard`) reaches the agent when it reaches for `Grep`/`Glob` and
-  points it at the matching basemind tool — the only Claude Code lever that can also
-  cover subagents. `BASEMIND_GUARD` selects the mode: `nudge` (default, advisory once
-  per session), `redirect` (deny with a pointer to the basemind tool), or `off`.
+  points it at the matching hacienda-mcp tool — the only Claude Code lever that can also
+  cover subagents. `HACIENDA_MCP_GUARD` selects the mode: `nudge` (default, advisory once
+  per session), `redirect` (deny with a pointer to the hacienda-mcp tool), or `off`.
 - **Full-capability awareness in the agent surfaces.** The always-injected MCP
-  `get_info` instructions and the `basemind` skill now describe the whole surface —
+  `get_info` instructions and the `hacienda-mcp` skill now describe the whole surface —
   code map across 300+ languages, full-text + semantic search, git intelligence,
   document RAG over 90+ file formats, shared memory, and web crawl — instead of a
   code-map-only framing. The README leads with the same capability set.
@@ -1398,7 +1398,7 @@ refresh" below. The first `basemind scan` / `serve` after upgrading re-extracts 
 ### Added
 
 - **Context-economy operating discipline shipped across every agent surface.** The
-  MCP `get_info` instructions, the `basemind` skill, the SessionStart hook, and the
+  MCP `get_info` instructions, the `hacienda-mcp` skill, the SessionStart hook, and the
   README now state one default workflow: these tools return paths, line numbers, and
   signatures rather than file bodies, so agents `outline` before reading,
   `search_symbols` / `find_references` / `workspace_grep` before grep, and `rescan`
@@ -1412,10 +1412,10 @@ refresh" below. The first `basemind scan` / `serve` after upgrading re-extracts 
 - **`serve` auto-scans a fresh repo on startup.** When the working-view index is
   empty, the server kicks off an initial scan in the background (reusing the
   in-process `rescan` path, so it never contends for the Fjall lock). The agent
-  no longer has to run `basemind scan` by hand — the statusline flips from
+  no longer has to run `hacienda-mcp scan` by hand — the statusline flips from
   "scanning…" to live counts on its own.
-- **`.basemind/` is now self-ignoring.** The first time the store is created it
-  writes `.basemind/.gitignore` containing `*`, so a user's repository never
+- **`.hacienda-mcp/` is now self-ignoring.** The first time the store is created it
+  writes `.hacienda-mcp/.gitignore` containing `*`, so a user's repository never
   accidentally commits the machine-local index. An existing `.gitignore` is left
   untouched.
 
@@ -1437,11 +1437,11 @@ refresh" below. The first `basemind scan` / `serve` after upgrading re-extracts 
 
 ### Added
 
-- **Claude Code plugin now auto-installs the basemind binary.** The MCP launcher
+- **Claude Code plugin now auto-installs the hacienda-mcp binary.** The MCP launcher
   (`scripts/mcp-launch.sh`) tries version-matched cached binaries, then npx
   (npm package), uvx (PyPI package), and finally downloads the prebuilt binary
   from the GitHub release with checksum verification. Override the launch strategy
-  with `BASEMIND_LAUNCHER=auto|npx|uvx|download`.
+  with `HACIENDA_MCP_LAUNCHER=auto|npx|uvx|download`.
 - **SessionStart hook pre-warms the binary and nudges statusline setup.** The
   hook runs in the background on session start to ensure the first tool call isn't
   a cold install, and suggests `/bm-statusline` if the statusline isn't yet
@@ -1456,7 +1456,7 @@ refresh" below. The first `basemind scan` / `serve` after upgrading re-extracts 
 
 - **Claude Code slash commands now load.** The `/bm` and `/bm-stats` commands
   were under `.claude-plugin/commands/`, which Claude Code ignores — plugin
-  component directories must sit at the plugin root, and basemind's marketplace
+  component directories must sit at the plugin root, and hacienda-mcp's marketplace
   `source` is `"./"`, so the plugin root is the repo root. Moved `commands/`
   (and confirmed `skills/`) to the repo root; `.claude-plugin/` now holds only
   the manifests + statusline. The Codex / Cursor / OpenCode trees keep their own
@@ -1473,8 +1473,8 @@ refresh" below. The first `basemind scan` / `serve` after upgrading re-extracts 
 ## [0.2.0] — 2026-06-17
 
 **Minor release — schema wipe (`RELEASE_MINOR=2`).** The blob and inverted-index
-formats are versioned to the release minor, so the next `basemind scan` rebuilds
-`.basemind/` from source. This is the intentional migration path; no user action
+formats are versioned to the release minor, so the next `hacienda-mcp scan` rebuilds
+`.hacienda-mcp/` from source. This is the intentional migration path; no user action
 beyond a rescan is needed.
 
 ### Changed
@@ -1482,7 +1482,7 @@ beyond a rescan is needed.
 - **Dependencies on crates.io.** `kreuzberg` moved from the `v5.0.0-rc.15` git pin
   to the published crates.io release `=5.0.0-rc.18`; the temporary `allow-git`
   exemptions in `deny.toml` are dropped. With no remaining git dependencies,
-  `cargo publish` to crates.io is unblocked — basemind now ships on all four
+  `cargo publish` to crates.io is unblocked — hacienda-mcp now ships on all four
   registries (crates.io, npm, PyPI, Homebrew) from a single tag.
 - **README is now a positioning document.** Rewritten from a code-map feature
   inventory into a full AI-context-layer overview: four pillars (Code, Documents,
@@ -1503,10 +1503,10 @@ beyond a rescan is needed.
   dot, and width-aware wide/narrow layouts. The file count now reads the L1 blob
   set directly (exact, deduped) instead of estimating from index bytes; scan
   recency reads the view index mtime; an empty repo renders an actionable
-  `run: basemind scan` hint instead of a blank line. The intelligence row
+  `run: hacienda-mcp scan` hint instead of a blank line. The intelligence row
   (documents / memory / web) appears when a LanceDB store is present.
 - **Agent-facing skills + slash commands bundled into every plugin tree.** The
-  `basemind` routing skill and `basemind-stats` dashboard, plus `/bm` and
+  `hacienda-mcp` routing skill and `basemind-stats` dashboard, plus `/bm` and
   `/bm-stats` slash commands, now ship inside `.claude-plugin/`, `.codex-plugin/`,
   `.cursor-plugin/`, and the `basemind-opencode` npm tarball — so an installed
   plugin teaches the agent how to use the tools without manual onboarding. A new
@@ -1517,23 +1517,23 @@ beyond a rescan is needed.
 
 ### Fixed
 
-- **`npm-package`** — `npx basemind …` (and equivalent `npm install -g basemind`
-  invocations) used to silently fall through to whatever `basemind` already lived
-  on `$PATH` because npm skipped creating the `node_modules/.bin/basemind`
+- **`npm-package`** — `npx hacienda-mcp …` (and equivalent `npm install -g hacienda-mcp`
+  invocations) used to silently fall through to whatever `hacienda-mcp` already lived
+  on `$PATH` because npm skipped creating the `node_modules/.bin/hacienda-mcp`
   symlink when the `bin:` target was missing at install time (the native binary
   is downloaded by `postinstall`). The wrapper now ships a Node.js shim at
-  `bin/basemind.js` that `spawnSync`'s the downloaded native binary, so the
+  `bin/hacienda-mcp.js` that `spawnSync`'s the downloaded native binary, so the
   symlink target exists at install time and npx routes correctly through the
   wrapper.
 - **`publish.yaml`** — re-enabled the Homebrew tap step now that
   `HOMEBREW_TOKEN` is on the path to being provisioned. Set the secret on the
-  basemind repo before pushing the next tag; goreleaser will then auto-update
-  `Goldziher/homebrew-tap`'s `Formula/basemind.rb`.
+  hacienda-mcp repo before pushing the next tag; goreleaser will then auto-update
+  `Goldziher/homebrew-tap`'s `Formula/hacienda-mcp.rb`.
 
 ## [0.1.0] — 2026-06-15
 
 **Initial public release.** First minor wipes the schema (`RELEASE_MINOR=1`)
-so any pre-tag `.basemind/` cache rebuilds on next scan — intentional.
+so any pre-tag `.hacienda-mcp/` cache rebuilds on next scan — intentional.
 
 Feature-complete code-map server with the kreuzberg document tier surface
 (reranker, keywords, NER, summarization, language detection, TOON output) and
@@ -1544,12 +1544,12 @@ crates.io.
 
 ### Added
 
-- **`basemind scan`** — rayon-parallel scanner that indexes a workspace into
-  content-addressed msgpack blobs (`.basemind/blobs/`) plus a Fjall-backed
-  inverted index (`.basemind/views/<view>/index.fjall/`). Two extraction tiers
+- **`hacienda-mcp scan`** — rayon-parallel scanner that indexes a workspace into
+  content-addressed msgpack blobs (`.hacienda-mcp/blobs/`) plus a Fjall-backed
+  inverted index (`.hacienda-mcp/views/<view>/index.fjall/`). Two extraction tiers
   ship: L1 outlines (symbols, signatures, imports, docs) and L2 call sites;
   L3 structural hash available for symbol-history diffing.
-- **`basemind serve`** — stdio MCP server (`rmcp`) exposing the full code-map
+- **`hacienda-mcp serve`** — stdio MCP server (`rmcp`) exposing the full code-map
   and git-history tool surface (`outline`, `search_symbols`, `find_references`,
   `find_callers`, `list_files`, `dependents`, `repo_info`, `status`,
   `symbol_history`, `working_tree_status`, `recent_changes`,
@@ -1562,10 +1562,10 @@ crates.io.
   (kotlin, csharp, swift, cpp, scala, solidity, lua, …) get best-effort
   symbol + call extraction via the fallback adapter that rewrites
   GitHub-standard `@definition.*` / `@reference.call` captures into
-  basemind's `@symbol.*` / `@call.*` shape.
+  hacienda-mcp's `@symbol.*` / `@call.*` shape.
 - **Schema-driven config across TOML / CLI / MCP / env vars.** Rust types in
   `src/config/` derive `schemars::JsonSchema`; the snapshot at
-  `schema/basemind-config-v1.schema.json` is regenerated from those types and
+  `schema/hacienda-mcp-config-v1.schema.json` is regenerated from those types and
   asserted by `tests/config_schema.rs`. Adding a config field lights up all
   four surfaces via `#[command(flatten)]` (clap) and `#[serde(flatten)]` (MCP
   params). Precedence: MCP > CLI > env > TOML > defaults, with per-field
@@ -1606,10 +1606,10 @@ crates.io.
   ripgrep-shallow truncation surfaces).
 - **Schema sync to release version** — `RELEASE_MINOR` in `src/version.rs`
   drives both `INDEX_SCHEMA_VER` and the blob `SCHEMA_VER`. Minor-release
-  bumps wipe `.basemind/` on next scan; patch releases stay compatible.
-- Distribution: `brew install Goldziher/tap/basemind`,
-  `npm install -g basemind`, `pip install basemind`,
-  `cargo install basemind --locked`. Precompiled binaries on GitHub
+  bumps wipe `.hacienda-mcp/` on next scan; patch releases stay compatible.
+- Distribution: `brew install Goldziher/tap/hacienda-mcp`,
+  `npm install -g hacienda-mcp`, `pip install hacienda-mcp`,
+  `cargo install hacienda-mcp --locked`. Precompiled binaries on GitHub
   Releases for `{x86_64,aarch64}-{linux-gnu,apple-darwin}` and
   `x86_64-pc-windows-gnu`.
 - **Per-harness install matrix** — manifests + skill bundle for every major
@@ -1618,16 +1618,16 @@ crates.io.
   - **Claude Code** — `.claude-plugin/plugin.json` + `marketplace.json` +
     `statusline.sh` (live one-line summary of the indexed map with true-color
     brand mark, freshness dot, and call/token-savings telemetry from
-    `.basemind/telemetry.jsonl`). Install via
-    `/plugin marketplace add Goldziher/basemind` then
-    `/plugin install basemind@basemind`.
+    `.hacienda-mcp/telemetry.jsonl`). Install via
+    `/plugin marketplace add jamon8888/Hacienda-mind` then
+    `/plugin install hacienda-mcp@hacienda-mcp`.
   - **Codex CLI / App** — `.codex-plugin/plugin.json` with full `interface`
     block (`displayName`, category `Developer Tools`, `capabilities`,
     `defaultPrompt`, `brandColor`). `scripts/sync-to-codex-plugin.sh` mirrors
     into a fork of the `openai/plugins` marketplace.
   - **Gemini CLI** — root-level `gemini-extension.json` with `contextFileName`
     and `mcpServers`. Install via
-    `gemini extensions install https://github.com/Goldziher/basemind`.
+    `gemini extensions install https://github.com/jamon8888/Hacienda-mind`.
   - **Cursor** — `.cursor-plugin/plugin.json`.
   - **OpenCode** — published as the
     [`basemind-opencode`](https://www.npmjs.com/package/basemind-opencode)
@@ -1643,7 +1643,7 @@ crates.io.
     `scanner`, `indexer`).
 - **Release pipeline** — `.github/workflows/publish.yaml` publishes on
   every `v*` tag: GitHub release assets (cross-compiled binaries via
-  goreleaser + zig), crates.io, npm × 2 (`basemind` binary wrapper +
+  goreleaser + zig), crates.io, npm × 2 (`hacienda-mcp` binary wrapper +
   `basemind-opencode` OpenCode plugin), and PyPI. Per-registry idempotent
   via existing-version detection; OIDC-driven trusted publishers on all
   four registries.
@@ -1671,15 +1671,15 @@ crates.io.
 - `search_documents` post-processing releases the store read-lock before
   blob I/O; `ahash::AHashMap` / `AHashSet` on the post-filter path.
 
-[0.5.0]: https://github.com/Goldziher/basemind/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/Goldziher/basemind/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/Goldziher/basemind/compare/v0.2.6...v0.3.0
-[0.2.6]: https://github.com/Goldziher/basemind/compare/v0.2.5...v0.2.6
-[0.2.5]: https://github.com/Goldziher/basemind/compare/v0.2.4...v0.2.5
-[0.2.4]: https://github.com/Goldziher/basemind/compare/v0.2.3...v0.2.4
-[0.2.3]: https://github.com/Goldziher/basemind/compare/v0.2.2...v0.2.3
-[0.2.2]: https://github.com/Goldziher/basemind/compare/v0.2.1...v0.2.2
-[0.2.1]: https://github.com/Goldziher/basemind/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/Goldziher/basemind/compare/v0.1.1...v0.2.0
-[0.1.1]: https://github.com/Goldziher/basemind/compare/v0.1.0...v0.1.1
-[0.1.0]: https://github.com/Goldziher/basemind/releases/tag/v0.1.0
+[0.5.0]: https://github.com/jamon8888/Hacienda-mind/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/jamon8888/Hacienda-mind/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/jamon8888/Hacienda-mind/compare/v0.2.6...v0.3.0
+[0.2.6]: https://github.com/jamon8888/Hacienda-mind/compare/v0.2.5...v0.2.6
+[0.2.5]: https://github.com/jamon8888/Hacienda-mind/compare/v0.2.4...v0.2.5
+[0.2.4]: https://github.com/jamon8888/Hacienda-mind/compare/v0.2.3...v0.2.4
+[0.2.3]: https://github.com/jamon8888/Hacienda-mind/compare/v0.2.2...v0.2.3
+[0.2.2]: https://github.com/jamon8888/Hacienda-mind/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/jamon8888/Hacienda-mind/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/jamon8888/Hacienda-mind/compare/v0.1.1...v0.2.0
+[0.1.1]: https://github.com/jamon8888/Hacienda-mind/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/jamon8888/Hacienda-mind/releases/tag/v0.1.0

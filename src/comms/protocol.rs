@@ -286,7 +286,7 @@ pub enum CommsRequest {
     },
     /// Liveness probe. The daemon replies [`CommsResponse::Pong`].
     Ping,
-    /// Ask the daemon to drain and stop. Used by `basemind comms stop`.
+    /// Ask the daemon to drain and stop. Used by `hacienda-mcp comms stop`.
     Stop,
     /// Report daemon status (pid / version / uptime / thread + subscriber counts).
     Status,

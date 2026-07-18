@@ -1,6 +1,6 @@
 //! `[shells]` configuration sub-tree.
 //!
-//! Governs how basemind presents an agent-spawned shell session to the user.
+//! Governs how hacienda-mcp presents an agent-spawned shell session to the user.
 //! The whole tree is feature-independent at the type level (it derives the same
 //! `schemars` schema whether or not the `shells` cargo feature is compiled in)
 //! so the published config schema is stable across feature matrices; the visual

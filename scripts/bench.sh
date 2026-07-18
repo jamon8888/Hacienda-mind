@@ -2,12 +2,12 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-BIN="$ROOT_DIR/target/release/basemind"
-BENCH_DIR="${BASEMIND_BENCH_DIR:-/tmp/basemind-bench}"
+BIN="$ROOT_DIR/target/release/hacienda-mcp"
+BENCH_DIR="${HACIENDA_MCP_BENCH_DIR:-/tmp/basemind-bench}"
 
 if [[ ! -x "$BIN" ]]; then
 	echo "building release binary..."
-	(cd "$ROOT_DIR" && cargo build --release --bin basemind)
+	(cd "$ROOT_DIR" && cargo build --release --bin hacienda-mcp)
 fi
 
 mkdir -p "$BENCH_DIR"
@@ -28,7 +28,7 @@ for entry in "${REPOS[@]}"; do
 		git clone --depth 1 -q "$url" "$name"
 	fi
 	cd "$name"
-	rm -rf .basemind
+	rm -rf .hacienda-mcp
 	"$BIN" init >/dev/null
 
 	echo
@@ -38,8 +38,8 @@ for entry in "${REPOS[@]}"; do
 	echo "==> $name — cached scan"
 	/usr/bin/time -p "$BIN" scan 2>&1 | tail -5
 
-	blob_count="$(find .basemind/blobs -type f -name '*.fm.msgpack' | wc -l | tr -d ' ')"
-	idx_bytes="$(wc -c <.basemind/index.msgpack | tr -d ' ')"
+	blob_count="$(find .hacienda-mcp/blobs -type f -name '*.fm.msgpack' | wc -l | tr -d ' ')"
+	idx_bytes="$(wc -c <.hacienda-mcp/index.msgpack | tr -d ' ')"
 	echo "    blobs=$blob_count  index_bytes=$idx_bytes"
 
 	cd "$BENCH_DIR"

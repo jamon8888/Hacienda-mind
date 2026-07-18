@@ -1,4 +1,4 @@
-//! Multi-SESSION contention repro: several `basemind serve` processes against the
+//! Multi-SESSION contention repro: several `hacienda-mcp serve` processes against the
 //! same repo. Unlike `concurrency_smoke.rs` (many concurrent calls to ONE server),
 //! these tests answer the load-bearing question behind the "blocked / not
 //! responsive" reports: can more than one holder open the Fjall index at once?
@@ -6,16 +6,16 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use basemind::config::ConfigV1;
-use basemind::index::IndexDb;
-use basemind::scanner::{ScanSource, scan};
-use basemind::store::{Store, VIEW_WORKING};
+use hacienda_mcp::config::ConfigV1;
+use hacienda_mcp::index::IndexDb;
+use hacienda_mcp::scanner::{ScanSource, scan};
+use hacienda_mcp::store::{Store, VIEW_WORKING};
 use tempfile::TempDir;
 
 /// Scan a tiny two-file repo so the Fjall `calls_by_callee` keyspace (which backs
 /// `find_references`) is populated, then drop the writer to release every lock.
 fn scanned_repo() -> TempDir {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let root = dir.path();
     std::fs::write(root.join("a.rs"), b"pub fn alpha() {}\n").expect("write a.rs");
@@ -31,7 +31,7 @@ fn scanned_repo() -> TempDir {
             &mut store,
             &cfg,
             ScanSource::WorkingTree,
-            basemind::scanner::EmbedMode::Inline,
+            hacienda_mcp::scanner::EmbedMode::Inline,
         )
         .expect("scan");
     }
@@ -46,7 +46,7 @@ fn scanned_repo() -> TempDir {
 #[test]
 fn fjall_index_rejects_a_second_concurrent_opener() {
     let dir = scanned_repo();
-    let view_dir = basemind::store::workspace_cache_dir(dir.path())
+    let view_dir = hacienda_mcp::store::workspace_cache_dir(dir.path())
         .join("views")
         .join(VIEW_WORKING);
 
@@ -80,7 +80,7 @@ fn second_session_loses_the_fjall_index_but_keeps_blob_reads() {
          see concurrency_smoke::second_session_resolves_find_references_from_blobs."
     );
 
-    let hits = basemind::query::search_symbols(&serve2, "alpha", None).expect("search");
+    let hits = hacienda_mcp::query::search_symbols(&serve2, "alpha", None).expect("search");
     assert_eq!(hits.len(), 1, "blob-backed search still works on the 2nd session");
 }
 
@@ -95,7 +95,7 @@ fn second_session_loses_the_fjall_index_but_keeps_blob_reads() {
 /// `fjall::Error::Locked`, which `cmd_serve` misread as contention and downgraded. The fix is two
 /// cooperating parts exercised here together: the writer retries a transient `Locked`
 /// (`open_index_with_retry`, F1), and readers skip the fjall open entirely while a writer holds
-/// `.basemind/.lock` (`writer_lock_is_held`, F3), draining the storm so the writer's retry wins.
+/// `.hacienda-mcp/.lock` (`writer_lock_is_held`, F3), draining the storm so the writer's retry wins.
 #[test]
 fn writer_never_downgrades_under_a_reader_storm() {
     let dir = scanned_repo();

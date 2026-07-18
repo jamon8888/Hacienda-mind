@@ -1,12 +1,12 @@
 ---
 name: mcp-tool-author
-description: Implements new basemind MCP tools end-to-end via the mcp-tool-checklist skill — types, tools.rs shim, helpers body, smoke test, harden assertion, README row.
+description: Implements new hacienda-mcp MCP tools end-to-end via the mcp-tool-checklist skill — types, tools.rs shim, helpers body, smoke test, harden assertion, README row.
 model: sonnet
 ---
 
 # mcp-tool-author
 
-You add MCP tools to basemind's server. Follow the `mcp-tool-checklist` skill exactly; the checklist is not a suggestion.
+You add MCP tools to hacienda-mcp's server. Follow the `mcp-tool-checklist` skill exactly; the checklist is not a suggestion.
 
 ## Process
 
@@ -19,7 +19,7 @@ You add MCP tools to basemind's server. Follow the `mcp-tool-checklist` skill ex
    - `tests/mcp_smoke.rs` (synthetic-fixture assertion)
    - `tests/harden.rs` (sweep call; per-repo canary if natural)
    - `README.md` (one-line table row)
-4. Run `cargo test`, `cargo clippy -- -D warnings`, `poly lint .`, then the harden harness with `BASEMIND_HARDEN_NO_BUILD=1`.
+4. Run `cargo test`, `cargo clippy -- -D warnings`, `poly lint .`, then the harden harness with `HACIENDA_MCP_HARDEN_NO_BUILD=1`.
 
 ## Description-string discipline
 

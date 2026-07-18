@@ -1,13 +1,13 @@
 # Attributions
 
-This document acknowledges sources of forked/copied code and rule data used in the basemind
+This document acknowledges sources of forked/copied code and rule data used in the hacienda-mcp
 project. Ordinary crates.io dependencies are tracked in `Cargo.toml` / `Cargo.lock` and governed by
 `deny.toml`; this file covers code and data files that were **copied into the repository** — either
-rule data or workspace crates under `crates/` that basemind now maintains as forks.
+rule data or workspace crates under `crates/` that hacienda-mcp now maintains as forks.
 
 ## stack-graphs name-binding rules (`.tsg`)
 
-Tree-sitter-graph (`.tsg`) name-resolution rule files driving basemind's precise, scope- and
+Tree-sitter-graph (`.tsg`) name-resolution rule files driving hacienda-mcp's precise, scope- and
 import-aware navigation for Python and Java.
 
 - **Source**: <https://github.com/github/stack-graphs> (archived, read-only)
@@ -24,9 +24,9 @@ import-aware navigation for Python and Java.
 ### Modifications
 
 - Derived from the upstream rule files (copyright header preserved) and now **maintained** by
-  basemind. A `;;`-comment attribution header (source, commit, license, target grammar version) is
+  hacienda-mcp. A `;;`-comment attribution header (source, commit, license, target grammar version) is
   prepended to each file.
-- The rules were written against `tree-sitter-python =0.23.5` / `tree-sitter-java =0.23.4`; basemind
+- The rules were written against `tree-sitter-python =0.23.5` / `tree-sitter-java =0.23.4`; hacienda-mcp
   parses via `tree-sitter-language-pack` 1.12.5. Grammar-drift adaptations for node types that do not
   exist in the current grammar (e.g. Python's `except_group_clause`) are stripped at engine-build
   time in `src/intel/stackgraph.rs`.
@@ -45,37 +45,37 @@ import-aware navigation for Python and Java.
 
 ### License Compatibility
 
-MIT OR Apache-2.0 is permissive and compatible with basemind's MIT license.
+MIT OR Apache-2.0 is permissive and compatible with hacienda-mcp's MIT license.
 
 ---
 
 ## tree-sitter-graph (forked & maintained)
 
 The tree-sitter-graph DSL interpreter — parses a `.tsg` file and executes it against a tree-sitter
-parse tree to construct a graph. basemind maintains this as a **fork**: a first-class workspace
+parse tree to construct a graph. hacienda-mcp maintains this as a **fork**: a first-class workspace
 crate that we own and modernize (not a throwaway vendored copy).
 
 - **Originally derived from**: <https://github.com/tree-sitter/tree-sitter-graph> v0.12.0
 - **License**: MIT OR Apache-2.0 (upstream LICENSE-MIT / LICENSE-APACHE retained in the crate)
 - **Original authors**: Douglas Creager and the tree-sitter-graph contributors
-- **Now maintained by**: basemind (Na'aman Hirschfeld)
+- **Now maintained by**: hacienda-mcp (Na'aman Hirschfeld)
 - **Location**: `crates/tree-sitter-graph/`
-- **Purpose**: Execute the stack-graphs `.tsg` rules against basemind's tree-sitter parse trees.
+- **Purpose**: Execute the stack-graphs `.tsg` rules against hacienda-mcp's tree-sitter parse trees.
 
 ### Modifications
 
-- Ported from `tree-sitter ^0.24` to `tree-sitter 0.26` (the version basemind uses via
+- Ported from `tree-sitter ^0.24` to `tree-sitter 0.26` (the version hacienda-mcp uses via
   tree-sitter-language-pack): streaming `QueryCursor` iteration via the `streaming-iterator` crate,
   `&Language` API signatures, and related 0.25/0.26 binding changes.
 - CLI / `clap` entry points and the `tree-sitter-loader` / `tree-sitter-config` optional integrations
-  were dropped — basemind supplies its own already-parsed trees and needs only the interpreter.
+  were dropped — hacienda-mcp supplies its own already-parsed trees and needs only the interpreter.
 - Modernized as an owned fork: promoted from `vendor/` to a `crates/` workspace member, bumped to
   Rust edition 2024, and made clippy-clean under the workspace `-D warnings` bar (removed the dead
   `term-colors` feature branches, elided/precise-captured lifetimes, idiom cleanups).
 
 ### License Compatibility
 
-MIT OR Apache-2.0 is compatible with basemind's MIT license. Upstream LICENSE files are preserved in
+MIT OR Apache-2.0 is compatible with hacienda-mcp's MIT license. Upstream LICENSE files are preserved in
 the fork crate.
 
 ---
@@ -83,13 +83,13 @@ the fork crate.
 ## tree-sitter-stack-graphs (forked & maintained)
 
 The thin builder that maps a tree-sitter-graph execution result into a `stack_graphs::StackGraph`
-(the `.tsg` special globals + node-attribute conventions). basemind maintains this as a **fork**
+(the `.tsg` special globals + node-attribute conventions). hacienda-mcp maintains this as a **fork**
 alongside tree-sitter-graph — a first-class workspace crate we own and modernize.
 
 - **Originally derived from**: <https://github.com/github/stack-graphs> v0.10.0 (archived, read-only)
 - **License**: MIT OR Apache-2.0 (upstream LICENSE-MIT / LICENSE-APACHE retained in the crate)
 - **Original authors**: GitHub, Inc. and the stack-graphs contributors
-- **Now maintained by**: basemind (Na'aman Hirschfeld)
+- **Now maintained by**: hacienda-mcp (Na'aman Hirschfeld)
 - **Location**: `crates/tree-sitter-stack-graphs/`
 - **Purpose**: Build a `StackGraph` from a `.tsg` rule set + a parse tree, so the `stack-graphs`
   path-stitcher can resolve references to definitions.
@@ -105,7 +105,7 @@ alongside tree-sitter-graph — a first-class workspace crate we own and moderni
 
 ### License Compatibility
 
-MIT OR Apache-2.0 is compatible with basemind's MIT license.
+MIT OR Apache-2.0 is compatible with hacienda-mcp's MIT license.
 
 ---
 
@@ -113,28 +113,28 @@ MIT OR Apache-2.0 is compatible with basemind's MIT license.
 
 LSP-compatible character positions (UTF-8 / UTF-16 / grapheme offsets). Shared by the forked
 tree-sitter-stack-graphs and the crates.io `stack-graphs` dependency; both must resolve to this one
-instance (via `[patch.crates-io]`) so their `lsp_positions::Span` types unify. basemind maintains it
-as a **fork** because the published crate pins tree-sitter 0.24, incompatible with basemind's 0.26.
+instance (via `[patch.crates-io]`) so their `lsp_positions::Span` types unify. hacienda-mcp maintains it
+as a **fork** because the published crate pins tree-sitter 0.24, incompatible with hacienda-mcp's 0.26.
 
 - **Originally derived from**: <https://github.com/github/stack-graphs> lsp-positions v0.3.4
   (archived, read-only)
 - **License**: MIT OR Apache-2.0 (upstream LICENSE-MIT / LICENSE-APACHE retained in the crate)
 - **Original authors**: GitHub, Inc. and the stack-graphs contributors
-- **Now maintained by**: basemind (Na'aman Hirschfeld)
+- **Now maintained by**: hacienda-mcp (Na'aman Hirschfeld)
 - **Location**: `crates/lsp-positions/`
 - **Purpose**: Provide the `Span` / `Position` / `Offset` position model used across the stack-graph
   build path.
 
 ### Modifications
 
-- Ported to `tree-sitter 0.26`; the `tree-sitter` feature is the only one basemind enables (the
+- Ported to `tree-sitter 0.26`; the `tree-sitter` feature is the only one hacienda-mcp enables (the
   `bincode` / `serde` features are retained but off by default).
 - Modernized as an owned fork: promoted from `vendor/` to a `crates/` workspace member, bumped to
   Rust edition 2024, and made clippy-clean under the workspace `-D warnings` bar.
 
 ### License Compatibility
 
-MIT OR Apache-2.0 is compatible with basemind's MIT license.
+MIT OR Apache-2.0 is compatible with hacienda-mcp's MIT license.
 
 ---
 

@@ -5,7 +5,7 @@ priority: high
 # Inverted Index (Fjall)
 
 The Fjall LSM keyspace is the secondary index over the canonical msgpack blob store.
-Lives at `.basemind/views/<view>/index.fjall/`. Source: `src/index/{mod,keys,writer}.rs`.
+Lives at `.hacienda-mcp/views/<view>/index.fjall/`. Source: `src/index/{mod,keys,writer}.rs`.
 
 ## Keyspaces
 

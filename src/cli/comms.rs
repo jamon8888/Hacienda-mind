@@ -1,10 +1,10 @@
-//! Agent-comms CLI verbs (`basemind comms <verb>`).
+//! Agent-comms CLI verbs (`hacienda-mcp comms <verb>`).
 //!
 //! Unlike the code-map / memory CLI groups — which build a one-shot
 //! [`BasemindServer`](crate::mcp::BasemindServer) and call the identical `#[tool]` an MCP client
 //! would — the comms verbs connect to the user-global broker daemon DIRECTLY via
 //! [`CommsClient::ensure_and_connect`]. Building a full server here would take the repo index
-//! lock and clash with a running `basemind serve`; the daemon is a separate process, so a thin
+//! lock and clash with a running `hacienda-mcp serve`; the daemon is a separate process, so a thin
 //! client is both correct and lock-free.
 //!
 //! This is also the human-admin path: a person can inspect (`threads`, `members`, `history`) and
@@ -227,12 +227,12 @@ fn since_cutoff(since_hours: Option<u32>) -> Option<i64> {
 /// Resolve the CLI agent identity, tiered to MATCH the `serve` resolver so CLI-driven comms share
 /// the session's identity.
 fn cli_agent_id(root: &Path) -> Result<AgentId> {
-    if let Ok(raw) = std::env::var("BASEMIND_AGENT_ID")
+    if let Ok(raw) = std::env::var("HACIENDA_MCP_AGENT_ID")
         && let Ok(id) = AgentId::parse(raw)
     {
         return Ok(id);
     }
-    if let Ok(existing) = std::fs::read_to_string(root.join(".basemind").join("agent-id"))
+    if let Ok(existing) = std::fs::read_to_string(root.join(".hacienda-mcp").join("agent-id"))
         && let Ok(id) = AgentId::parse(existing.trim())
     {
         return Ok(id);

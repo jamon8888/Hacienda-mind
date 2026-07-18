@@ -19,18 +19,18 @@ fn codex_mcp_launcher_should_resolve_from_plugin_root() {
     let manifest: Value =
         serde_json::from_slice(&std::fs::read(&manifest_path).expect("read committed Codex MCP manifest"))
             .expect("parse committed Codex MCP manifest");
-    let basemind = manifest
+    let hacienda_mcp = manifest
         .get("mcpServers")
-        .and_then(|servers| servers.get("basemind"))
-        .expect("basemind MCP entry");
+        .and_then(|servers| servers.get("hacienda-mcp"))
+        .expect("hacienda-mcp MCP entry");
 
     assert_eq!(
-        basemind.get("command").and_then(Value::as_str),
+        hacienda_mcp.get("command").and_then(Value::as_str),
         Some("./scripts/mcp-launch.sh"),
         "Codex does not expand shell-style ${{PLUGIN_ROOT}} placeholders in MCP commands",
     );
     assert_eq!(
-        basemind.get("cwd").and_then(Value::as_str),
+        hacienda_mcp.get("cwd").and_then(Value::as_str),
         Some("."),
         "Codex must resolve the launcher relative to the installed plugin root",
     );

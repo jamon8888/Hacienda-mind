@@ -5,17 +5,17 @@
 //! tools sit on against the live `gix` walk it replaces. The indexed path should be orders of
 //! magnitude faster; these benches are the before/after gate for the read-path optimization work.
 //!
-//! Point `BASEMIND_BENCH_REPO` at a repo whose `.basemind/git-history.fjall` is already built to
+//! Point `HACIENDA_MCP_BENCH_REPO` at a repo whose `.hacienda-mcp/git-history.fjall` is already built to
 //! profile against real history; the synthetic repo is used otherwise so the bench is
 //! self-contained and CI-safe.
 
 use std::path::Path;
 use std::process::Command;
 
-use basemind::git::Repo;
-use basemind::git_history::GitHistoryIndex;
-use basemind::git_history::builder;
-use basemind::path::RelPath;
+use hacienda_mcp::git::Repo;
+use hacienda_mcp::git_history::GitHistoryIndex;
+use hacienda_mcp::git_history::builder;
+use hacienda_mcp::path::RelPath;
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 use tempfile::TempDir;
@@ -71,7 +71,7 @@ fn build_synthetic() -> Harness {
         git(root, &["commit", "-qm", &format!("c{i}")], &date);
     }
 
-    let bdir = root.join(".basemind");
+    let bdir = root.join(".hacienda-mcp");
     std::fs::create_dir_all(&bdir).unwrap();
     let repo = Repo::discover(root).expect("discover");
     let index = GitHistoryIndex::open(&bdir).expect("open index");
@@ -85,13 +85,13 @@ fn build_synthetic() -> Harness {
     }
 }
 
-/// Open a prebuilt real-repo index pointed at by `BASEMIND_BENCH_REPO`, or `None` to use the
+/// Open a prebuilt real-repo index pointed at by `HACIENDA_MCP_BENCH_REPO`, or `None` to use the
 /// synthetic repo. Samples a hot + rare path from the newest commits.
 fn open_real(repo_root: &str) -> Option<Harness> {
     let root = Path::new(repo_root);
-    let bdir = root.join(".basemind");
+    let bdir = root.join(".hacienda-mcp");
     if !bdir.join("git-history.fjall").exists() {
-        eprintln!("BASEMIND_BENCH_REPO={repo_root} has no git-history.fjall; using synthetic repo");
+        eprintln!("HACIENDA_MCP_BENCH_REPO={repo_root} has no git-history.fjall; using synthetic repo");
         return None;
     }
     let repo = Repo::discover(root).ok()?;
@@ -119,7 +119,7 @@ fn open_real(repo_root: &str) -> Option<Harness> {
 }
 
 fn harness() -> Harness {
-    match std::env::var("BASEMIND_BENCH_REPO") {
+    match std::env::var("HACIENDA_MCP_BENCH_REPO") {
         Ok(repo) => open_real(&repo).unwrap_or_else(build_synthetic),
         Err(_) => build_synthetic(),
     }

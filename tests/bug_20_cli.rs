@@ -9,7 +9,7 @@
 use std::process::Command;
 
 fn bin() -> &'static str {
-    env!("CARGO_BIN_EXE_basemind")
+    env!("CARGO_BIN_EXE_hacienda-mcp")
 }
 
 /// `--json comms status` may fail to reach a broker (no daemon in CI), but the
@@ -17,13 +17,13 @@ fn bin() -> &'static str {
 /// dispatch — so its presence/absence is independent of the command's success.
 #[test]
 fn should_not_warn_json_ineffective_on_comms() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().expect("tempdir");
     let output = Command::new(bin())
         .args(["--root", dir.path().to_str().unwrap(), "--json", "comms", "status"])
         .env_remove("RUST_LOG")
         .output()
-        .expect("run basemind comms status");
+        .expect("run hacienda-mcp comms status");
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(
         !stderr.contains("--json has no effect"),

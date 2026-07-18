@@ -1,10 +1,10 @@
 //! System-resource sampling for the *reporting* process — current and peak resident set size
 //! (RSS), in bytes.
 //!
-//! basemind historically reported on-disk footprint only; the `cache_stats` surface now also
+//! hacienda-mcp historically reported on-disk footprint only; the `cache_stats` surface now also
 //! answers "how much RAM does it consume". The number is the RSS of whatever process calls
-//! [`sample`]: inside `basemind serve` that is the long-lived MCP server (the value the user
-//! cares about); from the one-shot `basemind cache stats` CLI it is that short-lived process.
+//! [`sample`]: inside `hacienda-mcp serve` that is the long-lived MCP server (the value the user
+//! cares about); from the one-shot `hacienda-mcp cache stats` CLI it is that short-lived process.
 //! Both are honest self-measurements, so the field is labelled "this process".
 //!
 //! Platform sources:

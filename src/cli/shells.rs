@@ -2,7 +2,7 @@
 //!
 //! Each handler builds the matching `Shell*Params` struct and dispatches to the
 //! identical `#[tool]` method on the in-process [`BasemindServer`]. Sessions are
-//! backed by the embedded rmux daemon (an external process basemind re-execs
+//! backed by the embedded rmux daemon (an external process hacienda-mcp re-execs
 //! itself as), so a session spawned from one CLI invocation survives the process
 //! exit and is addressable from the next — the same daemon a running `serve`
 //! shares. Gated on `feature = "shells"`.

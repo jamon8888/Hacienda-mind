@@ -17,7 +17,7 @@
           "**/node_modules/**",
           "**/dist/**",
           "**/.venv/**",
-          "**/.basemind/**",
+          "**/.hacienda-mcp/**",
           "**/.git/**",
           "**/bazel-out/**",
           "**/bazel-bin/**",
@@ -166,7 +166,7 @@
         "max_pages": 32,
         "max_depth": 2,
         "max_body_size": 4194304,
-        "user_agent": "basemind/0.21.1 (+https://github.com/Goldziher/basemind)",
+        "user_agent": "basemind/0.21.1 (+https://github.com/jamon8888/Hacienda-mind)",
         "allow_private_network": false
       }
     },
@@ -225,7 +225,7 @@
             "**/node_modules/**",
             "**/dist/**",
             "**/.venv/**",
-            "**/.basemind/**",
+            "**/.hacienda-mcp/**",
             "**/.git/**",
             "**/bazel-out/**",
             "**/bazel-bin/**",
@@ -260,7 +260,7 @@
           "default": true
         },
         "extra_roots": {
-          "description": "Extra directories to index in addition to the repository root. Each entry is an\nabsolute path to a directory *outside* the repo — e.g. a Bazel external repo cache\n(`/private/var/tmp/_bazel_<user>/<hash>/external`) — whose files should resolve in\nsymbol search, references, outlines, and document search.\n\nFiles under an extra root are keyed by their **absolute** path (repo files stay\nrepo-relative), so returned paths for external files are absolute. Missing or\nunreadable roots are skipped with a warning; a root inside the repo is ignored (the\nprimary walk already covers it). Extra roots are (re-)indexed on a full `basemind\nscan` only — the live watcher does not track them. Symlinks are followed for extra\nroots (Bazel `external/` is symlink-heavy). Because these trees can be large, scope\nthem narrowly and lean on `exclude` + `max_file_bytes`.",
+          "description": "Extra directories to index in addition to the repository root. Each entry is an\nabsolute path to a directory *outside* the repo — e.g. a Bazel external repo cache\n(`/private/var/tmp/_bazel_<user>/<hash>/external`) — whose files should resolve in\nsymbol search, references, outlines, and document search.\n\nFiles under an extra root are keyed by their **absolute** path (repo files stay\nrepo-relative), so returned paths for external files are absolute. Missing or\nunreadable roots are skipped with a warning; a root inside the repo is ignored (the\nprimary walk already covers it). Extra roots are (re-)indexed on a full `hacienda-mcp\nscan` only — the live watcher does not track them. Symlinks are followed for extra\nroots (Bazel `external/` is symlink-heavy). Because these trees can be large, scope\nthem narrowly and lean on `exclude` + `max_file_bytes`.",
           "type": "array",
           "items": {
             "type": "string"
@@ -274,7 +274,7 @@
       "type": "object",
       "properties": {
         "precise_resolution": {
-          "description": "Master switch for precise, scope- and import-aware name resolution. When `true` (default),\nlanguages with a precise engine resolve references to their true definitions — JS/TS via oxc\n(`code-intel-js`), Python/Java via the stack-graphs `.tsg` engine (`code-intel-stack`) — so\n`find_references` / `find_callers` / `goto_definition` distinguish a shadowed local from an\nimport instead of matching by name. Set to `false` to fall back to fast tree-sitter `locals`\nscope binding for every language (the precise engines are skipped). Inert for languages with\nno precise engine regardless. Takes effect on files (re)analyzed after the change; run a full\n`basemind scan` to apply it to an already-indexed repo.",
+          "description": "Master switch for precise, scope- and import-aware name resolution. When `true` (default),\nlanguages with a precise engine resolve references to their true definitions — JS/TS via oxc\n(`code-intel-js`), Python/Java via the stack-graphs `.tsg` engine (`code-intel-stack`) — so\n`find_references` / `find_callers` / `goto_definition` distinguish a shadowed local from an\nimport instead of matching by name. Set to `false` to fall back to fast tree-sitter `locals`\nscope binding for every language (the precise engines are skipped). Inert for languages with\nno precise engine regardless. Takes effect on files (re)analyzed after the change; run a full\n`hacienda-mcp scan` to apply it to an already-indexed repo.",
           "type": "boolean",
           "default": true
         }
@@ -842,7 +842,7 @@
           "default": true
         },
         "agent_id": {
-          "description": "Stable identity this process presents to the broker. When unset, the identity resolver\nfalls back to `BASEMIND_AGENT_ID`, then a generated-and-persisted per-session id, then\n`\"anon\"`. Validated through [`crate::comms::ids::AgentId`] at resolution time.",
+          "description": "Stable identity this process presents to the broker. When unset, the identity resolver\nfalls back to `HACIENDA_MCP_AGENT_ID`, then a generated-and-persisted per-session id, then\n`\"anon\"`. Validated through [`crate::comms::ids::AgentId`] at resolution time.",
           "type": [
             "string",
             "null"
@@ -918,10 +918,10 @@
           "default": 4194304
         },
         "user_agent": {
-          "description": "User-Agent header sent with every request. Override to identify your\ncrawler to operators; the default includes the basemind release\nversion + the upstream repo URL so site operators can trace traffic.",
+          "description": "User-Agent header sent with every request. Override to identify your\ncrawler to operators; the default includes the hacienda-mcp release\nversion + the upstream repo URL so site operators can trace traffic.",
           "type": "string",
           "minLength": 1,
-          "default": "basemind/0.21.1 (+https://github.com/Goldziher/basemind)"
+          "default": "basemind/0.21.1 (+https://github.com/jamon8888/Hacienda-mind)"
         },
         "allow_private_network": {
           "description": "Allow crawling URLs that resolve to private, loopback, or link-local\naddresses (`127.0.0.0/8`, `10.0.0.0/8`, `169.254.0.0/16`, …). Default\n`false`: the engine rejects them with an SSRF-policy violation. Flip this\non only to scrape an internal docs server you control. (The\n`CRAWLBERG_ALLOW_PRIVATE_NETWORK` env var is honoured as a process-wide\noverride regardless of this setting.)",

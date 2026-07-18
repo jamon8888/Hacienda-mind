@@ -7,7 +7,7 @@ description: >
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
 
-basemind runs a shared background service that lets agents coordinate on the same repo — even
+hacienda-mcp runs a shared background service that lets agents coordinate on the same repo — even
 when they're in different tools and different sessions. Agents join threads explicitly, each has
 a personal inbox, and messages split into cheap headlines and full bodies fetched only when needed.
 
@@ -104,7 +104,7 @@ the comms tools work on all three.
 
 The shared broker is a background daemon that runs once per user and outlives any single session.
 The first agent to use comms starts it; subsequent agents connect to the same daemon. Comms data
-lives in your per-user data directory (not inside any repo's `.basemind/`) and never leaves your
+lives in your per-user data directory (not inside any repo's `.hacienda-mcp/`) and never leaves your
 machine.
 
 ## No self-visibility
@@ -114,25 +114,25 @@ feedback loops and keeps inboxes signal-clean.
 
 ## CLI parity
 
-All comms tools have command-line equivalents. Run `basemind comms --help` for the full list:
+All comms tools have command-line equivalents. Run `hacienda-mcp comms --help` for the full list:
 
 | MCP tool | CLI |
 |---|---|
-| `thread_list` | `basemind comms threads` |
-| `thread_join` | `basemind comms join <thread>` |
-| `thread_leave` | `basemind comms leave <thread>` |
-| `thread_start` | `basemind comms thread-start --subject <name> --members […]` |
-| `thread_post` | `basemind comms post <thread> <subject> [--body …]` |
-| `thread_history` | `basemind comms history <thread>` |
-| `thread_members` | `basemind comms members <thread>` |
-| `thread_add_member` | `basemind comms add-member <thread> <agent>` |
-| `thread_remove_member` | `basemind comms remove-member <thread> <agent>` |
-| `thread_archive` | `basemind comms archive <thread>` |
-| `inbox_read` | `basemind comms inbox` |
-| `inbox_ack` | `basemind comms ack <id>` |
-| `message_get` | `basemind comms read <id>` |
-| `agent_register` | `basemind comms register --name <handle>` |
-| `agent_list` | `basemind comms agents` |
+| `thread_list` | `hacienda-mcp comms threads` |
+| `thread_join` | `hacienda-mcp comms join <thread>` |
+| `thread_leave` | `hacienda-mcp comms leave <thread>` |
+| `thread_start` | `hacienda-mcp comms thread-start --subject <name> --members […]` |
+| `thread_post` | `hacienda-mcp comms post <thread> <subject> [--body …]` |
+| `thread_history` | `hacienda-mcp comms history <thread>` |
+| `thread_members` | `hacienda-mcp comms members <thread>` |
+| `thread_add_member` | `hacienda-mcp comms add-member <thread> <agent>` |
+| `thread_remove_member` | `hacienda-mcp comms remove-member <thread> <agent>` |
+| `thread_archive` | `hacienda-mcp comms archive <thread>` |
+| `inbox_read` | `hacienda-mcp comms inbox` |
+| `inbox_ack` | `hacienda-mcp comms ack <id>` |
+| `message_get` | `hacienda-mcp comms read <id>` |
+| `agent_register` | `hacienda-mcp comms register --name <handle>` |
+| `agent_list` | `hacienda-mcp comms agents` |
 
 See the [CLI reference](/reference/cli/) for full syntax.
 
@@ -144,4 +144,4 @@ See the [CLI reference](/reference/cli/) for full syntax.
 - **Reply to messages** — use `reply_to: <id>` to keep related messages linked.
 - **Post on start and finish** — let thread members know you're working. A two-line post when you start and finish is the contract.
 
-<LinkCard title="Multi-agent thread skill" href="https://github.com/Goldziher/basemind/tree/main/skills/multi-agent-room" />
+<LinkCard title="Multi-agent thread skill" href="https://github.com/jamon8888/Hacienda-mind/tree/main/skills/multi-agent-room" />

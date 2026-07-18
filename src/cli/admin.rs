@@ -21,15 +21,15 @@ use super::run_tool;
 
 #[derive(Subcommand, Debug)]
 pub enum CacheCmd {
-    /// Garbage-collect orphaned extraction blobs from `.basemind/blobs/`.
+    /// Garbage-collect orphaned extraction blobs from `.hacienda-mcp/blobs/`.
     Gc,
-    /// Report on-disk size + blob accounting for the `.basemind/` cache.
+    /// Report on-disk size + blob accounting for the `.hacienda-mcp/` cache.
     Stats,
     /// Clear a cache component (`blobs|views|lance|git-cache|telemetry|all`), or a
     /// single view with `views:<name>` (e.g. `views:rev-abc1234`).
     ///
     /// Run with no `--component` to clear `git-cache` (back-compat with the old
-    /// `basemind cache clear`).
+    /// `hacienda-mcp cache clear`).
     Clear {
         /// Component to clear (`blobs|views|lance|git-cache|telemetry|all`), or
         /// `views:<name>` for a single view. Defaults to `git-cache` for back-compat.
@@ -51,16 +51,16 @@ pub async fn run_telemetry(
     emit("telemetry_summary", &r, json, out)
 }
 
-/// Dispatch a `cache` subcommand against the on-disk `.basemind/` directory.
+/// Dispatch a `cache` subcommand against the on-disk `.hacienda-mcp/` directory.
 ///
 /// These never touch the server: they operate directly on the offline
 /// `store_gc` primitives, which is why this is the only safe place to clear the
 /// live Fjall index (`views` / `all`).
 pub fn run_cache(root: &Path, cmd: CacheCmd, json: bool, out: &mut impl Write) -> Result<()> {
-    let basemind_dir = crate::store::workspace_cache_dir(root);
+    let hacienda_mcp_dir = crate::store::workspace_cache_dir(root);
     match cmd {
         CacheCmd::Gc => {
-            let report = store_gc::run_gc(&basemind_dir).context("run blob GC")?;
+            let report = store_gc::run_gc(&hacienda_mcp_dir).context("run blob GC")?;
             let value = serde_json::to_value(&report).context("serialize GC report")?;
             if json {
                 render_json(&value, out)
@@ -69,7 +69,7 @@ pub fn run_cache(root: &Path, cmd: CacheCmd, json: bool, out: &mut impl Write) -
             }
         }
         CacheCmd::Stats => {
-            let stats = store_gc::cache_stats(&basemind_dir).context("collect cache stats")?;
+            let stats = store_gc::cache_stats(&hacienda_mcp_dir).context("collect cache stats")?;
             let value = serde_json::to_value(&stats).context("serialize cache stats")?;
             if json {
                 render_json(&value, out)
@@ -79,12 +79,12 @@ pub fn run_cache(root: &Path, cmd: CacheCmd, json: bool, out: &mut impl Write) -
         }
         CacheCmd::Clear { component } => {
             let value = if let Some(name) = component.strip_prefix("views:") {
-                store_gc::clear_single_view(&basemind_dir, name)
+                store_gc::clear_single_view(&hacienda_mcp_dir, name)
                     .with_context(|| format!("clear single view {name}"))?;
                 serde_json::json!({ "component": format!("views:{name}"), "cleared": true })
             } else {
                 let comp = CacheComponent::from_str(&component).map_err(|e| anyhow::anyhow!(e))?;
-                store_gc::clear_component(&basemind_dir, comp)
+                store_gc::clear_component(&hacienda_mcp_dir, comp)
                     .with_context(|| format!("clear cache component {component}"))?;
                 serde_json::json!({ "component": comp.as_str(), "cleared": true })
             };

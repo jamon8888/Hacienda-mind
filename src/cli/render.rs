@@ -33,7 +33,7 @@ pub fn emit(tool_name: &str, result: &CallToolResult, json: bool, out: &mut impl
 
 /// Extract the JSON payload from a tool result.
 ///
-/// basemind tools always return a single `Content::json` block whose `text`
+/// hacienda-mcp tools always return a single `Content::json` block whose `text`
 /// field is the serialized response. We parse that text back into a [`Value`].
 pub fn result_to_value(result: &CallToolResult) -> Result<Value> {
     for content in &result.content {

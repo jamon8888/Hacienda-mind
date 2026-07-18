@@ -19,7 +19,7 @@ fn not_enabled(feature: &'static str) -> Result<CallToolResult, McpError> {
     Err(McpError::invalid_request(
         format!(
             "this tool requires the `{feature}` feature, which is not compiled into this \
-             basemind binary. Rebuild with `--features {feature}` (the published release \
+             hacienda-mcp binary. Rebuild with `--features {feature}` (the published release \
              binary includes it)."
         ),
         None,

@@ -9,9 +9,9 @@
 
 #![cfg(feature = "crawl")]
 
-use basemind::config::CrawlConfig;
-use basemind::url::{Url, UrlError};
-use basemind::web::build_engine;
+use hacienda_mcp::config::CrawlConfig;
+use hacienda_mcp::url::{Url, UrlError};
+use hacienda_mcp::web::build_engine;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -26,7 +26,7 @@ fn crawl_config() -> CrawlConfig {
     }
 }
 
-const PAGE_INDEX: &str = "<html><head><title>basemind smoke</title></head>\
+const PAGE_INDEX: &str = "<html><head><title>hacienda-mcp smoke</title></head>\
   <body><h1>Index</h1><p>The known phrase here is reticulating splines.</p>\
   <a href=\"/about\">about</a><a href=\"/forbidden\">forbidden</a></body></html>";
 
@@ -513,7 +513,7 @@ async fn crawl_respects_max_pages_cap() {
 }
 
 /// When `/robots.txt` is missing (404), the crawler must default to permissive
-/// — otherwise basemind would silently refuse to fetch from any site without
+/// — otherwise hacienda-mcp would silently refuse to fetch from any site without
 /// an explicit robots.txt file.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn missing_robots_txt_defaults_to_allowed() {

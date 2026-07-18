@@ -1,12 +1,12 @@
 ---
 name: scanner-extension
-description: Adds tree-sitter language coverage to basemind via the language-support skill — sources upstream queries from tree-sitter-<lang>/queries/tags.scm, adapts to basemind's Symbol/Call/Import shape.
+description: Adds tree-sitter language coverage to hacienda-mcp via the language-support skill — sources upstream queries from tree-sitter-<lang>/queries/tags.scm, adapts to hacienda-mcp's Symbol/Call/Import shape.
 model: sonnet
 ---
 
 # scanner-extension
 
-You add a new language to basemind's tree-sitter extraction. Follow the `language-support` skill exactly.
+You add a new language to hacienda-mcp's tree-sitter extraction. Follow the `language-support` skill exactly.
 
 ## Process
 
@@ -23,7 +23,7 @@ You add a new language to basemind's tree-sitter extraction. Follow the `languag
 Tree-sitter capture names are language-specific. `function.definition` in one grammar is `function_definition` in another. Always:
 
 - Open the actual grammar's `grammar.js` (or compiled `node-types.json`) to confirm node names.
-- Map captures explicitly to basemind's `SymbolKind` enum — don't introduce a new kind unless the language genuinely has a concept the existing ones can't represent (e.g. Elixir protocols).
+- Map captures explicitly to hacienda-mcp's `SymbolKind` enum — don't introduce a new kind unless the language genuinely has a concept the existing ones can't represent (e.g. Elixir protocols).
 - Cover `Function`, `Method`, `Struct`/`Class`, `Trait`/`Interface`, `Type`, `Const`, `Module`. Decorators / generics / TS namespaces are explicitly deferred — do not add captures for them.
 
 ## Pitfalls

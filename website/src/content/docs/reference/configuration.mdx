@@ -1,21 +1,21 @@
 ---
 title: Configuration
-description: Configure basemind via config file, environment variables, or per-request overrides.
+description: Configure hacienda-mcp via config file, environment variables, or per-request overrides.
 ---
 
 import { Aside, Code } from '@astrojs/starlight/components';
 
-basemind merges configuration from five layers. Highest precedence wins: a per-request MCP
+hacienda-mcp merges configuration from five layers. Highest precedence wins: a per-request MCP
 override, then a CLI flag, then an environment variable, then the config file, then the built-in
 default (`Mcp > Cli > Env > File > Default`).
 
 ## Config File
 
-Create `basemind.toml` at the repo root to customize behavior. `basemind init` (see
+Create `basemind.toml` at the repo root to customize behavior. `hacienda-mcp init` (see
 [Get started](/start/installation/#get-started)) writes a fully-commented starter file there if
 one doesn't already exist — optional, since all settings have sensible defaults. The file is
 validated against a JSON Schema and **rejects unknown keys**, so a typo fails loudly rather than
-being silently ignored. A legacy `.basemind/basemind.toml` path is still read as a fallback for
+being silently ignored. A legacy `.hacienda-mcp/basemind.toml` path is still read as a fallback for
 older checkouts.
 
 ### Minimal Example
@@ -69,12 +69,12 @@ extra_roots = ["/path/to/external/repo"]
 | Key | Type | Default | Notes |
 |---|---|---|---|
 | `include` | array of globs | `["**/*"]` | Files to index. Language detection still filters by tree-sitter support. |
-| `exclude` | array of globs | build/vendor dirs | Excludes `target/`, `node_modules/`, `dist/`, `.venv/`, `.git/`, `.basemind/`, and `bazel-*` trees. |
+| `exclude` | array of globs | build/vendor dirs | Excludes `target/`, `node_modules/`, `dist/`, `.venv/`, `.git/`, `.hacienda-mcp/`, and `bazel-*` trees. |
 | `respect_gitignore` | bool | `true` | Honor `.gitignore` during the walk. |
 | `max_file_bytes` | integer | `2097152` | Skip files larger than this (2 MiB). Prevents minified-bundle stalls. |
 | `skip_submodules` | bool | `true` | Skip paths under submodule roots listed in `.gitmodules`. |
 | `eager_l2` | bool | `true` | Extract L2 (call sites) inline with the scan. `false` trades reference search for a faster scan. |
-| `extra_roots` | array of paths | `[]` | Index directories outside the repo root (e.g., a Bazel external cache). External files are keyed by absolute path; (re-)indexed on full `basemind scan` only (not live-watched). |
+| `extra_roots` | array of paths | `[]` | Index directories outside the repo root (e.g., a Bazel external cache). External files are keyed by absolute path; (re-)indexed on full `hacienda-mcp scan` only (not live-watched). |
 
 ### `[watch]` Section
 
@@ -127,7 +127,7 @@ max_chunks_per_document = 2000
 
 The `[documents]` tree also carries sub-tables for reranking, keywords, NER, summarization, and OCR
 (`[documents.reranker]`, `[documents.keywords]`, and so on). See the
-[JSON Schema](https://github.com/Goldziher/basemind/blob/main/schema/basemind-config-v1.schema.json)
+[JSON Schema](https://github.com/jamon8888/Hacienda-mind/blob/main/schema/hacienda-mcp-config-v1.schema.json)
 for the exhaustive field set.
 
 ### `[code_search]` Section
@@ -187,8 +187,36 @@ allow_private_network = false
 | `max_pages` | integer | `32` | Hard cap on pages visited per `web_crawl`. |
 | `max_depth` | integer | `2` | Maximum link-following depth from the seed URL. |
 | `max_body_size` | integer | `4194304` | Truncate response bodies above this many bytes (4 MiB). |
-| `user_agent` | string | `basemind/<version>` | Identifies the crawler to site operators. |
+| `user_agent` | string | `hacienda-mcp/<version>` | Identifies the crawler to site operators. |
 | `allow_private_network` | bool | `false` | Allow URLs resolving to private/loopback/link-local addresses. Off by default (SSRF guard). |
+
+
+
+### `[pii]` Section
+
+In-process GLiNER2 + Candle (PEFT LoRA) PII redaction. Requires `--features pii`.
+
+```toml
+[pii]
+enabled = true
+model_dir = "/path/to/gliner2-model"   # tokenizer.json + model.safetensors
+# lora_adapter_dir = "/path/to/adapter"  # optional PEFT LoRA adapter
+strategy = "mask"                       # mask | hash | token_replace | drop
+categories = ["person", "organization", "location"]
+threshold = 0.5
+```
+
+| Key | Type | Default | Notes |
+|---|---|---|---|
+| `enabled` | bool | `false` | Master switch for the PII pass. |
+| `model_dir` | path | unset | Directory with `tokenizer.json` + `model.safetensors`. Unset to pass is skipped. |
+| `lora_adapter_dir` | path | unset | Optional PEFT LoRA adapter (`adapter_config.json` + `adapter_model.safetensors`). |
+| `strategy` | enum | `mask` | `mask` . `hash` . `token_replace` . `drop`. |
+| `categories` | list | all three | Subset of `person` / `organization` / `location`. |
+| `threshold` | f32 | `0.5` | Detection confidence cutoff (0.0-1.0). |
+
+When `model_dir` is missing or the model fails to load, the pass degrades gracefully (skipped, with a
+warning) so a scan never fails on a missing model. See [PII Redaction](/capabilities/pii-redaction).
 
 ### `[comms]` Section
 
@@ -203,7 +231,7 @@ agent_id = "my-agent"
 | Key | Type | Default | Notes |
 |---|---|---|---|
 | `enabled` | bool | `true` | Connect to the comms daemon (only meaningful with the `comms` feature). |
-| `agent_id` | string | auto | Stable identity presented to the broker. Falls back to `BASEMIND_AGENT_ID`, then a generated per-session id. |
+| `agent_id` | string | auto | Stable identity presented to the broker. Falls back to `HACIENDA_MCP_AGENT_ID`, then a generated per-session id. |
 | `idle_timeout_secs` | integer | — | Idle window before the broker sheds caches. |
 | `max_messages_per_room` | integer | — | Per-room front-matter retention cap. |
 | `retention_secs` | integer | — | Message retention window; older messages become prune-eligible. |
@@ -217,14 +245,14 @@ dormant unless both `model` and `api_key` are supplied, so it imposes no config 
 ```toml
 [llm]
 model = "..."
-api_key = "sk-..."  # or the BASEMIND_LLM_API_KEY env var
+api_key = "sk-..."  # or the HACIENDA_MCP_LLM_API_KEY env var
 base_url = "https://api.openai.com/v1"
 ```
 
 | Key | Type | Notes |
 |---|---|---|
 | `model` | string | Model ID. LLM-backed features are a no-op until this and `api_key` are both set. |
-| `api_key` | string | API key for the provider. Also read from `BASEMIND_LLM_API_KEY`. |
+| `api_key` | string | API key for the provider. Also read from `HACIENDA_MCP_LLM_API_KEY`. |
 | `base_url` | string | Override the provider endpoint URL. |
 | `temperature` | float | Sampling temperature. |
 | `timeout_secs` | integer | Per-request timeout. |
@@ -233,15 +261,15 @@ base_url = "https://api.openai.com/v1"
 
 ## Environment Variables
 
-Settings map to environment variables by prefixing `BASEMIND_`, uppercasing, and joining the
+Settings map to environment variables by prefixing `HACIENDA_MCP_`, uppercasing, and joining the
 section and key with an underscore.
 
 ```bash
-BASEMIND_SCAN_EAGER_L2=false
-BASEMIND_SCAN_EXTRA_ROOTS="/path/to/external"
-BASEMIND_DOCUMENTS_ENABLED=true
-BASEMIND_COMMS_AGENT_ID="my-agent"
-BASEMIND_LLM_API_KEY="sk-..."
+HACIENDA_MCP_SCAN_EAGER_L2=false
+HACIENDA_MCP_SCAN_EXTRA_ROOTS="/path/to/external"
+HACIENDA_MCP_DOCUMENTS_ENABLED=true
+HACIENDA_MCP_COMMS_AGENT_ID="my-agent"
+HACIENDA_MCP_LLM_API_KEY="sk-..."
 ```
 
 <Aside type="tip">
@@ -267,9 +295,9 @@ These cover the documents + LLM settings — for example an `llm_api_key` or `re
 
 ## Cargo Features
 
-When installing basemind, select which features to compile.
+When installing hacienda-mcp, select which features to compile.
 
-A vanilla `cargo install basemind` builds the code-map and git tools only (default features off, no
+A vanilla `cargo install hacienda-mcp` builds the code-map and git tools only (default features off, no
 ONNX Runtime). Opt into the rest:
 
 | Feature | Includes | In `full` |
@@ -281,43 +309,47 @@ ONNX Runtime). Opt into the rest:
 | `comms` | Agent-to-agent comms — rooms, per-agent inbox, DMs (Unix domain sockets + Windows named pipes). | yes |
 | `shells` | Headless agent shells (`shell_spawn`, `shell_send`, …). | yes |
 | `code-intel` | Scope- and import-resolved JS/TS `find_references` / `goto_definition` (oxc). | yes |
+| `pii` | In-process GLiNER2 + Candle (PEFT LoRA) PII redaction of PERSON / ORGANIZATION / LOCATION. | no |
 | `full` | `documents` + `memory` + `crawl` + `comms` + `shells` + `code-intel` + `code-search`. | — |
 
 ### Installation Examples
 
 ```bash
 # Everything (documents, memory, code-search, comms, shells)
-cargo install basemind --features full --locked
+cargo install hacienda-mcp --features full --locked
 
 # Code + git only (smallest build)
-cargo install basemind --locked
+cargo install hacienda-mcp --locked
 
 # Code + git + comms
-cargo install basemind --features comms --locked
+cargo install hacienda-mcp --features comms --locked
 
 # Homebrew / npm / pip (all features by default)
-brew install Goldziher/tap/basemind
-npm install -g basemind
-pip install basemind
+brew install Goldziher/tap/hacienda-mcp
+npm install -g hacienda-mcp
+pip install hacienda-mcp
+
+# PII redaction (GLiNER2 + Candle + LoRA) alongside the code-map + git tools
+cargo install hacienda-mcp --features pii --locked
 ```
 
 Prebuilt downloads (GitHub releases, Homebrew, npm, pip) include the full feature set by default.
 
 ## Schema Versioning
 
-basemind uses `RELEASE_MINOR` from `src/version.rs` as the single source of truth for both:
+hacienda-mcp uses `RELEASE_MINOR` from `src/version.rs` as the single source of truth for both:
 
 - **`INDEX_SCHEMA_VER`** — Fjall keyspace format (`<cache>/workspaces/<key>/views/<view>/index.fjall/`)
 - **`SCHEMA_VER`** — msgpack blob format (`<cache>/blobs/<hash>.{l1,l2,l3}.msgpack`, global + content-addressed)
 
-When either schema changes (typically on minor version bumps), the next `basemind scan` automatically wipes the old caches and rebuilds from source. Patch releases are always cache-compatible.
+When either schema changes (typically on minor version bumps), the next `hacienda-mcp scan` automatically wipes the old caches and rebuilds from source. Patch releases are always cache-compatible.
 
 ## Directory Layout
 
-All state lives under `.basemind/` in the repository root (`--root` selects a different repo):
+All state lives under `.hacienda-mcp/` in the repository root (`--root` selects a different repo):
 
 ```
-.basemind/
+.hacienda-mcp/
 ├── basemind.toml           # Config file (this file)
 ├── blobs/
 │   ├── <hash>.l1.msgpack   # Outlines (symbols, signatures, imports)
@@ -330,14 +362,14 @@ All state lives under `.basemind/` in the repository root (`--root` selects a di
 └── lance/                  # Vector store (memory, documents, code search)
 ```
 
-The `.basemind/` directory is safe to delete; `basemind scan` rebuilds it.
+The `.hacienda-mcp/` directory is safe to delete; `hacienda-mcp scan` rebuilds it.
 
 ## Troubleshooting
 
 **Slow first scan?** The first scan indexes everything. Re-scans only touch what changed (`scan_paths`). For large projects, `eager_l2 = false` under `[scan]` speeds initial indexing by skipping L2 (call-site) extraction, at the cost of disabling reference search.
 
-**`basemind serve` not starting?** Check that `basemind` is on your PATH (`which basemind`). In `.mcp.json`, use the full path if needed: `"command": "/path/to/basemind"`.
+**`hacienda-mcp serve` not starting?** Check that `hacienda-mcp` is on your PATH (`which hacienda-mcp`). In `.mcp.json`, use the full path if needed: `"command": "/path/to/hacienda-mcp"`.
 
-**Out of disk space?** Run `basemind cache gc` to reclaim unused blobs. `basemind cache stats` shows per-component sizes.
+**Out of disk space?** Run `hacienda-mcp cache gc` to reclaim unused blobs. `hacienda-mcp cache stats` shows per-component sizes.
 
-**Schema mismatch after upgrade?** Run `basemind scan` to automatically rebuild. Or delete `.basemind/` and re-scan. No data loss — everything is rebuilt from source.
+**Schema mismatch after upgrade?** Run `hacienda-mcp scan` to automatically rebuild. Or delete `.hacienda-mcp/` and re-scan. No data loss — everything is rebuilt from source.

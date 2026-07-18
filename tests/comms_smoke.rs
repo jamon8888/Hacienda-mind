@@ -1,7 +1,7 @@
 //! End-to-end smoke test for the thread-model comms client against a REAL detached broker daemon.
 //!
-//! The daemon is the actual `basemind comms daemon` process (spawned via the test binary's
-//! `CARGO_BIN_EXE_basemind`), isolated to a tempdir via `BASEMIND_COMMS_DIR`. We drive the library
+//! The daemon is the actual `hacienda-mcp comms daemon` process (spawned via the test binary's
+//! `CARGO_BIN_EXE_hacienda-mcp`), isolated to a tempdir via `HACIENDA_MCP_COMMS_DIR`. We drive the library
 //! [`CommsClient`] directly. This pins the thread contract end to end:
 //!
 //! * `thread_start` needs ≥2 of subject / path / members;
@@ -19,11 +19,11 @@ use std::path::{Path, PathBuf};
 use std::process::{Child, Command};
 use std::time::{Duration, Instant};
 
-use basemind::comms::client::CommsClient;
-use basemind::comms::ids::AgentId;
-use basemind::comms::singleton::{CommsPaths, comms_socket_path, probe_alive};
+use hacienda_mcp::comms::client::CommsClient;
+use hacienda_mcp::comms::ids::AgentId;
+use hacienda_mcp::comms::singleton::{CommsPaths, comms_socket_path, probe_alive};
 
-const BIN: &str = env!("CARGO_BIN_EXE_basemind");
+const BIN: &str = env!("CARGO_BIN_EXE_hacienda-mcp");
 
 /// Owns the spawned daemon process so it is always reaped.
 struct Daemon {
@@ -37,10 +37,10 @@ impl Daemon {
         let socket = comms_socket_path(comms_dir);
         let child = Command::new(BIN)
             .args(["comms", "daemon"])
-            .env("BASEMIND_COMMS_DIR", comms_dir)
+            .env("HACIENDA_MCP_COMMS_DIR", comms_dir)
             // Isolate the daemon's workspace index writes to the same tempdir so a `rescan` RPC ~keep
             // never touches the real XDG cache. ~keep
-            .env("BASEMIND_DATA_HOME", comms_dir)
+            .env("HACIENDA_MCP_DATA_HOME", comms_dir)
             .stdin(std::process::Stdio::null())
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
@@ -70,7 +70,7 @@ impl Drop for Daemon {
     fn drop(&mut self) {
         let _ = Command::new(BIN)
             .args(["comms", "stop"])
-            .env("BASEMIND_COMMS_DIR", &self.comms_dir)
+            .env("HACIENDA_MCP_COMMS_DIR", &self.comms_dir)
             .output();
         if self.child.try_wait().ok().flatten().is_none() {
             std::thread::sleep(Duration::from_millis(200));
@@ -259,7 +259,7 @@ async fn client_recovers_when_daemon_dies_mid_session() {
         move |_paths: &CommsPaths| {
             Command::new(BIN)
                 .args(["comms", "daemon"])
-                .env("BASEMIND_COMMS_DIR", &spawn_dir)
+                .env("HACIENDA_MCP_COMMS_DIR", &spawn_dir)
                 .stdin(std::process::Stdio::null())
                 .stdout(std::process::Stdio::null())
                 .stderr(std::process::Stdio::null())
@@ -311,7 +311,7 @@ async fn client_recovers_when_daemon_dies_mid_session() {
 
     let _ = Command::new(BIN)
         .args(["comms", "stop"])
-        .env("BASEMIND_COMMS_DIR", &comms_dir)
+        .env("HACIENDA_MCP_COMMS_DIR", &comms_dir)
         .output();
 }
 
@@ -403,7 +403,7 @@ async fn read_history_recency_cutoff() {
         .expect("start thread")
         .id;
 
-    let before_posts = basemind::comms::model::now_micros();
+    let before_posts = hacienda_mcp::comms::model::now_micros();
     for subject in ["first", "second"] {
         alice
             .post_message(
@@ -496,7 +496,7 @@ async fn rescan_rpc_indexes_a_workspace_and_reports_it_hot() {
 
 /// Connecting a client with a git-repo cwd auto-registers it in the daemon's machine registry, so
 /// `list_workspaces` / `list_worktrees` surface the repo, and a two-claimant worktree race resolves
-/// to exactly one holder. The daemon's registry is isolated to the tempdir via `BASEMIND_DATA_HOME`.
+/// to exactly one holder. The daemon's registry is isolated to the tempdir via `HACIENDA_MCP_DATA_HOME`.
 #[tokio::test(flavor = "multi_thread")]
 async fn machine_registry_auto_registers_and_worktree_claim_is_exclusive() {
     let tmp = tempfile::tempdir().expect("tempdir");

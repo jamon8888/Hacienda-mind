@@ -26,7 +26,7 @@ pub enum GitError {
     #[error("git error reading {what}: {msg}")]
     Read { what: String, msg: String },
     /// Blame refused: the file exceeds the configured byte/line cap. Tunable via
-    /// `BASEMIND_BLAME_MAX_BYTES` (default 1 MiB) and `BASEMIND_BLAME_MAX_LINES` (default 5 000).
+    /// `HACIENDA_MCP_BLAME_MAX_BYTES` (default 1 MiB) and `HACIENDA_MCP_BLAME_MAX_LINES` (default 5 000).
     #[error("blame skipped: {path} is too large ({bytes} bytes, {lines} lines)")]
     BlameTooLarge {
         path: crate::path::RelPath,
@@ -206,7 +206,7 @@ impl Repo {
     /// For a normal checkout or the main worktree this is just [`Self::workdir`]. For a *linked*
     /// worktree (`git worktree add`, where `.git` is a file pointing at
     /// `<main>/.git/worktrees/<name>`) this resolves back to `<main>` — the directory that owns the
-    /// shared object store. basemind uses this to place the content-addressed blob cache in ONE
+    /// shared object store. hacienda-mcp uses this to place the content-addressed blob cache in ONE
     /// location shared by every worktree of the same clone, so byte-identical files are extracted +
     /// embedded once rather than once per worktree.
     ///
@@ -232,7 +232,7 @@ impl Repo {
     }
 
     /// True when this clone has ANY linked worktree registered (`<common_dir>/worktrees/` is
-    /// non-empty), observable identically from the main worktree or any linked one. basemind uses
+    /// non-empty), observable identically from the main worktree or any linked one. hacienda-mcp uses
     /// this to disable auto-GC of the shared blob cache: a sweep from any single worktree only sees
     /// its own references and could reap blobs a sibling still needs. The dedup win doesn't depend on
     /// GC (it only reclaims orphaned disk); a worktree-spanning GC is a follow-up.
@@ -663,14 +663,14 @@ const BLAME_DEFAULT_MAX_BYTES: u64 = 1 << 20;
 const BLAME_DEFAULT_MAX_LINES: u64 = 5_000;
 
 fn blame_max_bytes_from_env() -> u64 {
-    std::env::var("BASEMIND_BLAME_MAX_BYTES")
+    std::env::var("HACIENDA_MCP_BLAME_MAX_BYTES")
         .ok()
         .and_then(|s| s.parse::<u64>().ok())
         .unwrap_or(BLAME_DEFAULT_MAX_BYTES)
 }
 
 fn blame_max_lines_from_env() -> u64 {
-    std::env::var("BASEMIND_BLAME_MAX_LINES")
+    std::env::var("HACIENDA_MCP_BLAME_MAX_LINES")
         .ok()
         .and_then(|s| s.parse::<u64>().ok())
         .unwrap_or(BLAME_DEFAULT_MAX_LINES)

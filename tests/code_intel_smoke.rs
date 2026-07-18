@@ -10,14 +10,14 @@
 
 use std::fs;
 
-use basemind::config::ConfigV1;
-use basemind::path::RelPath;
-use basemind::scanner::{ScanSource, scan};
-use basemind::store::{Store, VIEW_WORKING};
+use hacienda_mcp::config::ConfigV1;
+use hacienda_mcp::path::RelPath;
+use hacienda_mcp::scanner::{ScanSource, scan};
+use hacienda_mcp::store::{Store, VIEW_WORKING};
 
 #[test]
 fn scan_resolves_intra_file_references_for_javascript() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path();
     let src = "const count = 1;\nfunction f() {\n  return count + count;\n}\n";
@@ -30,7 +30,7 @@ fn scan_resolves_intra_file_references_for_javascript() {
         &mut store,
         &cfg,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
@@ -42,7 +42,7 @@ fn scan_resolves_intra_file_references_for_javascript() {
     let app = RelPath::from("app.js");
     let def_start = (src.find("const count").unwrap() + "const ".len()) as u32;
 
-    let mut uses = basemind::query::resolved_references(&store, &app, def_start);
+    let mut uses = hacienda_mcp::query::resolved_references(&store, &app, def_start);
     uses.sort_by_key(|(_, s)| *s);
     assert_eq!(
         uses.len(),
@@ -55,7 +55,7 @@ fn scan_resolves_intra_file_references_for_javascript() {
     );
 
     let first_use = (src.find("return count").unwrap() + "return ".len()) as u32;
-    let def = basemind::query::definition_of(&store, &app, first_use);
+    let def = hacienda_mcp::query::definition_of(&store, &app, first_use);
     assert_eq!(
         def,
         Some((app.clone(), def_start)),
@@ -65,7 +65,7 @@ fn scan_resolves_intra_file_references_for_javascript() {
 
 #[test]
 fn scan_resolves_cross_file_references_for_typescript() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path();
     let a_src = "export function helper() {\n  return 1;\n}\n";
@@ -80,7 +80,7 @@ fn scan_resolves_cross_file_references_for_typescript() {
         &mut store,
         &cfg,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
@@ -93,7 +93,7 @@ fn scan_resolves_cross_file_references_for_typescript() {
     let export_name_start = (a_src.find("function helper").unwrap() + "function ".len()) as u32;
     let import_local_start = b_src.find("helper").unwrap() as u32;
 
-    let uses = basemind::query::resolved_references(&store, &a, export_name_start);
+    let uses = hacienda_mcp::query::resolved_references(&store, &a, export_name_start);
     assert!(
         uses.iter()
             .any(|(p, s)| p.as_str() == Some("b.ts") && *s == import_local_start),
@@ -101,7 +101,7 @@ fn scan_resolves_cross_file_references_for_typescript() {
     );
 
     let b = RelPath::from("b.ts");
-    let def = basemind::query::definition_of(&store, &b, import_local_start);
+    let def = hacienda_mcp::query::definition_of(&store, &b, import_local_start);
     assert_eq!(
         def,
         Some((a.clone(), export_name_start)),
@@ -111,7 +111,7 @@ fn scan_resolves_cross_file_references_for_typescript() {
 
 #[test]
 fn resolved_references_do_not_conflate_same_named_symbols_across_files() {
-    basemind::store::init_isolated_cache();
+    hacienda_mcp::store::init_isolated_cache();
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path();
     let a_src = "const count = 1;\nfunction fa() {\n  return count;\n}\n";
@@ -126,7 +126,7 @@ fn resolved_references_do_not_conflate_same_named_symbols_across_files() {
         &mut store,
         &cfg,
         ScanSource::WorkingTree,
-        basemind::scanner::EmbedMode::Inline,
+        hacienda_mcp::scanner::EmbedMode::Inline,
     )
     .unwrap();
 
@@ -137,7 +137,7 @@ fn resolved_references_do_not_conflate_same_named_symbols_across_files() {
 
     let a = RelPath::from("a.js");
     let a_count_def = (a_src.find("const count").unwrap() + "const ".len()) as u32;
-    let uses = basemind::query::resolved_references(&store, &a, a_count_def);
+    let uses = hacienda_mcp::query::resolved_references(&store, &a, a_count_def);
     assert!(
         !uses.is_empty() && uses.iter().all(|(p, _)| p.as_str() == Some("a.js")),
         "a.js `count` must resolve only within a.js, never to b.js's unrelated `count`; got {uses:?}"

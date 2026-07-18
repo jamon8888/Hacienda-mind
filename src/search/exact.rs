@@ -1,6 +1,6 @@
 //! Exact / symbol lane for hybrid code search (`code-search` feature).
 //!
-//! basemind's differentiator over a pure vector+keyword stack: a scope-aware symbol index. When a
+//! hacienda-mcp's differentiator over a pure vector+keyword stack: a scope-aware symbol index. When a
 //! query is a bare identifier (a symbol name), this lane resolves it against the `symbols_by_name`
 //! index to the symbols that *define* it, maps each definition to its owning code chunk, and returns
 //! those chunk ids ranked exact-name-first. RRF then lets the defining chunk win ties against merely
