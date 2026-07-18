@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use super::code::CodeSearchConfig;
 use super::comms::CommsConfig;
 use super::documents::{DocumentsConfig, LlmConfig};
+use super::pii::PiiConfig;
 use super::shells::ShellsConfig;
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -44,6 +45,11 @@ pub struct ConfigV1 {
     /// `api_key` `Unset` short-circuits any LLM-backed feature.
     #[serde(default)]
     pub llm: LlmConfig,
+    /// In-process GLiNER2 + Candle (PEFT LoRA) PII redaction. Redacts
+    /// PERSON / ORGANIZATION / LOCATION mentions from extracted document text
+    /// using a local model. Independent of `[documents]` and `[redaction]`.
+    #[serde(default)]
+    pub pii: PiiConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -412,6 +418,7 @@ impl ConfigV1 {
             crawl: CrawlConfig::default(),
             shells: ShellsConfig::default(),
             llm: LlmConfig::default(),
+            pii: PiiConfig::default(),
         }
     }
 }

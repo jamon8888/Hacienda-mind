@@ -1,0 +1,36 @@
+[package]
+name = "pii-candle"
+version = "0.1.0"
+edition = "2024"
+description = "In-process GLiNER2 + Candle PII detection with PEFT LoRA adapter support, vendored from xberg-gliner-candle."
+license = "Apache-2.0"
+
+[lib]
+name = "pii_candle"
+path = "src/lib.rs"
+
+[features]
+default = []
+cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda"]
+metal = ["candle-core/metal", "candle-nn/metal", "candle-transformers/metal"]
+
+[dependencies]
+candle-core = "0.11"
+candle-nn = "0.11"
+candle-transformers = "0.11"
+ndarray = "0.17"
+safetensors = "0.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokenizers = { version = "0.23", default-features = false, features = ["fancy-regex"] }
+# Path-dep on the local xberg checkout: the GLiNER2 Candle PII backend
+# (xberg-gliner-candle) and its sibling xberg-gliner are unreleased (not on
+# crates.io) and use a more public API than the published rc.29 xberg-gliner.
+xberg-gliner = { path = "C:/Users/NMarchitecte/xberg/crates/xberg-gliner", default-features = false }
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints]
+workspace = true

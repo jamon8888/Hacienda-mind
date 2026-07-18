@@ -966,6 +966,7 @@ fn process_doc(
         &mime_type,
         &config.documents,
         &config.llm,
+        &config.pii,
         scope,
         embed,
     ) {
