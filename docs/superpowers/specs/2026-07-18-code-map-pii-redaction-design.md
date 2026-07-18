@@ -120,7 +120,13 @@ strings serialized by **every** tool that can leak. Tools and their feature gate
 
 Covers repos scanned before this feature shipped; same `PiiConfig`, same strategy.
 
-### Section 3 — Data flow, offsets, error handling
+### Section 3 — Data flow, offsets, error handling, and VERIFIABILITY
+
+The redaction must be **truthful**, not a silent best-effort. Today every skip path returns the
+original text with no machine-readable signal (investigation 2026-07-18: no `redaction_applied`
+field anywhere; the candle `entities` vec is discarded at `.0` in `doc.rs:411/466`; the model-load
+`OnceLock` is private). A tool that reports "redacted" against today's code would be **lying**. So
+this section adds the primitives that make the user-facing tools (Section 4) verifiable.
 
 - **Offset safety:** `redact_code_text` operates on already-extracted strings, not the raw file,
   so tree-sitter byte offsets in `l1`/`l2`/`l3` are never disturbed. Identifiers carrying their own
@@ -128,41 +134,91 @@ Covers repos scanned before this feature shipped; same `PiiConfig`, same strateg
 - **Span merge:** GLiNER2 spans + regex spans concatenated, overlaps resolved (wider/earlier span
   wins), sorted by `start`, then `apply_strategy` splices — reusing the logic in
   `src/extract/pii.rs:96`.
-- **Failure modes:**
-  - `pii` feature off → compile-time no-op.
-  - `enabled = false` → no-op (expected).
-  - `enabled = true`, model missing/unloadable → **fail-loud**: `tracing::warn` + set a
-    `redaction_failed` flag on the scan result / response metadata so the operator is told
-    redaction did NOT occur. No silent pass-through.
-  - inference error → `tracing::warn` + fail-loud flag (not silent original-text return).
+- **Failure modes → machine-readable, never silent:**
+  - `pii` feature off → compile-time no-op; `redact_code_text` returns
+    `(text, vec![], RedactionState::DisabledFeature)`.
+  - `enabled = false` → `(text, vec![], RedactionState::DisabledConfig)`.
+  - `enabled = true`, model missing/unloadable → `RedactionState::InactiveModelMissing(reason)`; the
+    caller is told redaction did NOT occur (no silent pass-through). `tracing::warn` retained.
+  - inference error → `RedactionState::Failed(reason)`, original text returned, flag set.
   - A PII failure never drops a file or panics the scanner.
-- **Audit trail:** `redact_code_text` returns the `Vec<String>` of detected categories. The scanner
-  records these alongside the blob; git/web/memory redactions log the same, giving an audit log of
-  *what was redacted* — satisfying "audit without leaks".
+  - `RedactionState` is an enum persisted on the blob + echoed in MCP response metadata, so a client
+    can distinguish "redacted" from "not redacted (and why)".
+- **Persisted detection record (prerequisite for audit + erasure):** `redact_code_text` returns
+  `(String, Vec<DetectedEntity>, RedactionState)` where `DetectedEntity { category, count }`. The
+  scanner writes the per-blob `DetectedEntity` tally + `RedactionState` into the blob header (a new
+  field on `FileMapL1`/`L2`/`L3` and `FileMapDoc`/chunk). A new Fjall keyspace `entities_by_category`
+  indexes `(category, value-hash) → blob-refs`, so "what was redacted" is queryable and "erase this
+  subject" is O(matches) not O(all data). This keyspace is the foundation for `pii_audit_report`
+  and `cache_erase_subject`.
+- **Client-verifiable attestation:** alongside each redacted blob, store
+  `attestation = HMAC(key, redacted_text ‖ model_id ‖ config_hash)` (key from `pii.encryption_key`,
+  P3 consumer; until encryption lands, a plain SHA over `text ‖ model_id ‖ config_hash` is stored).
+  MCP responses that return redacted text echo `model_id` + `config_hash` + the recomputed SHA so a
+  **client can independently confirm** the text was produced by the claimed config — closing the
+  "client must blindly trust the server" gap (investigation point 3). The client cannot recompute
+  the HMAC without the key, but it CAN verify the server's claim is self-consistent and reject
+  payloads whose `model_id`/`config_hash` don't match the operator-declared policy.
+- **Honesty constraint (non-negotiable):** redaction is a **0.5-threshold, category-limited ML guess
+  + regex**, not a guarantee. No tool description or response may imply completeness. Tool
+  descriptions MUST state: "best-effort; some PII may remain; verify before trusting."
 
-### Section 4 — Testing & verification
+### Section 4 — User-facing PII MCP tools (truthful by construction)
+
+All tools are `read_only_hint = true`, `open_world_hint = false` (matching the repo's existing
+read-only tool convention in `tools_git.rs`/`tools_memory.rs`), except `cache_erase_subject`
+(`destructiveHint = true`, deferred to P3). None of these tools can lie because they read the
+persisted `RedactionState` / `DetectedEntity` / attestation primitives from Section 3 — never a
+fresh unverified claim.
+
+- **`pii_status`** — returns the *reconciled* truth, not static config:
+  `{ enabled_config: bool, model_status: Loaded|Disabled|ModelDirUnset|LoadFailed(String),
+  active: bool, model_id, categories, threshold, last_scan_redaction_state }`. `active` is true only
+  when the model actually loaded; this surfaces config-vs-runtime drift (investigation point 6) so
+  the tool can never claim "redacting" when the model is missing.
+- **`pii_redact`** — takes `text`, returns `{ redacted_text, entities: Vec<DetectedEntity>,
+  state: RedactionState, attestation }`. Pure ad-hoc pass (no persistence). Description states
+  best-effort / may remain. Useful for auditing a snippet before pasting it elsewhere.
+- **`pii_audit_report`** — reads the `entities_by_category` keyspace + blob headers; returns per-
+  category counts and which files/blobs were redacted, across the index. Buildable only because
+  Section 3 persists the detection record. Returns `state` coverage so it can say "N files scanned
+  under redaction, M skipped (model missing)".
+- **`cache_erase_subject`** (P3, `destructiveHint = true`) — given a `category` + `value` (or
+  value-hash), looks up `entities_by_category`, purges matching blob refs, and (where the redaction
+  is `Drop`/`Hash`) rewrites the blob without the span. Feasible only because Section 3 adds the
+  entity index; today it would be O(all data) and incomplete (investigation point 5). Returns a
+  verified count of removed references.
+
+### Section 5 — Testing & verification
 
 - **Unit (`src/extract/pii.rs` + `pii_regex.rs`):** code-shaped input (doc comment w/ email,
   `const TOKEN = "sk-..."`, `KEY=value`, GitHub token, PEM, JWT, phone, date). Assert value masked,
-  symbol *name* preserved. Regex-only test (PEM/JWT) proving detection without candle.
+  symbol *name* preserved, `RedactionState::Redacted` returned, `DetectedEntity` tally correct.
+  Regex-only test (PEM/JWT) proving detection without candle. Assert each failure mode returns the
+  correct `RedactionState` (not silent).
+- **Verifiability tests:** assert `attestation` recomputes to the stored SHA for a redacted blob;
+  assert `pii_status.active == false` when model missing despite `enabled = true`; assert
+  `pii_audit_report` counts match the persisted `DetectedEntity` tallies.
 - **Documents:** assert `entities`/`summary`/`metadata` redacted when PII on.
 - **Git:** assert `search_git_history`/`blame_*` responses have email/name masked but structure
   intact.
 - **Web:** `index_page` unit test asserts scraped PII not stored verbatim.
 - **Scanner smoke (`tests/scan_smoke.rs`):** synthetic leaking repo; assert `l1` blob redacted and
-  `find_references`/`search_symbols` on identifier still hits.
+  `find_references`/`search_symbols` on identifier still hits; assert blob header carries
+  `RedactionState` + attestation.
 - **MCP smoke (`tests/mcp_smoke.rs`):** assert `outline`/`workspace_grep`/`expand` redact literal
-  but preserve symbol name; assert `memory_get`/`message_get` redact.
+  but preserve symbol name; assert `memory_get`/`message_get` redact; assert `pii_status` reports
+  `active` truthfully; assert `pii_redact` echoes attestation.
 - **Harden canary:** planted leaky file; assert redaction fired when `pii` enabled; navigation
   canaries (`spawn`/`get`/`useState`) unaffected.
 - **Poly/CI:** `cargo clippy --workspace -- -D warnings`, `poly lint .`, `cargo test --workspace`
   green. `src/extract/pii_regex.rs` under 1000-line cap.
 
-### Section 5 — RGPD infrastructure (encryption, erasure, telemetry)
+### Section 6 — RGPD infrastructure (encryption, erasure, telemetry)
 
 Scoped as infrastructure work; threat-model before implementation.
 
-**Section 5 is DEFERRED (P3) — not part of the P1/P2 build plan.** It is documented here for
+**Section 6 is DEFERRED (P3) — not part of the P1/P2 build plan.** It is documented here for
 completeness and threat-modeled in its own later spec. The concrete file changes below are
 intentionally NOT in the in-scope "Files touched" table; they belong to the P3 plan.
 
@@ -177,7 +233,7 @@ intentionally NOT in the in-scope "Files touched" table; they belong to the P3 p
   (`helpers_telemetry.rs:48`); restrict `telemetry_summary` (`tools_admin.rs:57`) behind a
   capability flag; encrypt `telemetry.jsonl`.
 
-### Section 6 — Secret-config preservation
+### Section 7 — Secret-config preservation
 
 `ApiKey`/`SecretString` redact on serialization (`src/config/documents.rs:528-591`). All P2/P3
 work must preserve this: credentials never leak via config round-trips or tool responses.
@@ -186,20 +242,23 @@ work must preserve this: credentials never leak via config round-trips or tool r
 
 | File | Change |
 |---|---|
-| `src/extract/pii.rs` | Add `redact_code_text`; merge regex spans; extend `PiiConfig` categories; fail-loud flag |
+| `src/extract/pii.rs` | Add `redact_code_text` → `(String, Vec<DetectedEntity>, RedactionState)`; merge regex spans; extend `PiiConfig` categories; public `model_status()` probe; attestation hash |
 | `src/extract/pii_regex.rs` | **New** — Presidio-style regex detector → `(start,end,category)` spans |
-| `src/config/pii.rs` | Extend default `categories` (email/phone/date/url); add `redact_git_identity`; add encryption key field |
-| `src/scanner.rs` | `process_file`: redact textual fields of `l1`/`l2`/`l3` when `pii.enabled` |
-| `src/extract/doc.rs` | Redact `entities`/`summary`/`metadata` too |
-| `src/web/ingest.rs` | `index_page`: redact chunk text before LanceDB store |
-| `src/git/*` + `src/mcp/tools_git.rs` | Redact author email/name + patch/body text (consent-gated) |
-| `src/mcp/helpers*.rs` | Defensive redaction of serialized strings in all leaking tools (default-build + documents/memory + comms-gated, per Section 2) |
-| `src/store.rs` | Blob write path hook for deferred P3 encryption (see Section 5) |
-| `src/scanner_docs.rs` / `src/mcp/memory.rs` | LanceDB write path hook for deferred P3 encryption (see Section 5) |
-| `src/mcp/tools_admin.rs` | `cache_erase_subject` tool (P3, Section 5); restrict `telemetry_summary` (P3) |
-| `src/mcp/helpers_telemetry.rs` | Scrub `params` PII before logging (P3, Section 5) |
+| `src/config/pii.rs` | Extend default `categories` (email/phone/date/url); add `redact_git_identity`; add `encryption_key` field (P3 consumer) |
+| `src/store.rs` | Blob header gains `RedactionState` + `DetectedEntity` tally + attestation; new Fjall `entities_by_category` keyspace (Section 3) |
+| `src/extract/mod.rs` | `FileMapL1`/`L2`/`L3` gain `RedactionState` + entity tally fields |
+| `src/scanner.rs` | `process_file`: redact textual fields of `l1`/`l2`/`l3` when `pii.enabled`; persist state + attestation |
+| `src/extract/doc.rs` | Redact `entities`/`summary`/`metadata`; persist state + attestation on `FileMapDoc`/chunk |
+| `src/web/ingest.rs` | `index_page`: redact chunk text before LanceDB store; persist state |
+| `src/git/*` + `src/mcp/tools_git.rs` | Redact author email/name + patch/body text (consent-gated); persist state |
+| `src/mcp/helpers*.rs` | Defensive redaction of serialized strings in all leaking tools (default-build + documents/memory + comms-gated, per Section 2); echo attestation in responses |
+| `src/mcp/tools_pii.rs` | **New** — `pii_status`, `pii_redact`, `pii_audit_report` (P1/P2, read-only); `cache_erase_subject` shim deferring to P3 |
+| `src/store.rs` | Blob write path hook for deferred P3 encryption (see Section 6) |
+| `src/scanner_docs.rs` / `src/mcp/memory.rs` | LanceDB write path hook for deferred P3 encryption (see Section 6) |
+| `src/mcp/tools_admin.rs` | `cache_erase_subject` tool (P3, Section 6); restrict `telemetry_summary` (P3) |
+| `src/mcp/helpers_telemetry.rs` | Scrub `params` PII before logging (P3, Section 6) |
 
-## Out of scope (deferred to P3 threat-modeling — see Section 5)
+## Out of scope (deferred to P3 threat-modeling — see Section 6)
 
 - Re-architecting the global machine-shared blob store for per-subject isolation (addressed via
   encryption + erasure in Section 5 instead).
