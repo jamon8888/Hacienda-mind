@@ -74,6 +74,54 @@ impl PiiCategory {
     }
 }
 
+/// Machine-readable outcome of a redaction pass. Never silent — lets clients
+/// distinguish "redacted" from "not redacted, and why".
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum RedactionState {
+    /// `pii` cargo feature compiled out.
+    DisabledFeature,
+    /// `pii.enabled = false` in config.
+    DisabledConfig,
+    /// Enabled but the model could not be loaded (with reason).
+    InactiveModelMissing(String),
+    /// Model loaded but inference errored (with reason).
+    Failed(String),
+    /// Redaction applied successfully.
+    Redacted,
+}
+
+/// Runtime load status of the candle model — surfaced by `pii_status`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum PiiModelStatus {
+    Disabled,
+    ModelDirUnset,
+    LoadFailed(String),
+    Loaded,
+}
+
+/// Tally of detected entities by category, persisted with each blob.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct DetectedEntity {
+    pub by_category: std::collections::BTreeMap<String, u32>,
+}
+
+impl DetectedEntity {
+    pub fn from_map(m: std::collections::BTreeMap<String, u32>) -> Self {
+        DetectedEntity { by_category: m }
+    }
+    pub fn total(&self) -> u32 {
+        self.by_category.values().copied().sum()
+    }
+    pub fn add(&mut self, category: &str) {
+        *self.by_category.entry(category.to_string()).or_insert(0) += 1;
+    }
+    pub fn is_empty(&self) -> bool {
+        self.by_category.is_empty()
+    }
+}
+
 /// Configuration for the candle PII redaction pass.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -158,5 +206,23 @@ mod tests {
         assert_eq!(PiiCategory::Phone.label(), "phone");
         assert_eq!(PiiCategory::Date.label(), "date");
         assert_eq!(PiiCategory::Url.label(), "url");
+    }
+
+    #[test]
+    fn redaction_state_serializes_stably() {
+        let s = RedactionState::InactiveModelMissing("model_dir unset".to_string());
+        let j = serde_json::to_string(&s).unwrap();
+        assert!(j.contains("inactive_model_missing"));
+        // round-trips
+        let back: RedactionState = serde_json::from_str(&j).unwrap();
+        assert_eq!(s, back);
+    }
+
+    #[test]
+    fn detected_entity_tally_works() {
+        let mut t = std::collections::BTreeMap::new();
+        t.insert("email".to_string(), 2u32);
+        let e = DetectedEntity::from_map(t);
+        assert_eq!(e.total(), 2);
     }
 }
