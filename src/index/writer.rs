@@ -6,6 +6,7 @@ use fjall::OwnedWriteBatch;
 
 use super::keys;
 use super::{IndexDb, IndexError};
+use crate::config::DetectedEntity;
 use crate::extract::{FileMapL1, FileMapL2, Symbol};
 use crate::intel::model::FileResolvedRefs;
 use crate::path::RelPath;
@@ -401,6 +402,9 @@ mod tests {
                 .collect(),
             imports: Vec::new(),
             implementations: Vec::new(),
+            redaction: None,
+            redacted_entities: DetectedEntity::default(),
+            attestation: None,
         }
     }
 
@@ -480,6 +484,9 @@ mod tests {
                 },
             ],
             docs: Vec::new(),
+            redaction: None,
+            redacted_entities: DetectedEntity::default(),
+            attestation: None,
         };
         w.upsert_file(&rel, &l1, Some(&l2)).unwrap();
         w.commit().unwrap();

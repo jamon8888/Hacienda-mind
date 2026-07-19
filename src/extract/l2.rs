@@ -1,7 +1,7 @@
 use streaming_iterator::StreamingIterator;
 use tree_sitter::{Query, QueryMatch};
 
-use super::{Call, DocComment, ExtractError, FileMapL2, SCHEMA_VER, capture_name};
+use super::{Call, DetectedEntity, DocComment, ExtractError, FileMapL2, SCHEMA_VER, capture_name};
 use crate::lang::{LangId, ParseOutcome, QueryKind, parse_with_default_timeout, try_get_query, with_parser};
 
 pub fn extract_l2(lang: LangId, source: &[u8]) -> Result<FileMapL2, ExtractError> {
@@ -37,6 +37,9 @@ pub(crate) fn extract_l2_from_tree(
         language: lang.to_string(),
         calls,
         docs,
+        redaction: None,
+        redacted_entities: DetectedEntity::default(),
+        attestation: None,
     })
 }
 

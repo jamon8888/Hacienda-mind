@@ -5,8 +5,9 @@ use rayon::prelude::*;
 use thiserror::Error;
 use tracing::debug;
 
-use crate::config::Config;
+use crate::config::{Config, RedactionState, DetectedEntity};
 use crate::extract::{self, ExtractError, FileMapL1, FileMapL2};
+use crate::extract::pii::redact_code_text;
 use crate::git::{GitError, Repo};
 use crate::hashing;
 use crate::index::{IndexDb, writer::IndexWriter};
@@ -844,7 +845,7 @@ fn process_file(
     };
     let reused = reused_pair.is_some();
 
-    let (l1, l2_opt): (FileMapL1, Option<FileMapL2>) = match reused_pair {
+    let (mut l1, mut l2_opt): (FileMapL1, Option<FileMapL2>) = match reused_pair {
         Some(pair) => pair,
         None => match extract::extract_l1_l2(lang, &bytes, want_l2) {
             Ok(pair) => pair,
@@ -862,7 +863,46 @@ fn process_file(
         },
     };
 
-    let l2: Option<FileMapL2> = l2_opt;
+    let mut l2: Option<FileMapL2> = l2_opt;
+
+    // PII redaction for code-map blobs (when feature enabled and config.pii.enabled)
+    #[cfg(feature = "pii")]
+    if config.pii.enabled {
+        let mut state = RedactionState::Redacted;
+        let mut tally = DetectedEntity::default();
+        // Redact textual fields in L1
+        for sym in &mut l1.symbols {
+            if let Some(ref mut sig) = sym.signature {
+                let (t, e, s) = crate::extract::pii::redact_code_text(sig, &config.pii);
+                *sig = t; tally.merge(&e); state = state.worst(&s);
+            }
+            // Decorators are Vec<String> - iterate all
+            for dec in &mut sym.decorators {
+                let (t, e, s) = crate::extract::pii::redact_code_text(dec, &config.pii);
+                *dec = t; tally.merge(&e); state = state.worst(&s);
+            }
+        }
+        // L2 calls (NOT callee - identifiers preserved) + docs
+        if let Some(l2) = &mut l2 {
+            for doc in &mut l2.docs {
+                let (t, e, s) = crate::extract::pii::redact_code_text(&doc.text, &config.pii);
+                doc.text = t; tally.merge(&e); state = state.worst(&s);
+            }
+        }
+        // Attestation: hash of config + model_id + concatenated redacted text
+        let config_hash = format!("{:?}", config.pii); // stable enough for self-consistency
+        let l1_text = format!("{:?}", l1);
+        let att = crate::extract::pii::attestation(&l1_text, "gliner2-guardrails", &config_hash);
+        l1.redaction = Some(state.clone());
+        l1.redacted_entities = tally.clone();
+        l1.attestation = Some(att.clone());
+        if let Some(l2) = &mut l2 {
+            l2.redaction = Some(state);
+            l2.redacted_entities = tally;
+            l2.attestation = Some(att);
+        }
+    }
+
     if !reused && let Err(e) = store.write_filemap_hex(hash_hex_str, &l1, l2.as_ref()) {
         return FileResult::bare(rel.to_string(), FileStatus::ExtractFailed { msg: e.to_string() });
     }

@@ -6,6 +6,7 @@ use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+use crate::config::DetectedEntity;
 use crate::extract::{FileMapL1, FileMapL2, SCHEMA_VER};
 use crate::hashing::{self, Hash};
 use crate::index::{IndexDb, IndexError};
@@ -860,6 +861,9 @@ mod tests {
             symbols: Vec::new(),
             imports: Vec::new(),
             implementations: Vec::new(),
+            redaction: None,
+            redacted_entities: DetectedEntity::default(),
+            attestation: None,
         }
     }
 
@@ -869,6 +873,9 @@ mod tests {
             language: "rust".to_string(),
             calls: Vec::new(),
             docs: Vec::new(),
+            redaction: None,
+            redacted_entities: DetectedEntity::default(),
+            attestation: None,
         }
     }
 

@@ -11,6 +11,8 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tree_sitter::Query;
 
+use crate::config::{DetectedEntity, RedactionState};
+
 use crate::lang::{LangError, LangId, ParseOutcome, parse_with_default_timeout, with_parser};
 
 use l1::extract_l1_from_tree;
@@ -99,6 +101,15 @@ pub struct FileMapL1 {
     /// L1 blobs without this field deserializable — no `SCHEMA_VER` bump needed.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub implementations: Vec<Implementation>,
+    /// Redaction outcome for this file's text. `None` = pre-feature blob.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub redaction: Option<RedactionState>,
+    /// Tally of detected PII categories (persisted for audit report).
+    #[serde(default, skip_serializing_if = "DetectedEntity::is_empty")]
+    pub redacted_entities: DetectedEntity,
+    /// Attestation hash over (redacted_text, model_id, config_hash).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub attestation: Option<String>,
 }
 
 /// A single inheritance or interface-implementation relationship found in a source file.
@@ -238,6 +249,15 @@ pub struct FileMapL2 {
     pub language: String,
     pub calls: Vec<Call>,
     pub docs: Vec<DocComment>,
+    /// Redaction outcome for this file's text. `None` = pre-feature blob.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub redaction: Option<RedactionState>,
+    /// Tally of detected PII categories (persisted for audit report).
+    #[serde(default, skip_serializing_if = "DetectedEntity::is_empty")]
+    pub redacted_entities: DetectedEntity,
+    /// Attestation hash over (redacted_text, model_id, config_hash).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub attestation: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

@@ -3,7 +3,9 @@
   "version": "0.22.0",
   "private": true,
   "description": "Workspace root for hacienda-mcp. Per-harness publishable packages live in npm-package/ (binary wrapper), pip-package/ (Python wrapper), and opencode-plugin/ (OpenCode plugin). Also carries the pi extension manifest (.pi/extensions, skills/).",
-  "keywords": ["pi-package"],
+  "keywords": [
+    "pi-package"
+  ],
   "homepage": "https://github.com/jamon8888/Hacienda-mind",
   "license": "MIT",
   "author": {
@@ -16,7 +18,12 @@
   },
   "type": "module",
   "pi": {
-    "extensions": ["./.pi/extensions"],
-    "skills": ["./skills"]
-  }
+    "extensions": [
+      "./.pi/extensions"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
