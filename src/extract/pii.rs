@@ -3,7 +3,9 @@
 //!
 //! [`redact_pii`] loads a GLiNER2 safetensors model (optionally merged with a
 //! PEFT LoRA adapter) once per process and rewrites every PERSON / ORGANIZATION
-//! / LOCATION span in the supplied text according to the configured strategy.
+//! / LOCATION / EMAIL / PHONE / DATE / URL / API_KEY / etc. span in the supplied
+//! text according to the configured strategy.
+//!
 //! When the model directory is unset or loading fails, the pass degrades
 //! gracefully — it returns the text unchanged and logs a warning, so a scan
 //! never fails on a missing model.
@@ -14,7 +16,7 @@
 
 use std::path::PathBuf;
 
-use crate::config::{PiiCategory, PiiConfig, PiiStrategy};
+use crate::config::{DetectedEntity, PiiCategory, PiiConfig, PiiModelStatus, PiiStrategy, RedactionState};
 
 /// A detected entity span with source offsets, ready to redact.
 struct Span {
@@ -127,60 +129,96 @@ fn apply_strategy(text: &str, detected: &[Span], strategy: PiiStrategy) -> Strin
     out
 }
 
-/// Redact PII from `text` in place according to `cfg`.
-///
-/// With the `pii` cargo feature disabled (no candle model compiled in), or when
-/// PII is disabled / the model is unavailable, returns the original text
-/// unchanged with an empty entity list.
-pub fn redact_pii(text: &str, cfg: &PiiConfig) -> (String, Vec<String>) {
+/// Public model-status probe — reads the `OnceLock` without forcing initialization.
+/// Returns the runtime load state so `pii_status` can report truthfully.
+#[cfg(feature = "pii")]
+pub fn model_status(cfg: &PiiConfig) -> PiiModelStatus {
+    if !cfg.enabled {
+        return PiiModelStatus::Disabled;
+    }
+    if cfg.model_dir.is_none() {
+        return PiiModelStatus::ModelDirUnset;
+    }
+    match MODEL.get() {
+        Some(Some(_)) => PiiModelStatus::Loaded,
+        Some(None) => PiiModelStatus::LoadFailed("model load failed".to_string()),
+        None => {
+            // Not yet initialized; probe load without caching a None permanently.
+            match cfg.model_dir.as_ref() {
+                Some(d) => match Gliner2Candle::from_local(d) {
+                    Ok(_) => PiiModelStatus::Loaded,
+                    Err(e) => PiiModelStatus::LoadFailed(e.to_string()),
+                },
+                None => PiiModelStatus::ModelDirUnset,
+            }
+        }
+    }
+}
+
+/// Compute a simple attestation hash over (redacted_text, model_id, config_hash).
+/// This lets a client verify the redaction was produced by the declared config.
+pub fn attestation(redacted: &str, model_id: &str, config_hash: &str) -> String {
+    use std::hash::Hasher;
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    std::hash::Hash::hash(&(redacted, model_id, config_hash), &mut h);
+    format!("{:x}", h.finish())
+}
+
+/// Redact PII from `text` according to `cfg`, returning redacted text, entity tally,
+/// and a machine-readable `RedactionState` (never silent — caller always knows why).
+pub fn redact_code_text(text: &str, cfg: &PiiConfig) -> (String, DetectedEntity, RedactionState) {
     #[cfg(not(feature = "pii"))]
     {
         let _ = cfg;
-        (text.to_string(), Vec::new())
+        (text.to_string(), DetectedEntity::default(), RedactionState::DisabledFeature)
     }
     #[cfg(feature = "pii")]
     {
+        if !cfg.enabled {
+            return (text.to_string(), DetectedEntity::default(), RedactionState::DisabledConfig);
+        }
         let model = match get_model(cfg) {
             Some(m) => m,
-            None => return (text.to_string(), Vec::new()),
+            None => return (text.to_string(), DetectedEntity::default(), RedactionState::InactiveModelMissing("model unavailable".to_string())),
         };
-
-        let label_slice = labels(cfg);
-        let spans = match model.extract_ner(text, &label_slice, cfg.threshold) {
-            Ok(s) => s,
-            Err(e) => {
-                tracing::warn!(error = %e, "[pii] inference failed — returning text unchanged");
-                return (text.to_string(), Vec::new());
-            }
-        };
-
-        let mut entities: Vec<String> = Vec::new();
+        let label_slice: Vec<&str> = cfg.categories.iter().map(PiiCategory::label).collect();
         let mut detected: Vec<Span> = Vec::new();
-        for span in spans {
-            let (start, end) = span.offsets();
-            if (end as usize) <= (start as usize) || (end as usize) > text.len() {
-                continue;
+        let mut tally = DetectedEntity::default();
+        // ML spans
+        if let Ok(spans) = model.extract_ner(text, &label_slice, cfg.threshold) {
+            for span in spans {
+                let (s, e) = span.offsets();
+                if (e as usize) <= (s as usize) || (e as usize) > text.len() { continue; }
+                tally.add(span.class());
+                detected.push(Span { start: s as usize, end: e as usize, category: span.class().to_string() });
             }
-            entities.push(span.class().to_string());
-            detected.push(Span {
-                start: start as usize,
-                end: end as usize,
-                category: span.class().to_string(),
-            });
+        } else {
+            return (text.to_string(), DetectedEntity::default(), RedactionState::Failed("inference error".to_string()));
         }
-
+        // Regex spans
+        for (s, e, cat) in crate::extract::pii_regex::detect_regex_pii(text) {
+            tally.add(cat);
+            detected.push(Span { start: s, end: e, category: cat.to_string() });
+        }
         if detected.is_empty() {
-            return (text.to_string(), Vec::new());
+            return (text.to_string(), tally, RedactionState::Redacted);
         }
-
-        detected.sort_by_key(|s| s.start);
-        (apply_strategy(text, &detected, cfg.strategy), entities)
+        detected.sort_by_key(|x| x.start);
+        (apply_strategy(text, &detected, cfg.strategy), tally, RedactionState::Redacted)
     }
+}
+
+/// Back-compat: documents path still calls this; returns redacted text + category labels only.
+pub fn redact_pii(text: &str, cfg: &PiiConfig) -> (String, Vec<String>) {
+    let (out, ents, _state) = redact_code_text(text, cfg);
+    let labels: Vec<String> = ents.by_category.keys().cloned().collect();
+    (out, labels)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::{DetectedEntity, PiiCategory, PiiConfig, RedactionState};
 
     #[test]
     fn disabled_pii_is_noop() {
@@ -221,15 +259,41 @@ mod tests {
     }
 
     #[test]
-    fn categories_default_to_three_labels() {
-        // labels() is feature-gated behind candle; test the config surface instead.
+    fn categories_default_to_seven_labels() {
         let cfg = PiiConfig::default();
-        assert!(cfg.categories.is_empty());
-        let cfg2 = PiiConfig {
-            categories: vec![PiiCategory::Person, PiiCategory::Location],
+        assert_eq!(cfg.categories.len(), 7);
+    }
+
+    #[test]
+    fn redact_code_text_returns_state_and_entities() {
+        let cfg = PiiConfig {
+            enabled: true,
+            model_dir: Some(PathBuf::from("/nonexistent-model")),
+            categories: vec![PiiCategory::Email, PiiCategory::Person],
             ..Default::default()
         };
-        assert_eq!(cfg2.categories.len(), 2);
+        // No model -> InactiveModelMissing, original text, no entities.
+        let (out, ents, state) = redact_code_text("mail me at maria@acme.com", &cfg);
+        assert!(matches!(state, RedactionState::InactiveModelMissing(_)));
+        assert_eq!(out, "mail me at maria@acme.com");
+        assert_eq!(ents.total(), 0);
+    }
+
+    #[test]
+    fn model_status_probe_reports_missing() {
+        let cfg = PiiConfig { enabled: true, model_dir: None, ..Default::default() };
+        assert_eq!(model_status(&cfg), crate::config::PiiModelStatus::ModelDirUnset);
+    }
+
+    #[test]
+    fn disabled_feature_returns_disabled_feature() {
+        #[cfg(not(feature = "pii"))]
+        {
+            let cfg = PiiConfig::default();
+            let (out, ents, state) = redact_code_text("test", &cfg);
+            assert_eq!(out, "test");
+            assert_eq!(ents.total(), 0);
+            assert_eq!(state, RedactionState::DisabledFeature);
+        }
     }
 }
-

@@ -22,7 +22,7 @@ pub use documents::{
 };
 pub use layered::{ConfigLayers, LoadedConfig, defaults_only, merge_layers};
 pub use overrides::DocumentsCliOverrides;
-pub use pii::{PiiCategory, PiiConfig, PiiStrategy};
+pub use pii::{DetectedEntity, PiiCategory, PiiConfig, PiiModelStatus, PiiStrategy, RedactionState};
 pub use shells::{ShellsConfig, TerminalChoice, VisualMode};
 pub use source::{ConfigSource, ProvenanceMap};
 pub use v1::{CodeIntelConfig, ConfigV1, CrawlConfig};
