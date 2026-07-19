@@ -5,6 +5,7 @@ pub mod l2;
 pub mod l3;
 pub mod locals;
 pub mod pii;
+pub mod pii_regex;
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
