@@ -120,6 +120,29 @@ impl DetectedEntity {
     pub fn is_empty(&self) -> bool {
         self.by_category.is_empty()
     }
+    pub fn merge(&mut self, other: &Self) {
+        for (k, v) in &other.by_category {
+            *self.by_category.entry(k.clone()).or_insert(0) += v;
+        }
+    }
+}
+
+impl RedactionState {
+    /// Pick the most severe state.
+    /// Order: Failed > InactiveModelMissing > DisabledConfig > DisabledFeature > Redacted
+    pub fn worst(&self, other: &Self) -> Self {
+        use RedactionState::*;
+        fn severity(s: &RedactionState) -> u8 {
+            match s {
+                Failed(_) => 5,
+                InactiveModelMissing(_) => 4,
+                DisabledConfig => 3,
+                DisabledFeature => 2,
+                Redacted => 1,
+            }
+        }
+        if severity(self) >= severity(other) { self.clone() } else { other.clone() }
+    }
 }
 
 /// Configuration for the candle PII redaction pass.
@@ -224,5 +247,21 @@ mod tests {
         t.insert("email".to_string(), 2u32);
         let e = DetectedEntity::from_map(t);
         assert_eq!(e.total(), 2);
+    }
+
+    #[test]
+    fn redaction_state_worst_picks_most_severe() {
+        assert_eq!(RedactionState::Redacted.worst(&RedactionState::Failed("e".into())), RedactionState::Failed("e".into()));
+        assert_eq!(RedactionState::InactiveModelMissing("a".into()).worst(&RedactionState::DisabledConfig), RedactionState::InactiveModelMissing("a".into()));
+        assert_eq!(RedactionState::DisabledConfig.worst(&RedactionState::DisabledFeature), RedactionState::DisabledConfig);
+    }
+
+    #[test]
+    fn detected_entity_merge() {
+        let mut a = DetectedEntity::from_map({ let mut m = std::collections::BTreeMap::new(); m.insert("email".to_string(), 1); m });
+        let b = DetectedEntity::from_map({ let mut m = std::collections::BTreeMap::new(); m.insert("email".to_string(), 2); m.insert("phone".to_string(), 1); m });
+        a.merge(&b);
+        assert_eq!(a.by_category.get("email"), Some(&3));
+        assert_eq!(a.by_category.get("phone"), Some(&1));
     }
 }
