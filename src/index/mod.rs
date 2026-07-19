@@ -31,8 +31,9 @@ use thiserror::Error;
 /// `implementations_by_trait` / `implementations_by_path` partitions for `find_implementations`;
 /// `+3` the `refs_by_def` / `refs_by_path` partitions for the code-intelligence tier's
 /// scope/import-resolved `find_references` / `goto_definition`; `+4` the `code_bm25_postings` /
-/// `code_bm25_by_path` partitions for the code-search BM25 keyword lane (`search_code mode=keyword`).
-const INDEX_PARTITION_REVISION: u32 = 4;
+/// `code_bm25_by_path` partitions for the code-search BM25 keyword lane (`search_code mode=keyword`);
+/// `+5` the `entities_by_category` partition for the RGPD/P3 audit-report + erasure-probe surface.
+const INDEX_PARTITION_REVISION: u32 = 5;
 
 /// Bumped whenever the on-disk key layout changes — the sum of `RELEASE_MINOR` and the
 /// [`INDEX_PARTITION_REVISION`] offset, monotonic across both. When `RELEASE_MINOR` next bumps,
@@ -122,6 +123,16 @@ pub struct IndexDb {
     /// W11 propose-don't-commit skill-mining surface. Always created for DB stability.
     #[allow(dead_code)]
     pub(crate) proposals: Keyspace,
+    /// `entities_by_category`: `category ‖ rel → count` for every redacted PII entity detected
+    /// during scan. Backs `pii_audit_report` (corpus-wide category counts + per-category file
+    /// lists). Always created for DB stability; written only when the `pii` feature is compiled and
+    /// redaction actually fires.
+    #[allow(dead_code)]
+    pub(crate) entities_by_category: Keyspace,
+    /// `entities_by_path`: companion keyed by file so the per-file delete on upsert / `remove_file`
+    /// is O(prefix). Always created for DB stability.
+    #[allow(dead_code)]
+    pub(crate) entities_by_path: Keyspace,
 }
 
 impl IndexDb {
@@ -170,6 +181,8 @@ impl IndexDb {
         let memory_by_key = db.keyspace("memory_by_key", KeyspaceCreateOptions::default)?;
         let memory_archive = db.keyspace("memory_archive", KeyspaceCreateOptions::default)?;
         let proposals = db.keyspace("proposals", KeyspaceCreateOptions::default)?;
+        let entities_by_category = db.keyspace("entities_by_category", KeyspaceCreateOptions::default)?;
+        let entities_by_path = db.keyspace("entities_by_path", KeyspaceCreateOptions::default)?;
 
         meta.insert(META_SCHEMA_VER, INDEX_SCHEMA_VER.to_be_bytes())?;
 
@@ -192,6 +205,8 @@ impl IndexDb {
             memory_by_key,
             memory_archive,
             proposals,
+            entities_by_category,
+            entities_by_path,
         })
     }
 
@@ -321,5 +336,43 @@ impl IndexDb {
         self.meta.insert(META_BM25_DOC_COUNT, n.to_be_bytes())?;
         self.meta.insert(META_BM25_TOTAL_LEN, total_len.to_be_bytes())?;
         Ok(())
+    }
+
+    /// Corpus-wide count of redacted PII entities, keyed by category. Sweeps the
+    /// `entities_by_category` partition once and sums the per-file `count` values per category.
+    /// Backs `pii_audit_report`.
+    ///
+    /// Returns a `BTreeMap<category, count>` so callers get a stable, sorted shape. An empty map
+    /// means no entity was ever redacted (redaction disabled, model missing, or corpus clean).
+    pub fn entities_by_category_counts(&self) -> std::collections::BTreeMap<String, u32> {
+        let mut out: std::collections::BTreeMap<String, u32> = std::collections::BTreeMap::new();
+        for guard in self.entities_by_category.iter() {
+            if let Ok((k, v)) = guard.into_inner()
+                && let Some((category, _rel)) = keys::parse_entity_by_category(&k)
+                && v.len() >= 4
+            {
+                let count = u32::from_be_bytes([v[0], v[1], v[2], v[3]]);
+                *out.entry(category).or_insert(0) += count;
+            }
+        }
+        out
+    }
+
+    /// Per-file redacted-entity tally: every `(category, count)` recorded for `rel`. Backs the
+    /// audit report's per-file breakdown and a future P3 erasure probe. Empty when the file produced
+    /// no redacted entities. Uses the `entities_by_path` companion for an O(prefix) scan.
+    pub fn entities_by_category_for_path(&self, rel: &crate::path::RelPath) -> std::collections::BTreeMap<String, u32> {
+        let mut out: std::collections::BTreeMap<String, u32> = std::collections::BTreeMap::new();
+        let prefix = keys::entities_by_path_prefix(rel);
+        for guard in self.entities_by_path.prefix(prefix) {
+            if let Ok((k, v)) = guard.into_inner()
+                && let Some((_rel, category)) = keys::parse_entity_by_path(&k)
+                && v.len() >= 4
+            {
+                let count = u32::from_be_bytes([v[0], v[1], v[2], v[3]]);
+                *out.entry(category).or_insert(0) += count;
+            }
+        }
+        out
     }
 }

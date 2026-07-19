@@ -595,6 +595,73 @@ pub fn parse_proposal_by_id(buf: &[u8]) -> Option<(String, u8, String)> {
     Some((scope, kind_byte, id))
 }
 
+/// `entities_by_category`: `u16:len(category) ‖ category ‖ u16:len(rel) ‖ rel`, value `count:u32_be`.
+///
+/// One entry per `(category, file)` recording how many redacted entities of that category were
+/// detected in that file (the count sourced from [`crate::config::DetectedEntity`]). Keyed by
+/// category first so a prefix scan over a single category yields every file that produced an entity
+/// of it (no prefix bleed between categories). The trailing `rel` disambiguates distinct files
+/// that share a category.
+///
+/// Used by `pii_audit_report` (corpus-wide category counts + per-category file lists). Returns
+/// `None` when `category` or `rel` exceeds 65535 bytes — the caller skips the secondary entry
+/// rather than panicking inside a rayon `par_iter`.
+pub fn entity_by_category(category: &str, rel: &RelPath) -> Option<Vec<u8>> {
+    let mut out = Vec::with_capacity(2 + category.len() + 2 + rel.as_bytes().len());
+    write_len_prefixed(&mut out, category.as_bytes())?;
+    let _ = write_len_prefixed(&mut out, rel.as_bytes());
+    Some(out)
+}
+
+/// Encode the `entities_by_category` value: `count:u32_be` (number of redacted entities of
+/// `category` in this file).
+pub fn entity_by_category_value(count: u32) -> Vec<u8> {
+    count.to_be_bytes().to_vec()
+}
+
+/// `entities_by_path`: `u16:len(rel) ‖ rel ‖ u16:len(category) ‖ category`. Companion to
+/// `entity_by_category` so the per-file delete on re-upsert / `remove_file` is O(prefix) instead
+/// of a full-partition filter. Mirrors the `symbols_by_path` / `symbols_by_name` dual-partition
+/// pattern. Value is empty (the count lives in the category-keyed twin).
+pub fn entity_by_path(rel: &RelPath, category: &str) -> Option<Vec<u8>> {
+    let mut out = Vec::with_capacity(2 + rel.as_bytes().len() + 2 + category.len());
+    let _ = write_len_prefixed(&mut out, rel.as_bytes());
+    write_len_prefixed(&mut out, category.as_bytes())?;
+    Some(out)
+}
+
+/// Prefix bytes for "every entity entry for `rel`" — feed to `keyspace.prefix(..)`.
+pub fn entities_by_path_prefix(rel: &RelPath) -> Vec<u8> {
+    let mut out = Vec::with_capacity(2 + rel.as_bytes().len());
+    let _ = write_len_prefixed(&mut out, rel.as_bytes());
+    out
+}
+
+/// Decode `(rel, category)` from a raw `entity_by_path` key buffer. The `rel` is the leading
+/// component but the caller already knows it from the prefix scan, so we return it for verification.
+pub fn parse_entity_by_path(key: &[u8]) -> Option<(RelPath, String)> {
+    let mut c = 0;
+    let rel = read_len_prefixed_ref(key, &mut c)?;
+    let category = String::from_utf8(read_len_prefixed(key, &mut c)?).ok()?;
+    Some((RelPath::from(rel), category))
+}
+
+/// Prefix bytes for "every entity in `category`" — feed to `keyspace.prefix(..)`.
+pub fn entities_by_category_prefix(category: &str) -> Vec<u8> {
+    let mut out = Vec::with_capacity(2 + category.len());
+    let _ = write_len_prefixed(&mut out, category.as_bytes());
+    out
+}
+
+/// Decode `(category, rel)` from a raw `entity_by_category` key buffer. The trailing 4-byte
+/// `count` is part of the value, not the key, so it is not returned here.
+pub fn parse_entity_by_category(key: &[u8]) -> Option<(String, RelPath)> {
+    let mut c = 0;
+    let category = String::from_utf8(read_len_prefixed(key, &mut c)?).ok()?;
+    let rel = read_len_prefixed_ref(key, &mut c)?;
+    Some((category, RelPath::from(rel)))
+}
+
 /// One-byte ordinal for a `SymbolKind`. Stable across releases so existing keys stay valid;
 /// new variants extend the tail. Keep the explicit assignments — accidentally reordering
 /// would silently miscategorize cached entries.

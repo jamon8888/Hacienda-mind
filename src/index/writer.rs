@@ -197,6 +197,23 @@ impl IndexWriter {
                 self.batch.remove(&self.db.implementations_by_trait, trait_key);
             }
         }
+
+        // Drop the file's `entities_by_category` / `entities_by_path` entries so a re-scan replays
+        // the fresh tally (O(prefix) via the path companion).
+        let ent_path_prefix = keys::entities_by_path_prefix(rel);
+        let mut found_entities: Vec<(Vec<u8>, String)> = Vec::new();
+        for guard in self.db.entities_by_path.prefix(ent_path_prefix) {
+            let (k, _) = guard.into_inner()?;
+            if let Some((_rel, category)) = keys::parse_entity_by_path(&k) {
+                found_entities.push(((*k).to_vec(), category));
+            }
+        }
+        for (path_key, category) in found_entities {
+            self.batch.remove(&self.db.entities_by_path, path_key);
+            if let Some(cat_key) = keys::entity_by_category(&category, rel) {
+                self.batch.remove(&self.db.entities_by_category, cat_key);
+            }
+        }
         Ok(())
     }
 
@@ -364,7 +381,33 @@ impl IndexWriter {
                 }
             }
         }
+        // Stage the redacted-entity tally into the `entities_by_category` partition so the
+        // audit report can answer "how many PERSON/EMAIL/etc. were redacted, and in which files"
+        // without re-scanning every blob. L1 carries the code-map tally; L2 (if present) carries
+        // the call-doc tally — merge both into the per-category per-file count.
+        self.stage_entities_for(rel, &l1.redacted_entities);
+        if let Some(l2) = l2 {
+            self.stage_entities_for(rel, &l2.redacted_entities);
+        }
         Ok(())
+    }
+
+    /// Stage one `(category, rel) → count` entry per category present in `tally` into both the
+    /// `entities_by_category` (keyed by category → audit counts) and `entities_by_path` (keyed by
+    /// file → O(prefix) delete) partitions. The value carries the per-file entity count for that
+    /// category. Idempotent per re-scan: `upsert_file` deletes the file's prior entries first
+    /// via [`Self::stage_deletes_for`], so a re-scan does not accumulate stale counts.
+    fn stage_entities_for(&mut self, rel: &RelPath, tally: &DetectedEntity) {
+        for (category, count) in &tally.by_category {
+            if let (Some(cat_key), Some(path_key)) = (
+                keys::entity_by_category(category, rel),
+                keys::entity_by_path(rel, category),
+            ) {
+                let value = keys::entity_by_category_value(*count);
+                self.batch.insert(&self.db.entities_by_category, cat_key, value.clone());
+                self.batch.insert(&self.db.entities_by_path, path_key, value);
+            }
+        }
     }
 }
 
@@ -758,6 +801,52 @@ mod tests {
         w.commit().unwrap();
         assert!(db.refs_by_def.iter().next().is_none());
         assert!(db.refs_by_path.iter().next().is_none());
+    }
+
+    #[test]
+    fn entities_by_category_round_trip_and_counts() {
+        use std::collections::BTreeMap;
+
+        let (_d, db) = fresh_db();
+        let rel = RelPath::from("src/secrets.rs");
+
+        let mut l1 = synthetic_l1(&[]);
+        let mut tally = DetectedEntity::default();
+        tally.by_category = BTreeMap::from([("person".to_string(), 3), ("email".to_string(), 2)]);
+        l1.redacted_entities = tally;
+
+        let mut w = db.writer();
+        w.upsert_file(&rel, &l1, None).unwrap();
+        w.commit().unwrap();
+
+        let counts = db.entities_by_category_counts();
+        assert_eq!(counts.get("person"), Some(&3));
+        assert_eq!(counts.get("email"), Some(&2));
+        assert_eq!(counts.values().sum::<u32>(), 5);
+
+        let per_file = db.entities_by_category_for_path(&rel);
+        assert_eq!(per_file.get("person"), Some(&3));
+        assert_eq!(per_file.get("email"), Some(&2));
+
+        // Re-upsert with a smaller tally — the counts must reflect the new value, not accumulate.
+        let mut l1b = synthetic_l1(&[]);
+        let mut tally_b = DetectedEntity::default();
+        tally_b.by_category = BTreeMap::from([("person".to_string(), 1)]);
+        l1b.redacted_entities = tally_b;
+        let mut w = db.writer();
+        w.upsert_file(&rel, &l1b, None).unwrap();
+        w.commit().unwrap();
+
+        let counts_b = db.entities_by_category_counts();
+        assert_eq!(counts_b.get("person"), Some(&1), "re-upsert must not accumulate");
+        assert_eq!(counts_b.get("email"), None, "dropped category must be gone");
+
+        // Remove the file — both partitions must empty.
+        let mut w = db.writer();
+        w.remove_file(&rel).unwrap();
+        w.commit().unwrap();
+        assert!(db.entities_by_category.iter().next().is_none());
+        assert!(db.entities_by_path.iter().next().is_none());
     }
 
     #[cfg(feature = "code-search")]
