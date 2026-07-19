@@ -53,6 +53,10 @@ pub enum PiiCategory {
     Person,
     Organization,
     Location,
+    Email,
+    Phone,
+    Date,
+    Url,
 }
 
 impl PiiCategory {
@@ -62,6 +66,10 @@ impl PiiCategory {
             PiiCategory::Person => "person",
             PiiCategory::Organization => "organization",
             PiiCategory::Location => "location",
+            PiiCategory::Email => "email",
+            PiiCategory::Phone => "phone",
+            PiiCategory::Date => "date",
+            PiiCategory::Url => "url",
         }
     }
 }
@@ -90,11 +98,20 @@ pub struct PiiConfig {
     /// Detection confidence threshold (0.0–1.0). Spans below it are ignored.
     #[serde(default = "PiiConfig::default_threshold")]
     pub threshold: f32,
+    /// Mask author email/name in git tool responses (legal/audit contexts).
+    #[serde(default = "PiiConfig::default_redact_git_identity")]
+    pub redact_git_identity: bool,
+    /// Encryption key source for at-rest encryption + attestation HMAC (P3).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub encryption_key: Option<crate::config::documents::ApiKey>,
 }
 
 impl PiiConfig {
     fn default_threshold() -> f32 {
         0.5
+    }
+    fn default_redact_git_identity() -> bool {
+        true
     }
 }
 
@@ -105,8 +122,41 @@ impl Default for PiiConfig {
             model_dir: None,
             lora_adapter_dir: None,
             strategy: PiiStrategy::default(),
-            categories: Vec::new(),
+            categories: vec![
+                PiiCategory::Person,
+                PiiCategory::Organization,
+                PiiCategory::Location,
+                PiiCategory::Email,
+                PiiCategory::Phone,
+                PiiCategory::Date,
+                PiiCategory::Url,
+            ],
+            redact_git_identity: true,
+            encryption_key: None,
             threshold: Self::default_threshold(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extended_categories_default_present() {
+        let cfg = PiiConfig::default();
+        let labels: Vec<&str> = cfg.categories.iter().map(|c| c.label()).collect();
+        assert!(labels.contains(&"email"));
+        assert!(labels.contains(&"phone"));
+        assert!(labels.contains(&"date"));
+        assert!(labels.contains(&"url"));
+    }
+
+    #[test]
+    fn pii_category_labels_are_stable() {
+        assert_eq!(PiiCategory::Email.label(), "email");
+        assert_eq!(PiiCategory::Phone.label(), "phone");
+        assert_eq!(PiiCategory::Date.label(), "date");
+        assert_eq!(PiiCategory::Url.label(), "url");
     }
 }
