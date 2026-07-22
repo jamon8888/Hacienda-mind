@@ -805,14 +805,14 @@ mod tests {
 
     #[test]
     fn entities_by_category_round_trip_and_counts() {
-        use std::collections::BTreeMap;
+        use std::collections::HashMap;
 
         let (_d, db) = fresh_db();
         let rel = RelPath::from("src/secrets.rs");
 
         let mut l1 = synthetic_l1(&[]);
         let mut tally = DetectedEntity::default();
-        tally.by_category = BTreeMap::from([("person".to_string(), 3), ("email".to_string(), 2)]);
+        tally.by_category = HashMap::from([("person".to_string(), 3), ("email".to_string(), 2)]);
         l1.redacted_entities = tally;
 
         let mut w = db.writer();
@@ -831,7 +831,7 @@ mod tests {
         // Re-upsert with a smaller tally — the counts must reflect the new value, not accumulate.
         let mut l1b = synthetic_l1(&[]);
         let mut tally_b = DetectedEntity::default();
-        tally_b.by_category = BTreeMap::from([("person".to_string(), 1)]);
+        tally_b.by_category = HashMap::from([("person".to_string(), 1)]);
         l1b.redacted_entities = tally_b;
         let mut w = db.writer();
         w.upsert_file(&rel, &l1b, None).unwrap();

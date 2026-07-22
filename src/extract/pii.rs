@@ -215,6 +215,39 @@ pub fn redact_pii(text: &str, cfg: &PiiConfig) -> (String, Vec<String>) {
     (out, labels)
 }
 
+/// Redact a single git author-identity string (the `author` field, typically
+/// `"Name <email>"` or just an email) for the git-history MCP tools.
+///
+/// Unlike [`redact_code_text`] this never loads the ML model — git identity is
+/// short and structured, so the regex detector (email/phone/url/key) is
+/// sufficient and keeps the hot blame/commit paths cheap. The `Mask` strategy
+/// is always used here regardless of `cfg.strategy` so a redacted author reads
+/// consistently as `[REDACTED]` rather than leaking a category token.
+///
+/// Returns the original string unchanged when `redact_git_identity` is off, so
+/// callers can pass the flag through unconditionally.
+pub fn redact_author_identity(author: &str, cfg: &PiiConfig) -> String {
+    if !cfg.redact_git_identity {
+        return author.to_string();
+    }
+    let spans = crate::extract::pii_regex::detect_regex_pii(author);
+    if spans.is_empty() {
+        return author.to_string();
+    }
+    let mut out = String::with_capacity(author.len());
+    let mut cursor = 0usize;
+    for (s, e, _cat) in spans {
+        if s < cursor {
+            continue;
+        }
+        out.push_str(&author[cursor..s]);
+        out.push_str("[REDACTED]");
+        cursor = e;
+    }
+    out.push_str(&author[cursor..]);
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -264,6 +297,7 @@ mod tests {
         assert_eq!(cfg.categories.len(), 7);
     }
 
+    #[cfg(feature = "pii")]
     #[test]
     fn redact_code_text_returns_state_and_entities() {
         let cfg = PiiConfig {
@@ -279,6 +313,7 @@ mod tests {
         assert_eq!(ents.total(), 0);
     }
 
+    #[cfg(feature = "pii")]
     #[test]
     fn model_status_probe_reports_missing() {
         let cfg = PiiConfig { enabled: true, model_dir: None, ..Default::default() };
@@ -295,5 +330,31 @@ mod tests {
             assert_eq!(ents.total(), 0);
             assert_eq!(state, RedactionState::DisabledFeature);
         }
+    }
+
+    #[cfg(feature = "pii")]
+    #[test]
+    fn redact_author_identity_masks_email_and_respects_flag() {
+        // With redact_git_identity on, an email in the identity is masked.
+        let on = PiiConfig {
+            redact_git_identity: true,
+            ..Default::default()
+        };
+        let masked = redact_author_identity("Maria Lopez <maria@acme.com>", &on);
+        assert!(!masked.contains("maria@acme.com"), "email must be masked, got: {masked}");
+        assert!(masked.contains("Maria Lopez"), "display name without PII stays");
+
+        // With the flag off, the identity is returned verbatim.
+        let off = PiiConfig {
+            redact_git_identity: false,
+            ..Default::default()
+        };
+        assert_eq!(
+            redact_author_identity("Maria Lopez <maria@acme.com>", &off),
+            "Maria Lopez <maria@acme.com>"
+        );
+
+        // No PII in the string -> unchanged even when on.
+        assert_eq!(redact_author_identity("Linus Torvalds", &on), "Linus Torvalds");
     }
 }

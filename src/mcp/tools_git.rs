@@ -139,7 +139,7 @@ impl BasemindServer {
                 .skip(skip)
                 .take(limit)
                 .cloned()
-                .map(|c| commit_to_view(c, params.include_files))
+                .map(|c| commit_to_view(c, params.include_files, &self.state.config.pii))
                 .collect();
             let has_more = commits.len() > skip + page.len();
             let next_cursor =
@@ -212,7 +212,7 @@ impl BasemindServer {
                 .skip(skip)
                 .take(limit)
                 .cloned()
-                .map(|c| commit_to_view(c, false))
+                .map(|c| commit_to_view(c, false, &self.state.config.pii))
                 .collect();
             let has_more = commits.len() > skip + page.len();
             let next_cursor =
@@ -424,7 +424,7 @@ impl BasemindServer {
                     break;
                 }
                 seen += 1;
-                hits.push(commit_to_view(c.clone(), true));
+                hits.push(commit_to_view(c.clone(), true, &self.state.config.pii));
             }
             let next_cursor =
                 has_more.then(|| super::cursor::Cursor::encode_in_memory((skip + hits.len()) as u64, snapshot));
@@ -659,7 +659,7 @@ impl BasemindServer {
                         sha: c.sha.clone(),
                         short_sha: c.short_sha.clone(),
                         summary: c.summary.clone(),
-                        author: c.author.clone(),
+                        author: crate::extract::pii::redact_author_identity(&c.author, &self.state.config.pii),
                         author_time_unix: c.author_time_unix,
                         change: kind_str,
                     });
@@ -742,7 +742,8 @@ impl BasemindServer {
                     return Err(McpError::internal_error(format!("blame: {e}"), None));
                 }
             };
-            let (hunks, next_cursor) = paginate_blame_hunks(result.hunks.iter(), resume_after, params.limit);
+            let (hunks, next_cursor) =
+                paginate_blame_hunks(result.hunks.iter(), resume_after, params.limit, &self.state.config.pii);
             let truncated_reason: Option<&'static str> = match result.truncated_reason.as_deref() {
                 Some("shallow_clone") => Some("shallow_clone"),
                 Some(_) => Some("truncated"),
@@ -829,7 +830,8 @@ impl BasemindServer {
                         return Err(McpError::internal_error(format!("blame: {e}"), None));
                     }
                 };
-            let (hunks, next_cursor) = paginate_blame_hunks(result.hunks.iter(), resume_after, params.limit);
+            let (hunks, next_cursor) =
+                paginate_blame_hunks(result.hunks.iter(), resume_after, params.limit, &self.state.config.pii);
             let truncated_reason: Option<&'static str> = match result.truncated_reason.as_deref() {
                 Some("shallow_clone") => Some("shallow_clone"),
                 Some(_) => Some("truncated"),

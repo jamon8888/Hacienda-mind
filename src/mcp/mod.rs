@@ -42,6 +42,7 @@ mod helpers_shells;
 mod helpers_telemetry;
 #[cfg(feature = "crawl")]
 mod helpers_web;
+mod helpers_pii;
 mod identity;
 mod kneedle;
 mod lean;
@@ -59,6 +60,7 @@ mod telemetry;
 mod tokens;
 mod tools;
 mod tools_admin;
+mod tools_pii;
 mod tools_archmap;
 mod tools_code;
 #[cfg(all(feature = "comms", any(unix, windows)))]
@@ -76,6 +78,7 @@ mod tools_web;
 mod toon;
 mod types;
 mod types_admin;
+mod types_pii;
 mod types_archmap;
 mod types_code;
 #[cfg(all(feature = "comms", any(unix, windows)))]
@@ -722,6 +725,7 @@ impl BasemindServer {
         }
         #[allow(unused_mut)]
         let mut router = Self::tool_router_core()
+            + Self::tool_router_pii()
             + Self::tool_router_archmap()
             + Self::tool_router_git()
             + Self::tool_router_memory()
