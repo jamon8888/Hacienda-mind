@@ -1,33 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": [
-    "file:C:/Users/NMarchitecte/basemind/opencode-plugin"
-  ],
-  "instructions": [
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/rules/basemind-usage.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/rules/perf-discipline.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/rules/tdd-and-poly.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/rules/module-size-cap.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/rules/schema-and-blob-compat.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/rules/release-versioning.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/rules/mcp-tool-conventions.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/rules/agent-comms.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/context/crate-layout.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/context/code-style.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/context/scanner-pipeline.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/context/inverted-index.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/context/mcp-surface.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/context/harden-harness.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/context/poly.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/agents/harness-interpreter.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/agents/mcp-tool-author.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/agents/rust-perf-engineer.md",
-    "C:/Users/NMarchitecte/basemind/.ai-rulez/agents/scanner-extension.md"
-  ],
-  "skills": {
-    "paths": [
-      "C:/Users/NMarchitecte/basemind/skills",
-      "C:/Users/NMarchitecte/basemind/.ai-rulez/skills"
-    ]
+  "plugin": ["basemind-opencode@latest"],
+  "mcp": {
+    "basemind": {
+      "type": "local",
+      "command": ["basemind", "serve"],
+      "enabled": true
+    }
   }
 }

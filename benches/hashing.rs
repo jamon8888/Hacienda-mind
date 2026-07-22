@@ -5,8 +5,8 @@
 //! few buffer sizes representative of real source files (1 KiB → 256 KiB) plus the
 //! zero-alloc hex round-trip used to key the content-addressed blob store.
 
-use hacienda_mcp::hashing::{from_hex, hash_bytes, hex_buf, hex_str};
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
+use hacienda_mcp::hashing::{from_hex, hash_bytes, hex_buf, hex_str};
 use std::hint::black_box;
 
 /// Buffer sizes in bytes: small file, typical module, large generated file.

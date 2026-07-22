@@ -141,8 +141,7 @@ pub fn discover_root_with_hacienda_mcp(start: &Path) -> PathBuf {
 
     let mut current = start;
     loop {
-        if current.join(CONFIG_FILE_NAME).is_file() || current.join(LEGACY_CONFIG_FILE_NAME).is_file()
-        {
+        if current.join(CONFIG_FILE_NAME).is_file() || current.join(LEGACY_CONFIG_FILE_NAME).is_file() {
             return current.to_path_buf();
         }
         // Stop after checking the enclosing git root — do not ascend past it into a parent repo.

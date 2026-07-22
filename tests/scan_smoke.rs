@@ -936,7 +936,14 @@ fn scan_paths_noop_batch_does_no_work() {
         root.join("node_modules/pkg/index.js"),
         root.join("child/.hacienda-mcp/index.msgpack"),
     ];
-    let report = scan_paths(root, &mut store, &cfg, &touched, hacienda_mcp::scanner::EmbedMode::Inline).unwrap();
+    let report = scan_paths(
+        root,
+        &mut store,
+        &cfg,
+        &touched,
+        hacienda_mcp::scanner::EmbedMode::Inline,
+    )
+    .unwrap();
     assert_eq!(report.stats.updated, 0, "no indexable file changed");
     assert_eq!(report.stats.removed, 0, "nothing removed");
     assert_eq!(report.results.len(), 0, "short-circuit: no per-file work recorded");

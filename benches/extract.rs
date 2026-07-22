@@ -8,9 +8,9 @@
 
 use std::path::Path;
 
+use criterion::{Criterion, criterion_group, criterion_main};
 use hacienda_mcp::extract::extract_l1_l2;
 use hacienda_mcp::lang::detect;
-use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 
 /// ~200 lines of idiomatic Rust: structs, enums, traits, impls, generics, calls.

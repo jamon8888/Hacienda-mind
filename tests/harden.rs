@@ -127,7 +127,9 @@ async fn connect(repo_root: &Path) -> ServiceHandle {
         c.arg("--root").arg(&root).arg("serve").arg("--view").arg("working");
     });
     let transport = TokioChildProcess::new(cmd).expect("spawn hacienda-mcp serve");
-    ().serve(transport).await.expect("rmcp handshake with hacienda-mcp serve")
+    ().serve(transport)
+        .await
+        .expect("rmcp handshake with hacienda-mcp serve")
 }
 
 /// Decode the first text-content item from a `CallToolResult` as JSON.

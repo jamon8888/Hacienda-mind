@@ -945,7 +945,11 @@ mod tests {
             "named view removed"
         );
         assert!(
-            hacienda_mcp_dir.join(VIEWS_DIR).join("working").join(INDEX_FILE).exists(),
+            hacienda_mcp_dir
+                .join(VIEWS_DIR)
+                .join("working")
+                .join(INDEX_FILE)
+                .exists(),
             "other view survives single-view clear"
         );
     }

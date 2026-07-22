@@ -84,7 +84,10 @@ pub struct DocumentsCliOverrides {
     pub keywords_max_keywords: Option<usize>,
 
     /// Override `documents.keywords.min_score`.
-    #[arg(long = "documents-keywords-min-score", env = "HACIENDA_MCP_DOCUMENTS_KEYWORDS_MIN_SCORE")]
+    #[arg(
+        long = "documents-keywords-min-score",
+        env = "HACIENDA_MCP_DOCUMENTS_KEYWORDS_MIN_SCORE"
+    )]
     pub keywords_min_score: Option<f32>,
 
     /// Override `documents.ner.enabled`.

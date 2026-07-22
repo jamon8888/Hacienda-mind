@@ -69,12 +69,7 @@ pub(crate) fn preset_dim(name: &str) -> anyhow::Result<u16> {
 /// Translate the project-level `[documents]` config into the xberg-facing
 /// [`DocConfig`] the extractor expects. Pulled out so the wiring in
 /// `process_file` stays a single call.
-pub(crate) fn doc_config_from(
-    cfg: &DocumentsConfig,
-    llm: &LlmConfig,
-    pii: &PiiConfig,
-    embed: bool,
-) -> DocConfig {
+pub(crate) fn doc_config_from(cfg: &DocumentsConfig, llm: &LlmConfig, pii: &PiiConfig, embed: bool) -> DocConfig {
     DocConfig {
         max_characters: cfg.max_characters,
         overlap: cfg.overlap,

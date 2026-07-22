@@ -5,9 +5,9 @@ use rayon::prelude::*;
 use thiserror::Error;
 use tracing::debug;
 
-use crate::config::{Config, RedactionState, DetectedEntity};
-use crate::extract::{self, ExtractError, FileMapL1, FileMapL2};
+use crate::config::{Config, DetectedEntity, RedactionState};
 use crate::extract::pii::redact_code_text;
+use crate::extract::{self, ExtractError, FileMapL1, FileMapL2};
 use crate::git::{GitError, Repo};
 use crate::hashing;
 use crate::index::{IndexDb, writer::IndexWriter};
@@ -874,19 +874,25 @@ fn process_file(
         for sym in &mut l1.symbols {
             if let Some(ref mut sig) = sym.signature {
                 let (t, e, s) = crate::extract::pii::redact_code_text(sig, &config.pii);
-                *sig = t; tally.merge(&e); state = state.worst(&s);
+                *sig = t;
+                tally.merge(&e);
+                state = state.worst(&s);
             }
             // Decorators are Vec<String> - iterate all
             for dec in &mut sym.decorators {
                 let (t, e, s) = crate::extract::pii::redact_code_text(dec, &config.pii);
-                *dec = t; tally.merge(&e); state = state.worst(&s);
+                *dec = t;
+                tally.merge(&e);
+                state = state.worst(&s);
             }
         }
         // L2 calls (NOT callee - identifiers preserved) + docs
         if let Some(l2) = &mut l2 {
             for doc in &mut l2.docs {
                 let (t, e, s) = crate::extract::pii::redact_code_text(&doc.text, &config.pii);
-                doc.text = t; tally.merge(&e); state = state.worst(&s);
+                doc.text = t;
+                tally.merge(&e);
+                state = state.worst(&s);
             }
         }
         // Attestation: hash of config + model_id + concatenated redacted text

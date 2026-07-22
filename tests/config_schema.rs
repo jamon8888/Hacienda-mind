@@ -1,4 +1,6 @@
-use hacienda_mcp::config::{self, ConfigError, ConfigLayers, ConfigSource, ConfigV1, DocumentsCliOverrides, merge_layers};
+use hacienda_mcp::config::{
+    self, ConfigError, ConfigLayers, ConfigSource, ConfigV1, DocumentsCliOverrides, merge_layers,
+};
 
 #[cfg(feature = "full")]
 const SCHEMA_PATH: &str = "schema/hacienda-mcp-config-v1.schema.json";

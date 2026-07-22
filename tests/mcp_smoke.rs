@@ -101,7 +101,8 @@ fn run_scan(root: &Path) {
     // `#[tokio::test]`, so run the scan on a dedicated std thread to mirror the production context.
     std::thread::scope(|scope| {
         scope.spawn(|| {
-            let mut store = hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING).expect("open store");
+            let mut store =
+                hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING).expect("open store");
             hacienda_mcp::scanner::scan(
                 root,
                 &mut store,
@@ -219,10 +220,7 @@ async fn mcp_server_exercises_representative_tools() {
             .await
             .expect("pii_redact"),
     );
-    let state = redacted
-        .get("state")
-        .and_then(Value::as_str)
-        .expect("pii_redact state");
+    let state = redacted.get("state").and_then(Value::as_str).expect("pii_redact state");
     // Without a model configured, honesty demands a non-`redacted` state and the
     // original text returned unchanged — never a lying mask.
     assert_ne!(state, "redacted", "pii_redact must not lie when the model is absent");

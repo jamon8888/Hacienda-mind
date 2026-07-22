@@ -33,6 +33,7 @@ mod helpers_graph;
 mod helpers_grep;
 mod helpers_impls;
 mod helpers_intel;
+mod helpers_pii;
 #[cfg(feature = "memory")]
 mod helpers_proposals;
 #[cfg(all(feature = "comms", any(unix, windows)))]
@@ -42,7 +43,6 @@ mod helpers_shells;
 mod helpers_telemetry;
 #[cfg(feature = "crawl")]
 mod helpers_web;
-mod helpers_pii;
 mod identity;
 mod kneedle;
 mod lean;
@@ -60,7 +60,6 @@ mod telemetry;
 mod tokens;
 mod tools;
 mod tools_admin;
-mod tools_pii;
 mod tools_archmap;
 mod tools_code;
 #[cfg(all(feature = "comms", any(unix, windows)))]
@@ -69,6 +68,7 @@ mod tools_compress;
 mod tools_git;
 mod tools_governance;
 mod tools_memory;
+mod tools_pii;
 #[cfg(all(feature = "comms", any(unix, windows)))]
 mod tools_registry;
 #[cfg(all(feature = "shells", any(unix, windows)))]
@@ -78,7 +78,6 @@ mod tools_web;
 mod toon;
 mod types;
 mod types_admin;
-mod types_pii;
 mod types_archmap;
 mod types_code;
 #[cfg(all(feature = "comms", any(unix, windows)))]
@@ -90,6 +89,7 @@ pub(crate) mod types_governance;
 mod types_graph;
 mod types_impls;
 pub(crate) mod types_memory;
+mod types_pii;
 #[cfg(all(feature = "comms", any(unix, windows)))]
 mod types_registry;
 #[cfg(all(feature = "shells", any(unix, windows)))]

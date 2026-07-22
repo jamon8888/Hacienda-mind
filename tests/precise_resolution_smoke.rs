@@ -84,7 +84,8 @@ fn run_scan(root: &Path) {
     // `#[tokio::test]`, so run the scan on a dedicated std thread to mirror the production context.
     std::thread::scope(|scope| {
         scope.spawn(|| {
-            let mut store = hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING).expect("open store");
+            let mut store =
+                hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING).expect("open store");
             hacienda_mcp::scanner::scan(
                 root,
                 &mut store,

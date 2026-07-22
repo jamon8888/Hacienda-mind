@@ -22,9 +22,8 @@ use xberg::{ExtractInput, extract};
 
 use super::{ExtractError, SCHEMA_VER};
 use crate::config::{
-    DetectedEntity, PiiConfig, RedactionState,
-    DocLanguageConfig, KeywordAlgorithm, KeywordsConfig, LlmConfig, NerBackend, NerConfig,
-    SummarizationConfig, SummarizationStrategy,
+    DetectedEntity, DocLanguageConfig, KeywordAlgorithm, KeywordsConfig, LlmConfig, NerBackend, NerConfig, PiiConfig,
+    RedactionState, SummarizationConfig, SummarizationStrategy,
 };
 
 /// Per-file document extraction result. Mirrors the shape of `FileMapL1` —

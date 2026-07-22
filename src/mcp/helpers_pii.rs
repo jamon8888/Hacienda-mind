@@ -5,8 +5,8 @@ use rmcp::ErrorData as McpError;
 
 use super::ServerState;
 use super::types_pii::{
-    PiiAuditReportParams, PiiAuditReportResponse, PiiEraseParams, PiiEraseResponse, PiiRedactParams,
-    PiiRedactResponse, PiiStatusParams, PiiStatusResponse,
+    PiiAuditReportParams, PiiAuditReportResponse, PiiEraseParams, PiiEraseResponse, PiiRedactParams, PiiRedactResponse,
+    PiiStatusParams, PiiStatusResponse,
 };
 use crate::config::{PiiConfig, PiiStrategy, RedactionState};
 
@@ -107,10 +107,7 @@ pub(super) async fn run_pii_audit_report(
 ) -> Result<PiiAuditReportResponse, McpError> {
     let store = state.store.read().await;
     let Some(db) = &store.index_db else {
-        return Err(McpError::internal_error(
-            "no index available; run a scan first",
-            None,
-        ));
+        return Err(McpError::internal_error("no index available; run a scan first", None));
     };
 
     let scoped = params.path_prefix.is_some();
@@ -122,8 +119,7 @@ pub(super) async fn run_pii_audit_report(
 
     // Optional category filter (case-insensitive).
     if let Some(want) = &params.categories {
-        let want_lc: std::collections::HashSet<String> =
-            want.iter().map(|s| s.to_lowercase()).collect();
+        let want_lc: std::collections::HashSet<String> = want.iter().map(|s| s.to_lowercase()).collect();
         by_category.retain(|k, _| want_lc.contains(&k.to_lowercase()));
     }
 
@@ -141,10 +137,7 @@ pub(super) async fn run_pii_audit_report(
 }
 
 /// Deferred P3 erasure stub — honest "not yet available", never a silent win.
-pub(super) async fn run_pii_erase(
-    _state: &ServerState,
-    params: PiiEraseParams,
-) -> Result<PiiEraseResponse, McpError> {
+pub(super) async fn run_pii_erase(_state: &ServerState, params: PiiEraseParams) -> Result<PiiEraseResponse, McpError> {
     Ok(PiiEraseResponse {
         erased: false,
         reason: format!(

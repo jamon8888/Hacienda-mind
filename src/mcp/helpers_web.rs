@@ -135,7 +135,10 @@ async fn embedder(state: &ServerState) -> Result<Arc<SharedEmbedder>, McpError> 
 
 fn engine(state: &ServerState) -> Result<&crawlberg::CrawlEngineHandle, McpError> {
     state.crawl_engine.as_ref().ok_or_else(|| {
-        McpError::internal_error("crawl engine not initialised; check hacienda-mcp serve startup logs", None)
+        McpError::internal_error(
+            "crawl engine not initialised; check hacienda-mcp serve startup logs",
+            None,
+        )
     })
 }
 

@@ -169,7 +169,10 @@ fn keep_event_path(filter: &crate::scanner_filter::IndexFilter, root: &Path, p: 
     let Ok(rel) = p.strip_prefix(root) else {
         return false;
     };
-    if rel.components().any(|c| c.as_os_str() == crate::config::HACIENDA_MCP_DIR) {
+    if rel
+        .components()
+        .any(|c| c.as_os_str() == crate::config::HACIENDA_MCP_DIR)
+    {
         return false;
     }
     let rel_cow = rel.to_string_lossy();
@@ -254,8 +257,11 @@ mod tests {
         });
 
         std::thread::sleep(Duration::from_millis(200));
-        std::fs::write(root.join(crate::config::HACIENDA_MCP_DIR).join("noise.txt"), b"ignored\n")
-            .expect("write hacienda-mcp file");
+        std::fs::write(
+            root.join(crate::config::HACIENDA_MCP_DIR).join("noise.txt"),
+            b"ignored\n",
+        )
+        .expect("write hacienda-mcp file");
 
         let result = path_rx.recv_timeout(Duration::from_millis(800));
         assert!(result.is_err(), "expected no emission, got {result:?}");
@@ -273,7 +279,8 @@ mod tests {
         let tmp = tempfile::tempdir().expect("tempdir");
         let root = tmp.path().canonicalize().expect("canonicalize tempdir");
         std::fs::create_dir_all(root.join(".git")).expect("mkdir .git");
-        std::fs::create_dir_all(root.join("child").join(crate::config::HACIENDA_MCP_DIR)).expect("mkdir child/.hacienda-mcp");
+        std::fs::create_dir_all(root.join("child").join(crate::config::HACIENDA_MCP_DIR))
+            .expect("mkdir child/.hacienda-mcp");
         std::fs::write(root.join(".gitignore"), b"build/\n").expect("write .gitignore");
         std::fs::create_dir_all(root.join("build")).expect("mkdir build");
         let mut config = crate::config::default_for_root(&root);

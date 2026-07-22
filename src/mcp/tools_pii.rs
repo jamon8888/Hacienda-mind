@@ -11,12 +11,8 @@ use serde_json::Value;
 
 use super::BasemindServer;
 use super::helpers::record_call;
-use super::helpers_pii::{
-    run_pii_audit_report, run_pii_erase, run_pii_redact, run_pii_status,
-};
-use super::types_pii::{
-    PiiAuditReportParams, PiiEraseParams, PiiRedactParams, PiiStatusParams,
-};
+use super::helpers_pii::{run_pii_audit_report, run_pii_erase, run_pii_redact, run_pii_status};
+use super::types_pii::{PiiAuditReportParams, PiiEraseParams, PiiRedactParams, PiiStatusParams};
 
 #[rmcp::tool_router(vis = "pub(super)", router = "tool_router_pii")]
 impl BasemindServer {

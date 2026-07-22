@@ -102,8 +102,7 @@ pub fn index_page(
 
     // Redact every chunk's text before embedding + storing. Track the worst state
     // and merge the per-chunk tallies so the IndexedPage reflects the whole page.
-    let (redacted_chunks, worst_state, merged_tally) =
-        redact_page_chunks(&chunked.chunks, pii_cfg);
+    let (redacted_chunks, worst_state, merged_tally) = redact_page_chunks(&chunked.chunks, pii_cfg);
 
     let mut rows: Vec<DocumentRow> = Vec::with_capacity(redacted_chunks.len());
     for (idx, chunk) in chunked.chunks.iter().enumerate() {
@@ -163,10 +162,7 @@ pub fn index_page(
 /// Split out from [`index_page`] so the core redaction behaviour is unit-testable without a
 /// LanceDB store or an embedding model. Honesty invariant: when the model is missing the worst
 /// state is `InactiveModelMissing` (never a lying `Redacted`).
-fn redact_page_chunks(
-    chunks: &[xberg::Chunk],
-    pii_cfg: &PiiConfig,
-) -> (Vec<String>, RedactionState, DetectedEntity) {
+fn redact_page_chunks(chunks: &[xberg::Chunk], pii_cfg: &PiiConfig) -> (Vec<String>, RedactionState, DetectedEntity) {
     let mut worst_state = RedactionState::Redacted;
     let mut merged_tally = DetectedEntity::default();
     let mut out: Vec<String> = Vec::with_capacity(chunks.len());

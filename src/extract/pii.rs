@@ -56,10 +56,7 @@ fn get_model(cfg: &PiiConfig) -> Option<Arc<Gliner2Candle>> {
             match Gliner2Candle::from_local(model_dir) {
                 Ok(mut model) => {
                     if let Some(adapter_dir) = cfg.lora_adapter_dir.as_ref() {
-                        let name = adapter_dir
-                            .file_name()
-                            .and_then(|n| n.to_str())
-                            .unwrap_or("adapter");
+                        let name = adapter_dir.file_name().and_then(|n| n.to_str()).unwrap_or("adapter");
                         if let Err(e) = model.load_adapter(name, adapter_dir) {
                             tracing::warn!(
                                 error = %e,
@@ -170,16 +167,30 @@ pub fn redact_code_text(text: &str, cfg: &PiiConfig) -> (String, DetectedEntity,
     #[cfg(not(feature = "pii"))]
     {
         let _ = cfg;
-        (text.to_string(), DetectedEntity::default(), RedactionState::DisabledFeature)
+        (
+            text.to_string(),
+            DetectedEntity::default(),
+            RedactionState::DisabledFeature,
+        )
     }
     #[cfg(feature = "pii")]
     {
         if !cfg.enabled {
-            return (text.to_string(), DetectedEntity::default(), RedactionState::DisabledConfig);
+            return (
+                text.to_string(),
+                DetectedEntity::default(),
+                RedactionState::DisabledConfig,
+            );
         }
         let model = match get_model(cfg) {
             Some(m) => m,
-            None => return (text.to_string(), DetectedEntity::default(), RedactionState::InactiveModelMissing("model unavailable".to_string())),
+            None => {
+                return (
+                    text.to_string(),
+                    DetectedEntity::default(),
+                    RedactionState::InactiveModelMissing("model unavailable".to_string()),
+                );
+            }
         };
         let label_slice: Vec<&str> = cfg.categories.iter().map(PiiCategory::label).collect();
         let mut detected: Vec<Span> = Vec::new();
@@ -188,23 +199,41 @@ pub fn redact_code_text(text: &str, cfg: &PiiConfig) -> (String, DetectedEntity,
         if let Ok(spans) = model.extract_ner(text, &label_slice, cfg.threshold) {
             for span in spans {
                 let (s, e) = span.offsets();
-                if (e as usize) <= (s as usize) || (e as usize) > text.len() { continue; }
+                if (e as usize) <= (s as usize) || (e as usize) > text.len() {
+                    continue;
+                }
                 tally.add(span.class());
-                detected.push(Span { start: s as usize, end: e as usize, category: span.class().to_string() });
+                detected.push(Span {
+                    start: s as usize,
+                    end: e as usize,
+                    category: span.class().to_string(),
+                });
             }
         } else {
-            return (text.to_string(), DetectedEntity::default(), RedactionState::Failed("inference error".to_string()));
+            return (
+                text.to_string(),
+                DetectedEntity::default(),
+                RedactionState::Failed("inference error".to_string()),
+            );
         }
         // Regex spans
         for (s, e, cat) in crate::extract::pii_regex::detect_regex_pii(text) {
             tally.add(cat);
-            detected.push(Span { start: s, end: e, category: cat.to_string() });
+            detected.push(Span {
+                start: s,
+                end: e,
+                category: cat.to_string(),
+            });
         }
         if detected.is_empty() {
             return (text.to_string(), tally, RedactionState::Redacted);
         }
         detected.sort_by_key(|x| x.start);
-        (apply_strategy(text, &detected, cfg.strategy), tally, RedactionState::Redacted)
+        (
+            apply_strategy(text, &detected, cfg.strategy),
+            tally,
+            RedactionState::Redacted,
+        )
     }
 }
 
@@ -316,7 +345,11 @@ mod tests {
     #[cfg(feature = "pii")]
     #[test]
     fn model_status_probe_reports_missing() {
-        let cfg = PiiConfig { enabled: true, model_dir: None, ..Default::default() };
+        let cfg = PiiConfig {
+            enabled: true,
+            model_dir: None,
+            ..Default::default()
+        };
         assert_eq!(model_status(&cfg), crate::config::PiiModelStatus::ModelDirUnset);
     }
 
@@ -341,7 +374,10 @@ mod tests {
             ..Default::default()
         };
         let masked = redact_author_identity("Maria Lopez <maria@acme.com>", &on);
-        assert!(!masked.contains("maria@acme.com"), "email must be masked, got: {masked}");
+        assert!(
+            !masked.contains("maria@acme.com"),
+            "email must be masked, got: {masked}"
+        );
         assert!(masked.contains("Maria Lopez"), "display name without PII stays");
 
         // With the flag off, the identity is returned verbatim.

@@ -504,7 +504,8 @@ fn warn_ignored_global_flags(cmd: &Cmd, json: bool, view: &str) {
 }
 
 fn bootstrap_grammars(verbosity: Verbosity, no_color: bool) -> Result<()> {
-    let summary = hacienda_mcp::lang::ensure_grammars().map_err(|e| anyhow::anyhow!("grammar bootstrap failed: {e}"))?;
+    let summary =
+        hacienda_mcp::lang::ensure_grammars().map_err(|e| anyhow::anyhow!("grammar bootstrap failed: {e}"))?;
     let mut out = render::stdout(no_color);
     render::render_grammar_bootstrap(&mut out, &summary, verbosity);
     Ok(())
@@ -561,7 +562,9 @@ fn writer_collision_notice(root: &std::path::Path) -> Option<String> {
              `rescan` tool to refresh the index, or stop it first.",
             meta.command, meta.pid
         )),
-        hacienda_mcp::store::WriterProbe::Held { holder: None } => Some(hacienda_mcp::store::LOCK_CONTENTION_HELP.to_string()),
+        hacienda_mcp::store::WriterProbe::Held { holder: None } => {
+            Some(hacienda_mcp::store::LOCK_CONTENTION_HELP.to_string())
+        }
     }
 }
 
@@ -594,7 +597,9 @@ fn sync_git_history_after_scan(
     match hacienda_mcp::git_history::builder::sync(&index, &repo, &hacienda_mcp_dir) {
         Ok(outcome) => {
             let summary = match outcome {
-                hacienda_mcp::git_history::builder::RebuildOutcome::Fresh => "git-history index: up to date".to_string(),
+                hacienda_mcp::git_history::builder::RebuildOutcome::Fresh => {
+                    "git-history index: up to date".to_string()
+                }
                 hacienda_mcp::git_history::builder::RebuildOutcome::Incremental { added } => {
                     format!("git-history index: +{added} commits")
                 }
@@ -614,7 +619,8 @@ fn cmd_scan(root: &std::path::Path, args: &ScanArgs, verbosity: Verbosity, no_co
 
     let mut out = render::stdout(no_color);
     if args.staged {
-        let repo = hacienda_mcp::git::Repo::discover(root).context("`--staged` requires being inside a git repository")?;
+        let repo =
+            hacienda_mcp::git::Repo::discover(root).context("`--staged` requires being inside a git repository")?;
         let mut store = open_store_for_write(root, hacienda_mcp::store::VIEW_STAGED, "staged", LockHolder::Scan)?;
         render::render_scan_header(&mut out, "staged index", verbosity);
         let report = hacienda_mcp::scanner::scan(
@@ -692,8 +698,14 @@ fn cmd_rescan(root: &std::path::Path, args: &RescanArgs, verbosity: Verbosity, n
         .context("rescan (full)")?
     } else {
         let abs: Vec<PathBuf> = args.paths.iter().map(|p| root.join(p)).collect();
-        hacienda_mcp::scanner::scan_paths(root, &mut store, &config, &abs, hacienda_mcp::scanner::EmbedMode::Inline)
-            .context("rescan (paths)")?
+        hacienda_mcp::scanner::scan_paths(
+            root,
+            &mut store,
+            &config,
+            &abs,
+            hacienda_mcp::scanner::EmbedMode::Inline,
+        )
+        .context("rescan (paths)")?
     };
     render::render_report(&mut out, &report, verbosity);
     sync_git_history_after_scan(root, !args.no_git_history, args.rebuild_git_history, &mut out);
@@ -819,7 +831,8 @@ fn cmd_serve(root: &std::path::Path, view: &str, args: &ServeArgs) -> Result<()>
     );
     let outcome = runtime.block_on(async move {
         use rmcp::ServiceExt;
-        let server = hacienda_mcp::mcp::BasemindServer::new_with_options(store, root_buf, config, repo, git_cache, options);
+        let server =
+            hacienda_mcp::mcp::BasemindServer::new_with_options(store, root_buf, config, repo, git_cache, options);
         let transport = rmcp::transport::stdio();
         let service = server
             .serve(transport)
@@ -832,7 +845,10 @@ fn cmd_serve(root: &std::path::Path, view: &str, args: &ServeArgs) -> Result<()>
         Ok::<(), anyhow::Error>(())
     });
     match &outcome {
-        Ok(()) => tracing::info!(pid = std::process::id(), "hacienda-mcp serve: client disconnected, exiting"),
+        Ok(()) => tracing::info!(
+            pid = std::process::id(),
+            "hacienda-mcp serve: client disconnected, exiting"
+        ),
         Err(error) => {
             tracing::error!(pid = std::process::id(), %error, "hacienda-mcp serve: exiting on error")
         }

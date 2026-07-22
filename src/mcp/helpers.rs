@@ -288,10 +288,7 @@ fn has_block_comments(lang: LangId) -> bool {
     )
 }
 
-pub(super) fn blame_hunk_view(
-    h: &crate::git::BlameHunk,
-    pii_cfg: &crate::config::PiiConfig,
-) -> BlameHunkView {
+pub(super) fn blame_hunk_view(h: &crate::git::BlameHunk, pii_cfg: &crate::config::PiiConfig) -> BlameHunkView {
     BlameHunkView {
         commit_sha: h.commit_sha.clone(),
         short_sha: h.short_sha.clone(),
