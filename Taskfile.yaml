@@ -14,15 +14,14 @@ tasks:
       - echo "Setup complete"
 
   build:
-    desc: Build the hacienda-mcp binary (optimized)
+    desc: Build the hacienda-mcp binary
     cmds:
-      - ./scripts/fast-build.sh
+      - cargo build --release
 
   test:
-    desc: Run all tests (optimized)
+    desc: Run all tests
     cmds:
-      - FEATURES=full ./scripts/fast-build.sh
-      - cargo test --workspace --features full
+      - cargo test --workspace
       - task: hermes:test
 
   hermes:test:
@@ -40,9 +39,8 @@ tasks:
       - cargo test --workspace -- --nocapture
 
   lint:
-    desc: Run all linters and formatters via prek (optimized)
+    desc: Run all linters and formatters via prek
     cmds:
-      - ./scripts/fast-build.sh
       - prek run --all-files
 
   format:
@@ -51,16 +49,15 @@ tasks:
       - cargo fmt --all
 
   check:
-    desc: Run all checks (lint + test) - optimized
+    desc: Run all checks (lint + test)
     cmds:
       - task: lint
       - task: test
 
   clean:
-    desc: Clean build artifacts (optimized)
+    desc: Clean build artifacts
     cmds:
       - cargo clean
-      - rm -rf target-fast
 
   update:
     desc: Update dependencies (compatible versions only — no Cargo.toml edits)
@@ -76,9 +73,8 @@ tasks:
       - prek autoupdate
 
   harden:
-    desc: Run the real-OSS hardening harness against all canary repos (optimized)
+    desc: Run the real-OSS hardening harness against all canary repos
     cmds:
-      - HACIENDA_MCP_HARDEN_NO_BUILD=1 ./scripts/fast-build.sh
       - ./scripts/harden.sh
 
   demo:record:
@@ -98,36 +94,3 @@ tasks:
     desc: GoReleaser snapshot build — produces dist/ archives without uploading
     cmds:
       - goreleaser release --snapshot --clean --skip=publish
-
-  # Fast development workflow tasks
-  dev:
-    desc: Fast development build with minimal features
-    cmds:
-      - FEATURES=documents ./scripts/fast-build.sh
-
-  dev:code:
-    desc: Fast development build with code intelligence features
-    cmds:
-      - FEATURES=code-intel ./scripts/fast-build.sh
-
-  dev:full:
-    desc: Full development build with all features
-    cmds:
-      - FEATURES=full ./scripts/fast-build.sh
-
-  dev:test:
-    desc: Quick test run with fast build
-    cmds:
-      - FEATURES=documents ./scripts/fast-build.sh
-      - cargo test --workspace --features documents
-
-  perf:
-    desc: Run performance check
-    cmds:
-      - ./scripts/performance-check.sh
-
-  build:clean:
-    desc: Clean build and rebuild fresh
-    cmds:
-      - task: clean
-      - task: build
