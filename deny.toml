@@ -74,7 +74,7 @@ allow = ["CDDL-1.0"]
 
 [[licenses.exceptions]]
 name = "nom-exif"
-allow = ["Apache-2.0 OR MIT"]
+allow = ["Apache-2.0 WITH MIT"]
 
 [licenses.private]
 ignore = false
