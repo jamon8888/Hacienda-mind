@@ -3,7 +3,7 @@ title: Web Crawl
 description: Fetch and crawl web pages, adding them to the document search store — discovery, indexing, and RAG all in one.
 ---
 
-import { Aside, Badge, Card, CardGrid } from '@astrojs/starlight/components';
+import { Aside, Badge, Card, CardGrid } from "@astrojs/starlight/components";
 
 Web pages can be scraped one-off or crawled from a seed URL. Results land in the document
 search store and are queryable the same way as local PDFs and Office files.
@@ -80,8 +80,9 @@ The crawler SSRF-blocks private and loopback networks (`localhost`, `127.0.0.1`,
 `allow_private_network = true` **only** if you trust the crawl target.
 
 <Aside type="caution">
-SSRF blocking is **default-on**. Disable only when crawling internal docs on a trusted
-network. Never disable in a shared environment or against untrusted URLs.
+  SSRF blocking is **default-on**. Disable only when crawling internal docs on a
+  trusted network. Never disable in a shared environment or against untrusted
+  URLs.
 </Aside>
 
 ## Searching crawled pages

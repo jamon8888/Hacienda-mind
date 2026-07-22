@@ -5,14 +5,22 @@ description: >-
   a standalone CLI.
 ---
 
-import { Aside, Tabs, TabItem, Code, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import {
+  Aside,
+  Tabs,
+  TabItem,
+  Code,
+  LinkCard,
+  CardGrid,
+} from "@astrojs/starlight/components";
 
 Three ways to run hacienda-mcp, easiest first. All three share the same local index
 and are safe to run side by side.
 
 <Aside type="tip">
-The plugin downloads the hacienda-mcp program for you on first use. The MCP server
-and CLI paths need it installed yourself — see [Install the program](#install-the-program).
+  The plugin downloads the hacienda-mcp program for you on first use. The MCP
+  server and CLI paths need it installed yourself — see [Install the
+  program](#install-the-program).
 </Aside>
 
 ## 1. As a plugin (recommended)
@@ -31,6 +39,7 @@ agent-comms features, and the slash commands. Pick your coding tool.
     turn on auto-update for the `hacienda-mcp` marketplace in Claude Code's plugin
     manager, so you always get the current index format and tool set — or
     update it regularly by hand if you'd rather control timing.
+
   </TabItem>
 
   <TabItem label="Codex">
@@ -38,33 +47,42 @@ agent-comms features, and the slash commands. Pick your coding tool.
 
     In the app: open the **Plugins** sidebar and add hacienda-mcp. The CLI and IDE
     share one config file.
+
   </TabItem>
 
-  <TabItem label="Cursor">
-    In Agent chat: `/add-plugin hacienda-mcp` (once listed), or go to **Dashboard →
-    Settings → Plugins → Team Marketplaces → Import from Repo** and point it at
-    `https://github.com/jamon8888/Hacienda-mind`.
-  </TabItem>
+<TabItem label="Cursor">
+  In Agent chat: `/add-plugin hacienda-mcp` (once listed), or go to **Dashboard
+  → Settings → Plugins → Team Marketplaces → Import from Repo** and point it at
+  `https://github.com/jamon8888/Hacienda-mind`.
+</TabItem>
 
   <TabItem label="Gemini CLI">
     <Code code={`gemini extensions install https://github.com/jamon8888/Hacienda-mind`} lang="bash" />
 
     Update later with `gemini extensions update hacienda-mcp`.
+
   </TabItem>
 
-  <TabItem label="Factory Droid">
-    <Code code={`droid plugin marketplace add https://github.com/jamon8888/Hacienda-mind\ndroid plugin install hacienda-mcp@hacienda-mcp`} lang="bash" />
-  </TabItem>
+<TabItem label="Factory Droid">
+  <Code
+    code={`droid plugin marketplace add https://github.com/jamon8888/Hacienda-mind\ndroid plugin install hacienda-mcp@hacienda-mcp`}
+    lang="bash"
+  />
+</TabItem>
 
-  <TabItem label="GitHub Copilot CLI">
-    <Code code={`copilot plugin marketplace add jamon8888/Hacienda-mind\ncopilot plugin install hacienda-mcp@hacienda-mcp`} lang="bash" />
-  </TabItem>
+<TabItem label="GitHub Copilot CLI">
+  <Code
+    code={`copilot plugin marketplace add jamon8888/Hacienda-mind\ncopilot plugin install hacienda-mcp@hacienda-mcp`}
+    lang="bash"
+  />
+</TabItem>
 
   <TabItem label="OpenCode">
     Add to `opencode.json` (project) or `~/.config/opencode/opencode.json`
     (global):
 
     <Code code={`{ "plugin": ["basemind-opencode@latest"] }`} lang="json" />
+
   </TabItem>
 
   <TabItem label="Kimi Code">
@@ -72,6 +90,7 @@ agent-comms features, and the slash commands. Pick your coding tool.
 
     Kimi doesn't support the comms auto-notifications, but the chat tools still
     work.
+
   </TabItem>
 
   <TabItem label="Hermes">
@@ -86,6 +105,7 @@ agent-comms features, and the slash commands. Pick your coding tool.
     <Code code={`hermes plugins enable hacienda-mcp`} lang="bash" />
 
     Comms auto-notifications are best-effort; the chat tools work regardless.
+
   </TabItem>
 
   <TabItem label="Antigravity & pi">
@@ -95,6 +115,7 @@ agent-comms features, and the slash commands. Pick your coding tool.
 
     **pi**: `pi install git:github.com/jamon8888/Hacienda-mind`. pi has no MCP support,
     so hacienda-mcp runs through its [CLI](#3-as-a-cli) here.
+
   </TabItem>
 </Tabs>
 
@@ -103,11 +124,14 @@ agent-comms features, and the slash commands. Pick your coding tool.
 If your tool speaks MCP but you're not using the plugin,
 [install the program](#install-the-program), then register it:
 
-<Code code={`{
+<Code
+  code={`{
   "mcpServers": {
     "hacienda-mcp": { "command": "hacienda-mcp", "args": ["serve"] }
   }
-}`} lang="json" />
+}`}
+  lang="json"
+/>
 
 Each tool says whether it only reads or can change things, so your client can
 auto-approve the safe ones and ask before the rest. If `hacienda-mcp` isn't found,
@@ -121,48 +145,53 @@ use the full path from `which hacienda-mcp`.
 
     Add `--scope user` for all projects; the `--` is required. Or commit a
     `.mcp.json` at the repo root with the block above.
+
   </TabItem>
 
-  <TabItem label="Cursor">
-    Put the block above in `.cursor/mcp.json` (project) or `~/.cursor/mcp.json`
-    (global).
-  </TabItem>
+<TabItem label="Cursor">
+  Put the block above in `.cursor/mcp.json` (project) or `~/.cursor/mcp.json`
+  (global).
+</TabItem>
 
-  <TabItem label="Windsurf">
-    `~/.codeium/windsurf/mcp_config.json` (or Cascade → MCP servers → manage),
-    then **Refresh**.
-  </TabItem>
+<TabItem label="Windsurf">
+  `~/.codeium/windsurf/mcp_config.json` (or Cascade → MCP servers → manage),
+  then **Refresh**.
+</TabItem>
 
   <TabItem label="Codex">
     <Code code={`codex mcp add hacienda-mcp -- hacienda-mcp serve`} lang="bash" />
 
     Shared by the CLI and IDE.
+
   </TabItem>
 
   <TabItem label="Gemini CLI">
     <Code code={`gemini mcp add hacienda-mcp hacienda-mcp serve`} lang="bash" />
 
     Or the block above in `~/.gemini/settings.json`.
+
   </TabItem>
 
-  <TabItem label="GitHub Copilot CLI">
-    `/mcp add` in-session, or `~/.copilot/mcp-config.json` with
-    `"type": "local"` and `"tools": ["*"]`.
-  </TabItem>
+<TabItem label="GitHub Copilot CLI">
+  `/mcp add` in-session, or `~/.copilot/mcp-config.json` with `"type": "local"`
+  and `"tools": ["*"]`.
+</TabItem>
 
   <TabItem label="Factory Droid">
     <Code code={`droid mcp add hacienda-mcp "hacienda-mcp serve"`} lang="bash" />
 
     Or `~/.factory/mcp.json`.
+
   </TabItem>
 
-  <TabItem label="Cline">
-    MCP Servers icon → Configure → add the block above.
-  </TabItem>
+<TabItem label="Cline">
+  MCP Servers icon → Configure → add the block above.
+</TabItem>
 
-  <TabItem label="Continue">
-    `.continue/mcpServers/hacienda-mcp.yaml` with `command: hacienda-mcp`, `args: [serve]`.
-  </TabItem>
+<TabItem label="Continue">
+  `.continue/mcpServers/hacienda-mcp.yaml` with `command: hacienda-mcp`, `args:
+  [serve]`.
+</TabItem>
 
   <TabItem label="Hermes">
     `mcp_servers.hacienda-mcp` in `~/.hermes/config.yaml` (YAML, not JSON):
@@ -171,12 +200,13 @@ use the full path from `which hacienda-mcp`.
 
     Then `hermes plugins enable hacienda-mcp`. `pip install hacienda-mcp` also ships a
     native Hermes plugin with the helper skills and comms notifications.
+
   </TabItem>
 
-  <TabItem label="OpenCode (without plugin)">
-    `opencode.json` under key `mcp`, with `command` as an array
-    `["hacienda-mcp", "serve"]`.
-  </TabItem>
+<TabItem label="OpenCode (without plugin)">
+  `opencode.json` under key `mcp`, with `command` as an array `["hacienda-mcp",
+  "serve"]`.
+</TabItem>
 
   <TabItem label="Other tools">
     Point it at the command `hacienda-mcp` with the argument `serve`.
@@ -188,11 +218,14 @@ use the full path from `which hacienda-mcp`.
 The standalone program, for scripts, headless runs, and CI.
 [Install it](#install-the-program), then:
 
-<Code code={`hacienda-mcp scan                          # index the project once
+<Code
+  code={`hacienda-mcp scan                          # index the project once
 hacienda-mcp query symbol "parseQuery"     # find a symbol by name
 hacienda-mcp query references "processFile" # find everywhere it's called
 hacienda-mcp git blame-file src/main.rs    # who last changed each line
-hacienda-mcp watch                         # keep the index fresh as files change`} lang="bash" />
+hacienda-mcp watch                         # keep the index fresh as files change`}
+  lang="bash"
+/>
 
 Full command list in the [CLI reference](/reference/cli/).
 
@@ -201,14 +234,14 @@ Full command list in the [CLI reference](/reference/cli/).
 The MCP and CLI paths need `hacienda-mcp` available on your system. (The plugin does
 this for you.)
 
-| Channel | Command | Includes |
-|---|---|---|
-| Homebrew | `brew install Goldziher/tap/hacienda-mcp` | everything |
-| npm | `npm install -g hacienda-mcp` | everything |
-| pip | `pip install hacienda-mcp` | everything |
-| cargo | `cargo install hacienda-mcp --locked` | code + git only |
-| cargo (full) | `cargo install hacienda-mcp --features full --locked` | everything |
-| GitHub releases | [Download a binary](https://github.com/jamon8888/Hacienda-mind/releases) | everything |
+| Channel         | Command                                                                  | Includes        |
+| --------------- | ------------------------------------------------------------------------ | --------------- |
+| Homebrew        | `brew install Goldziher/tap/hacienda-mcp`                                | everything      |
+| npm             | `npm install -g hacienda-mcp`                                            | everything      |
+| pip             | `pip install hacienda-mcp`                                               | everything      |
+| cargo           | `cargo install hacienda-mcp --locked`                                    | code + git only |
+| cargo (full)    | `cargo install hacienda-mcp --features full --locked`                    | everything      |
+| GitHub releases | [Download a binary](https://github.com/jamon8888/Hacienda-mind/releases) | everything      |
 
 The Homebrew / npm / pip / GitHub downloads include the full feature set —
 documents, OCR, search, web crawl, shared memory, agent comms, and agent shells

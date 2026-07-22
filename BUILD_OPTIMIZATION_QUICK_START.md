@@ -23,7 +23,7 @@ enabled = true
 
 Create a fast-build script with this content:
 
-```bash
+````bash
 #!/bin/bash
 # fast-build.sh - Optimized build script
 \nset -euo pipefail\n\nROOT_DIR="$(cd "$(dirname \"$0\")/..\" && pwd)\"
@@ -31,13 +31,13 @@ Create a fast-build script with this content:
 Make it executable:
 
 ```bash\nchmod +x fast-build.sh
-```
+````
 
 ### Step 3: Apply Immediate Optimizations
 
 Run one of these commands to immediately see build time improvements:
 
-```bash
+````bash
 # Fast development build (recommended for daily work)
 ./scripts/fast-build.sh\n\n# Build with minimal features for testing\nFEATURES=documents ./scripts/fast-build.sh\n\n# Build with code intelligence only\nFEATURES=\"code-intel\" ./scripts/fast-build.sh\n\n# Clean build (first time setup)\n./scripts/fast-build.sh clean\n```\n
 ## Advanced Optimizations (Optional)
@@ -83,43 +83,46 @@ Run a quick performance comparison:
 ./scripts/fast-build.sh > /tmp/bench-incremental.log 2>&1\n\n# Compare times
 echo \"First build: $(grep -o 'completed in [0-9]*' /tmp/bench-first.log | tail -1)\"
 echo \"Incremental: $(grep -o 'completed in [0-9]*' /tmp/bench-incremental.log | tail -1)\"
-```
+````
 
 ## Troubleshooting
 
 ### Common Issues and Solutions:
 
-1. **Build still slow**:\n   - Ensure `.cargo/config.toml` is updated\n   - Check disk space: `df -h /tmp`\n   - Try `./scripts/fast-build.sh clean`\n\n2. **Compilation errors**:\n   - Fall back to `./scripts/fast-build.sh` without extra flags\n   - Use fewer features: `FEATURES=\"intelligence\"`\n\n3. **Memory usage**:\n   - Increase system swap if needed\n   - Use incremental builds for memory efficiency\n\n## Maintenance
+1. **Build still slow**:\n - Ensure `.cargo/config.toml` is updated\n - Check disk space: `df -h /tmp`\n - Try `./scripts/fast-build.sh clean`\n\n2. **Compilation errors**:\n - Fall back to `./scripts/fast-build.sh` without extra flags\n - Use fewer features: `FEATURES=\"intelligence\"`\n\n3. **Memory usage**:\n - Increase system swap if needed\n - Use incremental builds for memory efficiency\n\n## Maintenance
 
 ### Update Optimizations:
 
-```bash\ncat > .cargo/config.toml << 'EOF'\n# Paste updated configuration here\nEOF\n```\n
+`bash\ncat > .cargo/config.toml << 'EOF'\n# Paste updated configuration here\nEOF\n`\n
+
 ### Monitor Build Health:
 
-```bash\n./scripts/performance-check.sh\n```\n
+`bash\n./scripts/performance-check.sh\n`\n
+
 ## Verification
 
 Your build optimization is successful when:
 
 - ✅ First build under 10 minutes (was 10-15 min)
-- ✅ Incremental builds under 1 minute (was 2-3 min)  
+- ✅ Incremental builds under 1 minute (was 2-3 min)
 - ✅ Build process shows 40%+ time improvement
 - ✅ No compilation errors
 
 ## Expected Runtime After Optimization:
 
-| Build Type | Before | After | Improvement |
-|------------|--------|-------|-------------|
-| Cold Build | 10-15 min | 4-6 min | 60% |
-| Incremental | 2-3 min | 30-45 sec | 80% |
-| Test Suite | 3-4 min | 1-2 min | 50% |
-| Docs Build | 2-3 min | 1-2 min | 60% |
+| Build Type  | Before    | After     | Improvement |
+| ----------- | --------- | --------- | ----------- |
+| Cold Build  | 10-15 min | 4-6 min   | 60%         |
+| Incremental | 2-3 min   | 30-45 sec | 80%         |
+| Test Suite  | 3-4 min   | 1-2 min   | 50%         |
+| Docs Build  | 2-3 min   | 1-2 min   | 60%         |
 
 ## Conclusion
 
 These optimizations provide immediate, significant build time improvements with minimal configuration changes. The setup takes 5 minutes but delivers 40-80% build time reductions.
 
 For teams, these optimizations result in:
+
 - Faster CI/CD pipelines
 - Better developer experience
 - More efficient resource utilization

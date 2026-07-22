@@ -5,15 +5,21 @@ description: >-
   and see answers come back in milliseconds.
 ---
 
-import { Steps, Code, Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import {
+  Steps,
+  Code,
+  Aside,
+  CardGrid,
+  LinkCard,
+} from "@astrojs/starlight/components";
 
 After installing, index a repository and ask it questions. Most answers come back
 in **under a millisecond** — queries are answered from RAM, not disk.
 
 <Aside type="tip">
-New to a repo? Run `hacienda-mcp init` (or `/bm-init`) first — see
-[Get started](/start/installation/#get-started) — to scaffold `basemind.toml`
-and wire agent-instructions rules before you scan.
+  New to a repo? Run `hacienda-mcp init` (or `/bm-init`) first — see [Get
+  started](/start/installation/#get-started) — to scaffold `basemind.toml` and
+  wire agent-instructions rules before you scan.
 </Aside>
 
 <Steps>
@@ -34,8 +40,11 @@ and wire agent-instructions rules before you scan.
 
    Output:
 
-   <Code code={`src/parser.rs:142:1 parseQuery (function)
-src/utils.rs:89:1 parseQuery (type alias)`} lang="text" />
+   <Code
+     code={`src/parser.rs:142:1 parseQuery (function)
+src/utils.rs:89:1 parseQuery (type alias)`}
+     lang="text"
+   />
 
    Now you know exactly where to read — no grep noise, no manual parsing.
 
@@ -45,9 +54,12 @@ src/utils.rs:89:1 parseQuery (type alias)`} lang="text" />
 
    Output:
 
-   <Code code={`src/scanner.rs:142:9 processFile
+   <Code
+     code={`src/scanner.rs:142:9 processFile
 src/scanner.rs:201:13 processFile
-src/extract.rs:57:20 processFile`} lang="text" />
+src/extract.rs:57:20 processFile`}
+     lang="text"
+   />
 
    Every place it's called, with line and column numbers.
 
@@ -57,7 +69,10 @@ src/extract.rs:57:20 processFile`} lang="text" />
 
    Or drill down to a single symbol:
 
-   <Code code={`hacienda-mcp git blame-symbol src/main.rs "processFile"`} lang="bash" />
+   <Code
+     code={`hacienda-mcp git blame-symbol src/main.rs "processFile"`}
+     lang="bash"
+   />
 
    Shows the last commit, author, and timestamp for each line or symbol.
 
@@ -68,7 +83,7 @@ src/extract.rs:57:20 processFile`} lang="text" />
    <Code code={`hacienda-mcp watch`} lang="bash" />
 
    This runs in the foreground and re-indexes on file changes. Or use `hacienda-mcp
-   serve` if you're querying via the MCP server or plugin.
+serve` if you're querying via the MCP server or plugin.
 
 </Steps>
 
@@ -121,6 +136,7 @@ the tools in the chat:
 All the same queries, just over the MCP surface instead of the CLI.
 
 <Aside>
-After re-indexing, both the CLI (`hacienda-mcp query ...`) and the MCP tools have
-the fresh index. No server restart needed — use `rescan` to update in-process.
+  After re-indexing, both the CLI (`hacienda-mcp query ...`) and the MCP tools
+  have the fresh index. No server restart needed — use `rescan` to update
+  in-process.
 </Aside>

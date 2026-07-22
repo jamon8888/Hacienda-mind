@@ -3,7 +3,7 @@ title: Agent Shells
 description: Agents open, type into, and watch terminal sessions in the background — no extra tools to install.
 ---
 
-import { Aside, Badge, Card, CardGrid } from '@astrojs/starlight/components';
+import { Aside, Badge, Card, CardGrid } from "@astrojs/starlight/components";
 
 Included in every prebuilt download. Agents can spawn detached terminal sessions, send
 input, read screen output, and coordinate with each other over agent comms. Sessions can
@@ -84,10 +84,7 @@ Send the same input to multiple sessions at once.
 ```json
 {
   "text": "echo 'ready'",
-  "session_ids": [
-    "abc123def456",
-    "def456ghi789"
-  ]
+  "session_ids": ["abc123def456", "def456ghi789"]
 }
 ```
 
@@ -150,9 +147,10 @@ shell_capture { "session_id": "shard-2" }
   sessions.
 
 <Aside type="note">
-Headless sessions have no real terminal — they buffer stdout/stderr and you read it with
-`shell_capture`. For interactive shells (passing `-it` flags) or to watch a session's
-output in real time, the agent can open a tab or window in your terminal emulator.
+  Headless sessions have no real terminal — they buffer stdout/stderr and you
+  read it with `shell_capture`. For interactive shells (passing `-it` flags) or
+  to watch a session's output in real time, the agent can open a tab or window
+  in your terminal emulator.
 </Aside>
 
 ## See also

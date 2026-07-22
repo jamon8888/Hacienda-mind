@@ -18,7 +18,7 @@ This package can be used either as a library or command-line program.
 
 To use it as a library, add the following to your `Cargo.toml`:
 
-``` toml
+```toml
 [dependencies]
 tree-sitter-graph = "0.12"
 ```

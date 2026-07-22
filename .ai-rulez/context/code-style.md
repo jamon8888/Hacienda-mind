@@ -34,4 +34,4 @@ Project-specific conventions baked into context so they ship into every AI tool'
 #### Commits
 
 - Conventional Commit prefixes (`feat:`, `fix:`, `perf:`, `chore:`, `refactor:`). Match the style in `git log`.
-- Body explains *why*, not *what*. Mention schema bumps explicitly.
+- Body explains _why_, not _what_. Mention schema bumps explicitly.

@@ -13,11 +13,11 @@ that separately (see below). The plugin reaches hacienda-mcp by shelling out to 
 
 1. **The `hacienda-mcp` binary on your `PATH`** — via any channel:
 
-   | Channel | Command |
-   |---|---|
-   | Homebrew | `brew install Goldziher/tap/hacienda-mcp` |
-   | npm | `npm install -g hacienda-mcp` |
-   | cargo | `cargo install hacienda-mcp --features full --locked` |
+   | Channel         | Command                                                                  |
+   | --------------- | ------------------------------------------------------------------------ |
+   | Homebrew        | `brew install Goldziher/tap/hacienda-mcp`                                |
+   | npm             | `npm install -g hacienda-mcp`                                            |
+   | cargo           | `cargo install hacienda-mcp --features full --locked`                    |
    | GitHub releases | [download a binary](https://github.com/jamon8888/Hacienda-mind/releases) |
 
 2. **The hacienda-mcp MCP server wired into Hermes** — this is what gives Hermes the 60+ tools. Add to

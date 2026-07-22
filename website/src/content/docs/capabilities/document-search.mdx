@@ -3,7 +3,7 @@ title: Document Search
 description: Semantic and full-text search over PDFs, Office files, HTML, email, images, and web pages — with OCR, reranking, and NER filtering.
 ---
 
-import { Aside, Badge, Card, CardGrid } from '@astrojs/starlight/components';
+import { Aside, Badge, Card, CardGrid } from "@astrojs/starlight/components";
 
 hacienda-mcp extracts 90+ file formats (PDF, Office, HTML, email, images via OCR) into a
 LanceDB vector store and answers meaning-based queries with optional cross-encoder reranking.
@@ -86,9 +86,9 @@ Follow links from a seed URL up to a configurable depth, indexing all discovered
 ```
 
 <Aside type="note">
-The crawler honors `robots.txt` by default (disable with config). It SSRF-blocks private
-and loopback hosts unless `[crawl].allow_private_network = true` is set in
-`.hacienda-mcp/basemind.toml`.
+  The crawler honors `robots.txt` by default (disable with config). It
+  SSRF-blocks private and loopback hosts unless `[crawl].allow_private_network =
+  true` is set in `.hacienda-mcp/basemind.toml`.
 </Aside>
 
 ### `web_map`
@@ -165,8 +165,8 @@ enabled = true  # cross-encoder reranking for document chunks
   to a document class.
 
 <Aside type="note">
-All results are paginated. Use `next_cursor` from one response as `cursor` in the next to
-fetch additional pages.
+  All results are paginated. Use `next_cursor` from one response as `cursor` in
+  the next to fetch additional pages.
 </Aside>
 
 ## See also

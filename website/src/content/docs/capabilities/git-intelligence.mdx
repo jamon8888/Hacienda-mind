@@ -3,7 +3,7 @@ title: Git Intelligence
 description: Explore git history without shelling out — commits, blame, diffs, churn ranking, and full-text search — all at symbol resolution.
 ---
 
-import { Aside, Badge, Card, CardGrid } from '@astrojs/starlight/components';
+import { Aside, Badge, Card, CardGrid } from "@astrojs/starlight/components";
 
 hacienda-mcp precomputes a per-repo git-history index backed by `gix`, resolving blame and diffs
 at **symbol** resolution. History queries return commits, authors, and paths as structured
@@ -11,9 +11,10 @@ data in **tens of microseconds** — a pure accelerator that rebuilds automatica
 changes.
 
 <Aside type="note">
-Git tools require `hacienda-mcp serve` to be running inside a git repository. The history index
-auto-builds on first use; if it is fresh (matching HEAD), the tools use it. Otherwise they
-walk history directly, so results are always current.
+  Git tools require `hacienda-mcp serve` to be running inside a git repository.
+  The history index auto-builds on first use; if it is fresh (matching HEAD),
+  the tools use it. Otherwise they walk history directly, so results are always
+  current.
 </Aside>
 
 ## Core tools
@@ -155,12 +156,12 @@ What's staged and unstaged right now — the structured equivalent of `git statu
 
 On a typical repo with 2,000–4,000 commits:
 
-| Query | Latency | Notes |
-|---|---|---|
-| `commits_touching` | ~37 µs | Indexed posting-list lookup |
-| `recent_changes` | ~13 µs | Newest-first list scan |
-| Index build | 0.5–3.2 s | Depends on commit depth |
-| Index size | 6–22 % of `.git` | Space–time trade-off |
+| Query              | Latency          | Notes                       |
+| ------------------ | ---------------- | --------------------------- |
+| `commits_touching` | ~37 µs           | Indexed posting-list lookup |
+| `recent_changes`   | ~13 µs           | Newest-first list scan      |
+| Index build        | 0.5–3.2 s        | Depends on commit depth     |
+| Index size         | 6–22 % of `.git` | Space–time trade-off        |
 
 The index is a **pure accelerator**: it rebuilds automatically when history is rewritten
 (rebase, force-push, filter-repo) and the tools fall back to live history walks if the
@@ -180,7 +181,8 @@ index is stale.
   author is cheaper than parsing the log.
 
 <Aside type="note">
-All paths are repository-relative. Lists are capped (`limit`, default 100, max 1000).
+  All paths are repository-relative. Lists are capped (`limit`, default 100, max
+  1000).
 </Aside>
 
 ## See also

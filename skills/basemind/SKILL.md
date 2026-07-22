@@ -82,33 +82,33 @@ git only when no hacienda-mcp tool covers the question.
 
 ## Tool routing (copy this into your mental model)
 
-| Question | Tool |
-|---|---|
-| "Where is X defined?" | `search_symbols` (substring match, optional `kind` filter) |
-| "What's the shape of file F?" | `outline` (add `l2: true` for calls + docs) |
-| "What calls X?" (any name) | `find_references` |
-| "What calls this specific definition?" | `find_callers` (path + name + optional kind) |
-| "Trace the call graph from a function?" | `call_graph` (BFS up or down, bounded by `max_depth` / `max_nodes`) |
-| "What implements / extends / inherits from X?" | `find_implementations` (Rust, Python, TS/TSX, JS) |
-| "What imports module M?" | `dependents` |
-| "What files are indexed?" | `list_files` (filter by `language` or `path_contains`) |
-| "What changed recently?" | `recent_changes`, `commits_touching`, `find_commits_by_path` |
-| "When did symbol X last change?" | `symbol_history` |
-| "Who wrote this line / symbol?" | `blame_file`, `blame_symbol` |
-| "Where's the churn?" | `hot_files` |
-| "What's dirty in the working tree?" | `working_tree_status` |
-| "What's HEAD / branch?" | `repo_info` |
-| "Show diff between revs for file F" | `diff_file`, `diff_outline` |
-| "What's indexed?" | `status` |
-| "Semantic search over PDFs / Office docs in the repo?" | `search_documents` (requires `--features documents`) |
-| "Recall something the agent stored earlier?" | `memory_get` exact, `memory_list` prefix, `memory_search` KNN |
-| "Remember this for future sessions?" | `memory_put` (delete with `memory_delete`) |
-| "Refresh the index after editing code?" | `rescan` — no MCP disconnect needed; optional `paths` arg |
-| "Fetch next page of results?" | Pass `next_cursor` from prior response as `cursor` |
-| "Pull this URL into RAG?" | `web_scrape` (requires `--features crawl`) — single page, robots-aware |
-| "Ingest a docs site section?" | `web_crawl` — link-following from a seed URL |
-| "What URLs exist on this site?" | `web_map` — sitemap + link discovery, no bodies fetched |
-| "How much has hacienda-mcp helped today?" | `telemetry_summary` — per-tool histogram + estimated tokens saved |
+| Question                                               | Tool                                                                   |
+| ------------------------------------------------------ | ---------------------------------------------------------------------- |
+| "Where is X defined?"                                  | `search_symbols` (substring match, optional `kind` filter)             |
+| "What's the shape of file F?"                          | `outline` (add `l2: true` for calls + docs)                            |
+| "What calls X?" (any name)                             | `find_references`                                                      |
+| "What calls this specific definition?"                 | `find_callers` (path + name + optional kind)                           |
+| "Trace the call graph from a function?"                | `call_graph` (BFS up or down, bounded by `max_depth` / `max_nodes`)    |
+| "What implements / extends / inherits from X?"         | `find_implementations` (Rust, Python, TS/TSX, JS)                      |
+| "What imports module M?"                               | `dependents`                                                           |
+| "What files are indexed?"                              | `list_files` (filter by `language` or `path_contains`)                 |
+| "What changed recently?"                               | `recent_changes`, `commits_touching`, `find_commits_by_path`           |
+| "When did symbol X last change?"                       | `symbol_history`                                                       |
+| "Who wrote this line / symbol?"                        | `blame_file`, `blame_symbol`                                           |
+| "Where's the churn?"                                   | `hot_files`                                                            |
+| "What's dirty in the working tree?"                    | `working_tree_status`                                                  |
+| "What's HEAD / branch?"                                | `repo_info`                                                            |
+| "Show diff between revs for file F"                    | `diff_file`, `diff_outline`                                            |
+| "What's indexed?"                                      | `status`                                                               |
+| "Semantic search over PDFs / Office docs in the repo?" | `search_documents` (requires `--features documents`)                   |
+| "Recall something the agent stored earlier?"           | `memory_get` exact, `memory_list` prefix, `memory_search` KNN          |
+| "Remember this for future sessions?"                   | `memory_put` (delete with `memory_delete`)                             |
+| "Refresh the index after editing code?"                | `rescan` — no MCP disconnect needed; optional `paths` arg              |
+| "Fetch next page of results?"                          | Pass `next_cursor` from prior response as `cursor`                     |
+| "Pull this URL into RAG?"                              | `web_scrape` (requires `--features crawl`) — single page, robots-aware |
+| "Ingest a docs site section?"                          | `web_crawl` — link-following from a seed URL                           |
+| "What URLs exist on this site?"                        | `web_map` — sitemap + link discovery, no bodies fetched                |
+| "How much has hacienda-mcp helped today?"              | `telemetry_summary` — per-tool histogram + estimated tokens saved      |
 
 ## Setup (one-time per repo)
 

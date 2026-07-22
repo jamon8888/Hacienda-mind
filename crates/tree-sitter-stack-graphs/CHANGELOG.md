@@ -60,7 +60,7 @@ Support `stack-graphs` version `0.12`.
 
 #### Changed
 
-- The `LanguageConfiguration::matches_file` method takes a `ContentProvider` instead of an `Option<&str>` value. This allows lazy file reading *after* the filename is checked, instead of the unconditional loading required before. To give content readers the opportunity to cache read values, a mutable reference is required. The return type has changed to `std::io::Result` to propagate possible errors from content providers. A `FileReader` implementation that caches the last read file is provided as well.
+- The `LanguageConfiguration::matches_file` method takes a `ContentProvider` instead of an `Option<&str>` value. This allows lazy file reading _after_ the filename is checked, instead of the unconditional loading required before. To give content readers the opportunity to cache read values, a mutable reference is required. The return type has changed to `std::io::Result` to propagate possible errors from content providers. A `FileReader` implementation that caches the last read file is provided as well.
 - Tests run with the CI `Tester` timeout after 60 seconds by default. Set `Tester::max_test_time` to change this behavior.
 - A new `StackGraphLanguage::from_source` function can be used to construct a stack graph language from a given TSG source. The `StackGraphLanguage` type can also record the TSG file path, which is used when displaying errors.
 - The `LoadError` type has been renamed to `BuildError` to avoid confusion between it and the `loader::LoadError` type.
@@ -111,7 +111,7 @@ Support `stack-graphs` version `0.12`.
 
 ## v0.5.1 -- 2023-01-10
 
-Patch release to update *all* version numbers.
+Patch release to update _all_ version numbers.
 
 ## v0.5.0 -- 2023-01-10
 

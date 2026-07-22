@@ -55,11 +55,11 @@ background, so a client never blocks waiting for a large repo to load. The `stat
 While the server isn't fully ready, `status` and every code-map read tool may carry a `notice`
 object — `{ state, message, retry }` — instead of (or alongside) their normal result:
 
-| `state` | Meaning | `retry` |
-|---|---|---|
-| `warming_up` | Loading an existing index into memory. | `true` |
-| `building_index` | Indexing from scratch (no `.hacienda-mcp/` yet). | `true` |
-| `rescanning` | Incremental rescan after a file change; results are usable but may be stale. | `false` |
+| `state`          | Meaning                                                                      | `retry` |
+| ---------------- | ---------------------------------------------------------------------------- | ------- |
+| `warming_up`     | Loading an existing index into memory.                                       | `true`  |
+| `building_index` | Indexing from scratch (no `.hacienda-mcp/` yet).                             | `true`  |
+| `rescanning`     | Incremental rescan after a file change; results are usable but may be stale. | `false` |
 
 Treat an empty or partial result carrying a `notice` as "retry shortly," not "no matches" — poll
 `status` (or just retry the call) until the notice clears.

@@ -32,9 +32,11 @@ any files.
    version dir is pruned:
 
    ```json
-   { "type": "command",
+   {
+     "type": "command",
      "command": "bash -c 's=$(ls -d \"$HOME\"/.claude/plugins/cache/basemind/basemind/*/.claude-plugin/statusline.sh 2>/dev/null | sort -V | tail -1); [ -f \"$s\" ] || s=\"$HOME/.claude/plugins/marketplaces/basemind/.claude-plugin/statusline.sh\"; [ -f \"$s\" ] && exec bash \"$s\" || printf \"%s\" \"◆ hacienda-mcp: run /bm-statusline\"'",
-     "refreshInterval": 5 }
+     "refreshInterval": 5
+   }
    ```
 
    How it resolves, in order: the **highest-versioned** cached copy (`sort -V`, not

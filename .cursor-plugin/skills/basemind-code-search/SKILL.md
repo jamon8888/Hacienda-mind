@@ -33,20 +33,20 @@ raw shell only when no tool covers the question.
 
 ## Tool routing
 
-| Question | MCP tool | CLI |
-|---|---|---|
-| "Where is X defined?" | `search_symbols` (substring, optional `kind`) | `hacienda-mcp query symbol "X"` |
-| "What's the shape of file F?" | `outline` (add `l2: true` for calls + docs) | `hacienda-mcp query outline F [--l2]` |
-| "What calls X?" (any name) | `find_references` | `hacienda-mcp query references "X"` |
-| "What calls this specific definition?" | `find_callers` (path + name + optional kind) | `hacienda-mcp query callers F name [--kind]` |
-| "Trace the call graph from a function?" | `call_graph` (BFS, bounded by `max_depth` / `max_nodes`) | `hacienda-mcp query call-graph "name" [--direction --max-depth]` |
-| "What implements / extends / inherits X?" | `find_implementations` (Rust, Python, TS/TSX, JS) | `hacienda-mcp query implementations "X"` |
-| "What imports module M?" | `dependents` | `hacienda-mcp query dependents "M"` |
-| "What files are indexed?" | `list_files` (filter by `language` / `path_contains`) | `hacienda-mcp query list-files [--language --path-contains]` |
-| "Regex over file contents?" | `workspace_grep` | `hacienda-mcp query grep "pattern" [--language --path-contains]` |
-| "What's indexed?" | `status` | `hacienda-mcp query status` |
-| "Refresh the index after editing?" | `rescan` (optional `paths`) | `hacienda-mcp scan` |
-| "Fetch the next page?" | pass `next_cursor` from the prior response as `cursor` | — |
+| Question                                  | MCP tool                                                 | CLI                                                              |
+| ----------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------- |
+| "Where is X defined?"                     | `search_symbols` (substring, optional `kind`)            | `hacienda-mcp query symbol "X"`                                  |
+| "What's the shape of file F?"             | `outline` (add `l2: true` for calls + docs)              | `hacienda-mcp query outline F [--l2]`                            |
+| "What calls X?" (any name)                | `find_references`                                        | `hacienda-mcp query references "X"`                              |
+| "What calls this specific definition?"    | `find_callers` (path + name + optional kind)             | `hacienda-mcp query callers F name [--kind]`                     |
+| "Trace the call graph from a function?"   | `call_graph` (BFS, bounded by `max_depth` / `max_nodes`) | `hacienda-mcp query call-graph "name" [--direction --max-depth]` |
+| "What implements / extends / inherits X?" | `find_implementations` (Rust, Python, TS/TSX, JS)        | `hacienda-mcp query implementations "X"`                         |
+| "What imports module M?"                  | `dependents`                                             | `hacienda-mcp query dependents "M"`                              |
+| "What files are indexed?"                 | `list_files` (filter by `language` / `path_contains`)    | `hacienda-mcp query list-files [--language --path-contains]`     |
+| "Regex over file contents?"               | `workspace_grep`                                         | `hacienda-mcp query grep "pattern" [--language --path-contains]` |
+| "What's indexed?"                         | `status`                                                 | `hacienda-mcp query status`                                      |
+| "Refresh the index after editing?"        | `rescan` (optional `paths`)                              | `hacienda-mcp scan`                                              |
+| "Fetch the next page?"                    | pass `next_cursor` from the prior response as `cursor`   | —                                                                |
 
 ## Examples
 

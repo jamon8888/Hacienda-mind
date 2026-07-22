@@ -14,28 +14,29 @@
 
 ## File Structure
 
-| File | Responsibility |
-|---|---|
-| `src/config/pii.rs` | Add `PiiCategory::{Email,Phone,Date,Url}`, `PiiModelStatus`, `RedactionState`, `DetectedEntity` types; extend default `categories`; add `redact_git_identity` + `encryption_key` (P3 consumer) fields. |
-| `src/extract/pii.rs` | Rework `redact_pii` → `redact_code_text` returning `(String, Vec<DetectedEntity>, RedactionState)`; public `model_status()` probe; attestation hash; merge regex spans. Keep `redact_pii` as a thin compat wrapper. |
-| `src/extract/pii_regex.rs` | **New** — Presidio-style regex detector → `(start, end, category)` spans (email, phone, date, url, AWS/Google/GitHub keys, `sk-*`, JWT, PEM, `KEY=`). |
-| `src/extract/mod.rs` | Add `RedactionState` + `DetectedEntity` + attestation fields to `FileMapL1`/`FileMapL2`/`FileMapL3`. |
-| `src/scanner.rs` | In `process_file`, redact textual fields of l1/l2/l3 when `pii.enabled`; persist state + tally + attestation; stage `entities_by_category`. |
-| `src/extract/doc.rs` | Redact `entities`/`summary`/`metadata` too; persist state + attestation on `FileMapDoc`/chunks. |
-| `src/web/ingest.rs` | `index_page`: redact chunk text before LanceDB store; persist state. |
-| `src/git/*` + `src/mcp/tools_git.rs` | Redact author email/name + patch/body text (consent-gated by `pii.redact_git_identity`). |
-| `src/mcp/helpers*.rs` | Defensive redaction of serialized strings in leaking tools; echo attestation. |
-| `src/mcp/tools_pii.rs` | **New** — `pii_status`, `pii_redact`, `pii_audit_report` tools (`read_only_hint=true`). |
-| `src/index/keys.rs` + `src/index/writer.rs` + `src/index/mod.rs` | New Fjall `entities_by_category` keyspace. |
-| `src/store.rs` | Blob write/read carries new `RedactionState` + tally + attestation header fields. |
-| `tests/scan_smoke.rs`, `tests/mcp_smoke.rs`, `tests/harden.rs` | Assertions per spec Section 5. |
-| `README.md` | Note PII now covers code-map + git + web, RGPD-ready with verifiable tools. |
+| File                                                             | Responsibility                                                                                                                                                                                                      |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/config/pii.rs`                                              | Add `PiiCategory::{Email,Phone,Date,Url}`, `PiiModelStatus`, `RedactionState`, `DetectedEntity` types; extend default `categories`; add `redact_git_identity` + `encryption_key` (P3 consumer) fields.              |
+| `src/extract/pii.rs`                                             | Rework `redact_pii` → `redact_code_text` returning `(String, Vec<DetectedEntity>, RedactionState)`; public `model_status()` probe; attestation hash; merge regex spans. Keep `redact_pii` as a thin compat wrapper. |
+| `src/extract/pii_regex.rs`                                       | **New** — Presidio-style regex detector → `(start, end, category)` spans (email, phone, date, url, AWS/Google/GitHub keys, `sk-*`, JWT, PEM, `KEY=`).                                                               |
+| `src/extract/mod.rs`                                             | Add `RedactionState` + `DetectedEntity` + attestation fields to `FileMapL1`/`FileMapL2`/`FileMapL3`.                                                                                                                |
+| `src/scanner.rs`                                                 | In `process_file`, redact textual fields of l1/l2/l3 when `pii.enabled`; persist state + tally + attestation; stage `entities_by_category`.                                                                         |
+| `src/extract/doc.rs`                                             | Redact `entities`/`summary`/`metadata` too; persist state + attestation on `FileMapDoc`/chunks.                                                                                                                     |
+| `src/web/ingest.rs`                                              | `index_page`: redact chunk text before LanceDB store; persist state.                                                                                                                                                |
+| `src/git/*` + `src/mcp/tools_git.rs`                             | Redact author email/name + patch/body text (consent-gated by `pii.redact_git_identity`).                                                                                                                            |
+| `src/mcp/helpers*.rs`                                            | Defensive redaction of serialized strings in leaking tools; echo attestation.                                                                                                                                       |
+| `src/mcp/tools_pii.rs`                                           | **New** — `pii_status`, `pii_redact`, `pii_audit_report` tools (`read_only_hint=true`).                                                                                                                             |
+| `src/index/keys.rs` + `src/index/writer.rs` + `src/index/mod.rs` | New Fjall `entities_by_category` keyspace.                                                                                                                                                                          |
+| `src/store.rs`                                                   | Blob write/read carries new `RedactionState` + tally + attestation header fields.                                                                                                                                   |
+| `tests/scan_smoke.rs`, `tests/mcp_smoke.rs`, `tests/harden.rs`   | Assertions per spec Section 5.                                                                                                                                                                                      |
+| `README.md`                                                      | Note PII now covers code-map + git + web, RGPD-ready with verifiable tools.                                                                                                                                         |
 
 ---
 
 ## Task 1: PII types + extended categories (config)
 
 **Files:**
+
 - Modify: `src/config/pii.rs`
 - Test: inline `#[cfg(test)]` in `src/config/pii.rs`
 
@@ -74,20 +75,25 @@ Expected: FAIL — `PiiCategory::Email` does not exist; default categories empty
 In `src/config/pii.rs`:
 
 1. Add to `PiiCategory` enum (after `Location`):
+
 ```rust
     Email,
     Phone,
     Date,
     Url,
 ```
+
 2. Extend `PiiCategory::label`:
+
 ```rust
     PiiCategory::Email => "email",
     PiiCategory::Phone => "phone",
     PiiCategory::Date => "date",
     PiiCategory::Url => "url",
 ```
+
 3. Add `redact_git_identity` + `encryption_key` fields to `PiiConfig` (encryption_key is a P3 consumer; add the field now, unused until P3):
+
 ```rust
     /// Mask author email/name in git tool responses (legal/audit contexts).
     #[serde(default = "PiiConfig::default_redact_git_identity")]
@@ -96,7 +102,9 @@ In `src/config/pii.rs`:
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub encryption_key: Option<crate::config::documents::ApiKey>,
 ```
+
 4. Extend `PiiConfig::default()` so `categories` defaults to the four new + three base labels and `redact_git_identity` defaults to `true`:
+
 ```rust
     categories: vec![
         PiiCategory::Person,
@@ -109,7 +117,9 @@ In `src/config/pii.rs`:
     ],
     redact_git_identity: true,
 ```
+
 5. Add the default fn:
+
 ```rust
 fn default_redact_git_identity() -> bool { true }
 ```
@@ -131,6 +141,7 @@ git commit -m "feat(pii): add Email/Phone/Date/Url categories + git-identity + k
 ## Task 2: Verifiability types (RedactionState, DetectedEntity, PiiModelStatus)
 
 **Files:**
+
 - Modify: `src/config/pii.rs` (add the three enums/structs)
 - Test: inline test in `src/config/pii.rs`
 
@@ -227,6 +238,7 @@ git commit -m "feat(pii): add RedactionState, PiiModelStatus, DetectedEntity typ
 ## Task 3: Presidio-style regex detector (`pii_regex.rs`)
 
 **Files:**
+
 - Create: `src/extract/pii_regex.rs`
 - Modify: `src/extract/mod.rs` (add `pub mod pii_regex;`)
 - Test: inline `#[cfg(test)]` in `src/extract/pii_regex.rs`
@@ -315,6 +327,7 @@ git commit -m "feat(pii): add Presidio-style regex secret/PII detector"
 ## Task 4: Rework `redact_pii` → `redact_code_text` (verifiable)
 
 **Files:**
+
 - Modify: `src/extract/pii.rs`
 - Test: inline in `src/extract/pii.rs`
 
@@ -354,6 +367,7 @@ Expected: FAIL — `redact_code_text` / `model_status` do not exist.
 
 1. Add `use crate::config::{DetectedEntity, PiiCategory, PiiConfig, PiiModelStatus, PiiStrategy, RedactionState};`
 2. Add a public model-status probe that reads the `OnceLock`:
+
 ```rust
 #[cfg(feature = "pii")]
 pub fn model_status(cfg: &PiiConfig) -> PiiModelStatus {
@@ -375,7 +389,9 @@ pub fn model_status(cfg: &PiiConfig) -> PiiModelStatus {
     }
 }
 ```
+
 3. Add attestation helper:
+
 ```rust
 pub fn attestation(redacted: &str, model_id: &str, config_hash: &str) -> String {
     use std::hash::Hasher;
@@ -384,7 +400,9 @@ pub fn attestation(redacted: &str, model_id: &str, config_hash: &str) -> String 
     format!("{:x}", h.finish())
 }
 ```
+
 4. Replace `redact_pii` body (feature `pii`) with `redact_code_text`:
+
 ```rust
 pub fn redact_code_text(text: &str, cfg: &PiiConfig) -> (String, DetectedEntity, RedactionState) {
     #[cfg(not(feature = "pii"))]
@@ -430,7 +448,9 @@ pub fn redact_code_text(text: &str, cfg: &PiiConfig) -> (String, DetectedEntity,
     }
 }
 ```
+
 5. Keep compat wrapper:
+
 ```rust
 /// Back-compat: documents path still calls this; returns redacted text only.
 pub fn redact_pii(text: &str, cfg: &PiiConfig) -> (String, Vec<String>) {
@@ -439,6 +459,7 @@ pub fn redact_pii(text: &str, cfg: &PiiConfig) -> (String, Vec<String>) {
     (out, labels)
 }
 ```
+
 6. Update existing tests: `disabled_pii_is_noop` and `enabled_without_model_dir_is_noop` still call `redact_pii` and check `.0` — keep passing. Add `model_status` test.
 
 - [ ] **Step 4: Run tests to verify pass**
@@ -458,6 +479,7 @@ git commit -m "feat(pii): redact_code_text returns state+entities+attestation, p
 ## Task 5: Persist state + tally + attestation on code-map blobs
 
 **Files:**
+
 - Modify: `src/extract/mod.rs` (`FileMapL1`/`L2`/`L3` structs)
 - Modify: `src/store.rs` (blob header write/read)
 - Modify: `src/scanner.rs` (`process_file`)
@@ -466,6 +488,7 @@ git commit -m "feat(pii): redact_code_text returns state+entities+attestation, p
 - [ ] **Step 1: Write failing test (struct round-trip)**
 
 Add to `src/extract/mod.rs` tests:
+
 ```rust
 #[test]
 fn l1_carries_redaction_fields() {
@@ -491,6 +514,7 @@ Expected: FAIL — `redaction`/`redacted_entities`/`attestation` fields and `def
 - [ ] **Step 3: Add fields + constructor**
 
 In `src/extract/mod.rs`, add to `FileMapL1` (and matching fields to `FileMapL2`/`FileMapL3`):
+
 ```rust
     /// Redaction outcome for this file's text. `None` = pre-feature blob.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -502,6 +526,7 @@ In `src/extract/mod.rs`, add to `FileMapL1` (and matching fields to `FileMapL2`/
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub attestation: Option<String>,
 ```
+
 Add `impl DetectedEntity { pub fn is_empty(&self) -> bool { self.by_category.is_empty() } }` (or place on the config type). Ensure `RedactionState`/`DetectedEntity` are imported (`use crate::config::pii::*;`).
 
 - [ ] **Step 4: Run test to verify pass**
@@ -514,6 +539,7 @@ Expected: PASS.
 After `extract_l1_l2` produces `(l1, l2_opt)` (line ~847) and before `store.write_filemap_hex` (line ~866), redact textual fields when `pii.enabled`. For each `Symbol`/`Import`/`Call` doc-comment/signature/string-literal field, apply `redact_code_text` and collect the worst `RedactionState` + merged `DetectedEntity` + recompute attestation over the concatenated redacted text. Set `l1.redaction`/`l1.redacted_entities`/`l1.attestation` (and same on `l2`). Do NOT redact `symbol.name`/`call.callee`/import module names.
 
 Pseudocode (fill in exact field names from `l1.rs`/`l2.rs`):
+
 ```rust
 #[cfg(feature = "pii")]
 if config.pii.enabled {
@@ -533,7 +559,9 @@ if config.pii.enabled {
     if let Some(l2) = &mut l2 { l2.redaction = Some(state.clone()); l2.redacted_entities = tally; l2.attestation = Some(att); }
 }
 ```
+
 Add `RedactionState::worst`/`DetectedEntity::merge` helpers in `src/config/pii.rs`:
+
 ```rust
 impl RedactionState {
     /// Pick the most severe state (Failed > InactiveModelMissing > DisabledConfig > Redacted).
@@ -559,6 +587,7 @@ git commit -m "feat(pii): persist redaction state, entity tally, attestation on 
 ## Task 6: Redact documents `entities`/`summary`/`metadata`
 
 **Files:**
+
 - Modify: `src/extract/doc.rs` (already calls `redact_pii` at lines 410, 465)
 - Test: inline in `src/extract/doc.rs`
 
@@ -576,10 +605,12 @@ fn doc_entities_and_summary_redacted() {
 - [ ] **Step 2: Replace `.0` calls with `redact_code_text` and persist state**
 
 In `src/extract/doc.rs`:
+
 ```rust
 let (text, _ents, state) = crate::extract::pii::redact_code_text(&c.content, &config.pii);
 // use `text` for the chunk
 ```
+
 Apply same to `result.content` (line 465) and to `result.summary`/`.metadata`/`.entities` text fields. Set `FileMapDoc.redaction`/`redacted_entities`/`attestation` (add these three fields to `FileMapDoc` in `doc.rs`, mirroring Task 5). Keep the existing `entities`/`summary`/`metadata` fields but redact their `text`/`value`.
 
 - [ ] **Step 3: Run doc tests + clippy**
@@ -599,6 +630,7 @@ git commit -m "feat(pii): redact document entities/summary/metadata, persist sta
 ## Task 7: New Fjall `entities_by_category` keyspace
 
 **Files:**
+
 - Modify: `src/index/keys.rs`, `src/index/writer.rs`, `src/index/mod.rs`
 - Test: inline in `src/index/writer.rs`
 
@@ -640,6 +672,7 @@ git commit -m "feat(pii): add entities_by_category Fjall keyspace for audit + er
 ## Task 8: Web ingest redaction (`src/web/ingest.rs`)
 
 **Files:**
+
 - Modify: `src/web/ingest.rs` (`index_page`)
 - Test: inline in `src/web/ingest.rs`
 
@@ -674,6 +707,7 @@ git commit -m "feat(pii): redact web-ingested page text before LanceDB store"
 ## Task 9: Git tool redaction (consent-gated)
 
 **Files:**
+
 - Modify: `src/git/mod.rs` (author email/name structs) + `src/mcp/tools_git.rs` + `src/mcp/helpers_git.rs` (or wherever git responses are built)
 - Test: inline in the git helper module
 
@@ -715,6 +749,7 @@ git commit -m "feat(pii): consent-gated redaction of git author/email/patch text
 ## Task 10: MCP response-time defensive redaction + `tools_pii.rs`
 
 **Files:**
+
 - Create: `src/mcp/tools_pii.rs`
 - Modify: `src/mcp/mod.rs` (register the new tool module)
 - Modify: `src/mcp/helpers*.rs` (redact serialized strings per Section 2 tool list)
@@ -739,6 +774,7 @@ async fn pii_audit_report(state: &AppState) -> Result<PiiAuditResponse, McpError
     Ok(PiiAuditResponse { by_category: counts, note: "best-effort; some PII may remain".into() })
 }
 ```
+
 Define `PiiStatusResponse`/`PiiRedactResponse`/`PiiAuditResponse` with `JsonSchema`-derived structs in `src/mcp/types_pii.rs` (or inline). Mark all three `annotations(read_only_hint = true, open_world_hint = false)`. Add `cache_erase_subject` as a **deferred stub** that returns `McpError::not_implemented("deferred to P3")` so the surface is reserved but not built.
 
 - [ ] **Step 2: Register module in `src/mcp/mod.rs`**
@@ -766,6 +802,7 @@ git commit -m "feat(pii): add pii_status/pii_redact/pii_audit_report tools + res
 ## Task 11: Tests — scan_smoke, mcp_smoke, harden
 
 **Files:**
+
 - Modify: `tests/scan_smoke.rs`, `tests/mcp_smoke.rs`, `tests/harden.rs`
 - Run: `cargo test --features "pii documents memory comms code-search" --test scan_smoke --test mcp_smoke`
 
@@ -799,6 +836,7 @@ git commit -m "test(pii): add scan/mcp/harden assertions for code-map + git + we
 ## Task 12: README + final verification
 
 **Files:**
+
 - Modify: `README.md`
 
 - [ ] **Step 1: Update README PII section**
@@ -808,12 +846,14 @@ Add a row/note: PII redaction now covers code-map (symbols/doc-comments/literals
 - [ ] **Step 2: Final check triad**
 
 Run:
+
 ```bash
 cargo fmt
 cargo clippy --workspace --all-targets --tests -- -D warnings
 cargo test --workspace
 poly lint .
 ```
+
 Expected: all clean.
 
 - [ ] **Step 3: Commit**

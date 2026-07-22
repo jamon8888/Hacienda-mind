@@ -16,6 +16,7 @@ cargo test --release --test harden -- --ignored --nocapture
 
    `ripgrep` (Rust), `tokio` (Rust), `typescript` (TS/JS), `react` (TS/JSX), `django` (Python),
    `requests` (Python), `gin` (Go), `ripgrep-shallow` (shallow clone smoke).
+
 2. For each repo: `hacienda-mcp scan`, then an **in-process git-ops measurement** (`measure_git_ops`):
    build the git-history index synchronously and time warm, microsecond-resolution indexed-vs-live
    latency for `commits_touching` (hot + rare path), `recent_changes`, and `window_commits`, plus the
@@ -43,12 +44,12 @@ cargo test --release --test harden -- --ignored --nocapture
 
 Measured on an Apple M4 (10 cores — 4 P + 6 E, 16 GB), default-feature build (`HACIENDA_MCP_HARDEN_FEATURES=""`).
 
-| Repo | Files | Scan time | git-history build | `commits_touching` indexed / live |
-|---|---|---|---|---|
-| typescript | 81 k | ~18 s | ~3.2 s (2 k commits) | ~37 µs / ~2.3 ms |
-| django | 7 k | ~2.4 s | ~0.5 s (2 k commits) | ~39 µs / ~1.6 ms |
-| react | 7 k | ~2.0 s | ~0.6 s (2 k commits) | ~39 µs / ~2.5 ms |
-| tokio | 861 | ~0.4 s | ~0.9 s (4 k commits) | ~37 µs / ~2.1 ms |
+| Repo       | Files | Scan time | git-history build    | `commits_touching` indexed / live |
+| ---------- | ----- | --------- | -------------------- | --------------------------------- |
+| typescript | 81 k  | ~18 s     | ~3.2 s (2 k commits) | ~37 µs / ~2.3 ms                  |
+| django     | 7 k   | ~2.4 s    | ~0.5 s (2 k commits) | ~39 µs / ~1.6 ms                  |
+| react      | 7 k   | ~2.0 s    | ~0.6 s (2 k commits) | ~39 µs / ~2.5 ms                  |
+| tokio      | 861   | ~0.4 s    | ~0.9 s (4 k commits) | ~37 µs / ~2.1 ms                  |
 
 Indexed git queries are ~tens of µs flat; the index is 6–22 % of `.git`. Regressions beyond ~20% on
 the scan-time or build-time baselines should be investigated before merge.

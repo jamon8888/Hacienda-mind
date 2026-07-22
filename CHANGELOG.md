@@ -57,9 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   their true definitions. Delivers **intra-file** precision (shadowing, per-function/method parameter
   scope, Python comprehension bindings, Java field-vs-local) and **cross-file** resolution for Python:
   dotted and relative imports resolve to their target module, and each call site of an imported name
-  resolves *through* the import to the exported definition (reporting `resolved: true`), rather than
+  resolves _through_ the import to the exported definition (reporting `resolved: true`), rather than
   matching by name. No new MCP tools or query surface — existing navigation just gets precise for
-  these languages. Known limitations this iteration: Java cross-file resolution of *member* calls on
+  these languages. Known limitations this iteration: Java cross-file resolution of _member_ calls on
   an imported type (`Foo.greet()`) is not yet resolved (the imported type itself is), and a variable
   reused after a same-name Python comprehension may bind to the comprehension's own variable.
 - **`[code_intel] precise_resolution` config toggle** (default `true`). Set it to `false` in
@@ -86,7 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **`hacienda-mcp init` no longer scaffolds into a parent directory.** `init` resolved its target with
-  the same ancestor-`.hacienda-mcp/` walk the other commands use to *attach* to an existing index, so
+  the same ancestor-`.hacienda-mcp/` walk the other commands use to _attach_ to an existing index, so
   running it inside a repo whose parent already had a `.hacienda-mcp/` wrote `basemind.toml`, `.gitignore`,
   and the rules block into the parent instead of the current repo. `init` now anchors to the closest
   enclosing git repository (falling back to the working directory when not in a repo), so it always
@@ -939,8 +939,7 @@ harmless** — the blob and index formats are unchanged.
   `rmcp` `1.7` → `1.8`. `arrow` stays at 58 (lock-step with lancedb 0.30). rmcp 1.8 deprecates MCP
   logging (SEP-2577); hacienda-mcp keeps the capability for now since the status line and `rescan`
   progress depend on it.
-- **Linux release binaries target glibc 2.28** (RHEL 8 / Debian 11 / Ubuntu 20.04+ / Amazon Linux
-  2023) — the two `*-unknown-linux-gnu` artifacts are built with `cargo-zigbuild` (zig as the
+- **Linux release binaries target glibc 2.28** (RHEL 8 / Debian 11 / Ubuntu 20.04+ / Amazon Linux 2023) — the two `*-unknown-linux-gnu` artifacts are built with `cargo-zigbuild` (zig as the
   linker), pinning the required glibc symbol floor without changing runtime behaviour (still
   dynamically linked). A CI `objdump` guard fails the build if a dependency pulls a newer symbol.
   macOS / Windows artifacts are unchanged.
@@ -1578,7 +1577,7 @@ crates.io.
   `documents.output.format = "toon"` (or `--documents-output-format toon`).
   Round-trip parity with JSON asserted in `tests/mcp_smoke.rs`.
 - **Language-aware ingestion.** `documents.language.{auto_detect,
-  min_confidence, detect_multiple}` flows into kreuzberg's
+min_confidence, detect_multiple}` flows into kreuzberg's
   `LanguageDetectionConfig` and the chunking tokenizer. ISO 639-3 codes (e.g.
   `"fra"`) surface on `FileMapDoc.detected_languages`.
 - **Cross-encoder reranker** as a post-step on `search_documents`. Off by
