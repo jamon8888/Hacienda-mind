@@ -1,8 +1,7 @@
 # CodeRabbit configuration - limit review scope
 # Only review core PII redaction functionality
 
-review:
-  # Use path_filters to limit review scope
+reviews:
   path_filters:
     # Include only core PII files
     - "src/config/pii.rs"
@@ -19,7 +18,7 @@ review:
     - "src/store.rs"
     - "crates/pii-candle/**"
     - "crates/xberg-gliner/**"
-    # Exclude everything else (docs, plugins, configs, etc.)
+    # Exclude everything else
     - "!**/*.md"
     - "!**/*.mdx"
     - "!**/*.svg"
