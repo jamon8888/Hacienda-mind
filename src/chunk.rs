@@ -462,6 +462,9 @@ mod tests {
                 start_byte: 0,
                 end_byte: doc_end,
             }],
+            redaction: None,
+            redacted_entities: DetectedEntity::default(),
+            attestation: None,
         };
         let chunks = chunk_file(
             "d.rs",

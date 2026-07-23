@@ -30,17 +30,17 @@ this skill is for prose and documents.
 
 ## Tool routing
 
-| Question | MCP tool | CLI |
-|---|---|---|
-| "Semantic search over PDFs/Office/HTML docs?" | `search_documents` | `hacienda-mcp memory search-documents "query"` |
-| "Narrow to docs mentioning an entity?" | `search_documents { entity_category: "…" }` | *(MCP only)* |
-| "Narrow to docs with a keyword?" | `search_documents { keywords_contains: "…" }` | *(MCP only)* |
-| "Filter by file type?" | `search_documents { mime_type: "application/pdf" }` | *(MCP only)* |
-| "Pull a single URL into RAG?" | `web_scrape` (robots-aware) | `hacienda-mcp web scrape <url>` |
-| "Ingest a docs site section?" | `web_crawl` (link-following from a seed) | `hacienda-mcp web crawl <seed-url>` |
-| "What URLs exist on this site?" | `web_map` (sitemap + link discovery, no bodies) | `hacienda-mcp web map <url>` |
-| "Recall something the agent stored earlier?" | `memory_get` exact / `memory_list` prefix / `memory_search` KNN | `hacienda-mcp memory get "key"` / `list` / `search "q"` |
-| "Remember this for future sessions?" | `memory_put` (delete with `memory_delete`) | `hacienda-mcp memory put "key" "value"` |
+| Question                                      | MCP tool                                                        | CLI                                                     |
+| --------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------- |
+| "Semantic search over PDFs/Office/HTML docs?" | `search_documents`                                              | `hacienda-mcp memory search-documents "query"`          |
+| "Narrow to docs mentioning an entity?"        | `search_documents { entity_category: "…" }`                     | _(MCP only)_                                            |
+| "Narrow to docs with a keyword?"              | `search_documents { keywords_contains: "…" }`                   | _(MCP only)_                                            |
+| "Filter by file type?"                        | `search_documents { mime_type: "application/pdf" }`             | _(MCP only)_                                            |
+| "Pull a single URL into RAG?"                 | `web_scrape` (robots-aware)                                     | `hacienda-mcp web scrape <url>`                         |
+| "Ingest a docs site section?"                 | `web_crawl` (link-following from a seed)                        | `hacienda-mcp web crawl <seed-url>`                     |
+| "What URLs exist on this site?"               | `web_map` (sitemap + link discovery, no bodies)                 | `hacienda-mcp web map <url>`                            |
+| "Recall something the agent stored earlier?"  | `memory_get` exact / `memory_list` prefix / `memory_search` KNN | `hacienda-mcp memory get "key"` / `list` / `search "q"` |
+| "Remember this for future sessions?"          | `memory_put` (delete with `memory_delete`)                      | `hacienda-mcp memory put "key" "value"`                 |
 
 ## What a hit carries
 

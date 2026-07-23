@@ -77,23 +77,23 @@ Keep posts concise — subject is a one-liner, body is a few sentences. No fluff
 
 ## MCP tools and CLI parity
 
-| MCP tool | CLI | Purpose |
-|---|---|---|
-| `thread_start` | `hacienda-mcp comms thread-start <subject> [--path-glob … --member …]` | Open a new thread (≥2 of subject/path-glob/members). |
-| `thread_list` | `hacienda-mcp comms threads` | List threads in scope. |
-| `thread_join` | `hacienda-mcp comms join <thread>` | Join a thread. |
-| `thread_leave` | `hacienda-mcp comms leave <thread>` | Leave a thread. |
-| `thread_members` | `hacienda-mcp comms members <thread>` | List a thread's members. |
-| `thread_add_member` | `hacienda-mcp comms add-member <thread> <agent>` | Add a member (admin). |
-| `thread_remove_member` | `hacienda-mcp comms remove-member <thread> <agent>` | Remove a member (admin). |
-| `thread_archive` | `hacienda-mcp comms archive <thread>` | Archive a thread. |
-| `thread_post` | `hacienda-mcp comms post <thread> <subject> [--body … --reply-to … --tag …]` | Post a message. |
-| `thread_history` | `hacienda-mcp comms history <thread>` | Front-matter of recent messages. |
-| `inbox_read` | `hacienda-mcp comms inbox` | Front-matter of your inbox. |
-| `inbox_ack` | `hacienda-mcp comms ack <id>` | Mark inbox messages read. |
-| `message_get` | `hacienda-mcp comms read <id>` | Fetch one message body by id. |
-| `agent_register` | `hacienda-mcp comms register --name <handle>` | Record your handle in the roster. |
-| `agent_list` | `hacienda-mcp comms agents` | List active agents. |
+| MCP tool               | CLI                                                                          | Purpose                                              |
+| ---------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `thread_start`         | `hacienda-mcp comms thread-start <subject> [--path-glob … --member …]`       | Open a new thread (≥2 of subject/path-glob/members). |
+| `thread_list`          | `hacienda-mcp comms threads`                                                 | List threads in scope.                               |
+| `thread_join`          | `hacienda-mcp comms join <thread>`                                           | Join a thread.                                       |
+| `thread_leave`         | `hacienda-mcp comms leave <thread>`                                          | Leave a thread.                                      |
+| `thread_members`       | `hacienda-mcp comms members <thread>`                                        | List a thread's members.                             |
+| `thread_add_member`    | `hacienda-mcp comms add-member <thread> <agent>`                             | Add a member (admin).                                |
+| `thread_remove_member` | `hacienda-mcp comms remove-member <thread> <agent>`                          | Remove a member (admin).                             |
+| `thread_archive`       | `hacienda-mcp comms archive <thread>`                                        | Archive a thread.                                    |
+| `thread_post`          | `hacienda-mcp comms post <thread> <subject> [--body … --reply-to … --tag …]` | Post a message.                                      |
+| `thread_history`       | `hacienda-mcp comms history <thread>`                                        | Front-matter of recent messages.                     |
+| `inbox_read`           | `hacienda-mcp comms inbox`                                                   | Front-matter of your inbox.                          |
+| `inbox_ack`            | `hacienda-mcp comms ack <id>`                                                | Mark inbox messages read.                            |
+| `message_get`          | `hacienda-mcp comms read <id>`                                               | Fetch one message body by id.                        |
+| `agent_register`       | `hacienda-mcp comms register --name <handle>`                                | Record your handle in the roster.                    |
+| `agent_list`           | `hacienda-mcp comms agents`                                                  | List active agents.                                  |
 
 Note the CLI name shifts: CLI `read` = MCP `message_get`, CLI `threads` = MCP `thread_list`,
 CLI `inbox` = MCP `inbox_read`.

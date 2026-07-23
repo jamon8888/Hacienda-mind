@@ -101,7 +101,8 @@ fn run_scan(root: &Path) {
     // `#[tokio::test]`, so run the scan on a dedicated std thread to mirror the production context.
     std::thread::scope(|scope| {
         scope.spawn(|| {
-            let mut store = hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING).expect("open store");
+            let mut store =
+                hacienda_mcp::store::Store::open(root, hacienda_mcp::store::VIEW_WORKING).expect("open store");
             hacienda_mcp::scanner::scan(
                 root,
                 &mut store,
@@ -191,6 +192,58 @@ async fn mcp_server_exercises_representative_tools() {
     assert!(
         langs.contains_key("typescript"),
         "typescript should be present: {langs:?}"
+    );
+
+    // PII toolkit: status is truthful, redact is honest about a missing model,
+    // and the audit report returns a well-shaped (possibly empty) tally.
+    let pii = decode_text(
+        &service
+            .call_tool(call_params("pii_status", json!({})))
+            .await
+            .expect("pii_status"),
+    );
+    assert!(
+        pii.get("enabled").is_some(),
+        "pii_status must report an `enabled` flag: {pii:?}"
+    );
+    assert!(
+        pii.get("model_status").and_then(Value::as_str).is_some(),
+        "pii_status must report a `model_status` string: {pii:?}"
+    );
+
+    let redacted = decode_text(
+        &service
+            .call_tool(call_params(
+                "pii_redact",
+                json!({ "text": "mail me at jane.doe@example.com" }),
+            ))
+            .await
+            .expect("pii_redact"),
+    );
+    let state = redacted.get("state").and_then(Value::as_str).expect("pii_redact state");
+    // Without a model configured, honesty demands a non-`redacted` state and the
+    // original text returned unchanged — never a lying mask.
+    assert_ne!(state, "redacted", "pii_redact must not lie when the model is absent");
+    if state != "redacted" {
+        let rt = redacted
+            .get("redacted_text")
+            .and_then(Value::as_str)
+            .expect("redacted_text");
+        assert!(
+            rt.contains("jane.doe@example.com"),
+            "without a model the original email must be returned verbatim, got: {rt}"
+        );
+    }
+
+    let audit = decode_text(
+        &service
+            .call_tool(call_params("pii_audit_report", json!({})))
+            .await
+            .expect("pii_audit_report"),
+    );
+    assert!(
+        audit.get("by_category").is_some() && audit.get("total").is_some(),
+        "pii_audit_report must return by_category + total: {audit:?}"
     );
 
     let body = decode_text(

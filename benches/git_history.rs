@@ -12,11 +12,11 @@
 use std::path::Path;
 use std::process::Command;
 
+use criterion::{Criterion, criterion_group, criterion_main};
 use hacienda_mcp::git::Repo;
 use hacienda_mcp::git_history::GitHistoryIndex;
 use hacienda_mcp::git_history::builder;
 use hacienda_mcp::path::RelPath;
-use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 use tempfile::TempDir;
 

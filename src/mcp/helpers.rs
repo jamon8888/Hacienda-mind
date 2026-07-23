@@ -121,7 +121,11 @@ pub(super) fn json_result<T: Serialize>(value: &T) -> Result<CallToolResult, Mcp
     Ok(CallToolResult::success(vec![content]))
 }
 
-pub(super) fn commit_to_view(c: crate::git::CommitInfo, include_files: bool) -> CommitView {
+pub(super) fn commit_to_view(
+    c: crate::git::CommitInfo,
+    include_files: bool,
+    pii_cfg: &crate::config::PiiConfig,
+) -> CommitView {
     let files = if include_files {
         Some(
             c.files
@@ -139,7 +143,7 @@ pub(super) fn commit_to_view(c: crate::git::CommitInfo, include_files: bool) -> 
         sha: c.sha,
         short_sha: c.short_sha,
         summary: c.summary,
-        author: c.author,
+        author: crate::extract::pii::redact_author_identity(&c.author, pii_cfg),
         author_time_unix: c.author_time_unix,
         files,
     }
@@ -284,14 +288,14 @@ fn has_block_comments(lang: LangId) -> bool {
     )
 }
 
-pub(super) fn blame_hunk_view(h: &crate::git::BlameHunk) -> BlameHunkView {
+pub(super) fn blame_hunk_view(h: &crate::git::BlameHunk, pii_cfg: &crate::config::PiiConfig) -> BlameHunkView {
     BlameHunkView {
         commit_sha: h.commit_sha.clone(),
         short_sha: h.short_sha.clone(),
         start_line: h.start_line,
         len: h.len,
         source_start_line: h.source_start_line,
-        author: h.author.clone(),
+        author: crate::extract::pii::redact_author_identity(&h.author, pii_cfg),
         author_time_unix: h.author_time_unix,
         summary: h.summary.clone(),
         source_path: h.source_path.clone(),
@@ -307,6 +311,7 @@ pub(super) fn paginate_blame_hunks<'a, I>(
     iter: I,
     resume_after: u32,
     limit: Option<u32>,
+    pii_cfg: &crate::config::PiiConfig,
 ) -> (Vec<BlameHunkView>, Option<super::cursor::Cursor>)
 where
     I: IntoIterator<Item = &'a crate::git::BlameHunk>,
@@ -326,7 +331,7 @@ where
             break;
         }
         last_line = h.start_line;
-        out.push(blame_hunk_view(h));
+        out.push(blame_hunk_view(h, pii_cfg));
     }
     let next_cursor = if has_more {
         Some(super::cursor::Cursor::encode_in_memory(last_line as u64, 0))

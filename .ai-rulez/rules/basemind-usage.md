@@ -10,16 +10,16 @@ hacienda-mcp is this repo's indexed context layer. Prefer it BEFORE grep, before
 
 ### Routing
 
-| Reach for | Instead of |
-|---|---|
-| `search_symbols` / `find_references` / `find_callers` / `workspace_grep` | `grep` / `rg` / opening files to find a symbol |
-| `outline` / `architecture_map` | reading whole files to learn their shape |
-| `find_files` (fuzzy path search) | `find` / `fd` / `ls -R` to locate a file by name |
-| `recent_changes` / `blame_symbol` / `commits_touching` / `diff_file` | `git log` / `git blame` / `git diff` |
-| `thread_post` / `inbox_read` / `thread_list` | assuming you're the only agent in the repo |
-| `workspaces` / `worktrees` / `worktree_claim` | editing a worktree another session may already own |
-| `search_documents` / `web_scrape` / `web_crawl` / `web_map` | manually reading PDFs / docs or ad-hoc fetching |
-| semantic code search over the index | keyword-only guessing at where a concept lives |
+| Reach for                                                                | Instead of                                         |
+| ------------------------------------------------------------------------ | -------------------------------------------------- |
+| `search_symbols` / `find_references` / `find_callers` / `workspace_grep` | `grep` / `rg` / opening files to find a symbol     |
+| `outline` / `architecture_map`                                           | reading whole files to learn their shape           |
+| `find_files` (fuzzy path search)                                         | `find` / `fd` / `ls -R` to locate a file by name   |
+| `recent_changes` / `blame_symbol` / `commits_touching` / `diff_file`     | `git log` / `git blame` / `git diff`               |
+| `thread_post` / `inbox_read` / `thread_list`                             | assuming you're the only agent in the repo         |
+| `workspaces` / `worktrees` / `worktree_claim`                            | editing a worktree another session may already own |
+| `search_documents` / `web_scrape` / `web_crawl` / `web_map`              | manually reading PDFs / docs or ad-hoc fetching    |
+| semantic code search over the index                                      | keyword-only guessing at where a concept lives     |
 
 ### Red flags — stop and re-route
 
@@ -33,4 +33,3 @@ hacienda-mcp is this repo's indexed context layer. Prefer it BEFORE grep, before
 - Install the hacienda-mcp Claude Code plugin from its marketplace (`/plugin marketplace add jamon8888/Hacienda-mind`, then install `hacienda-mcp`).
 - Keep hacienda-mcp current: enable plugin auto-update, or update the binary regularly so the index format and tools stay in sync.
 - Re-run `hacienda-mcp init` (or `/bm-init`) after enabling new capabilities to refresh this block.
-

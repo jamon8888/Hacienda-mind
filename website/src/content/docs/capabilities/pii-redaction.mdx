@@ -3,7 +3,7 @@ title: PII Redaction
 description: In-process GLiNER2 + Candle (PEFT LoRA) redaction of PERSON / ORGANIZATION / LOCATION from indexed documents.
 ---
 
-import { Aside, Badge } from '@astrojs/starlight/components';
+import { Aside, Badge } from "@astrojs/starlight/components";
 
 hacienda-mcp can redact **personally identifiable information** from the documents it indexes, using an
 **in-process GLiNER2 model backed by Candle** (a pure-Rust ML runtime — no Python, no external service)
@@ -36,14 +36,14 @@ categories = ["person", "organization", "location"]
 threshold = 0.5
 ```
 
-| Key | Type | Default | Notes |
-|---|---|---|---|
-| `enabled` | bool | `false` | Master switch for the pass. |
-| `model_dir` | path | unset | Required to actually redact. Unset → pass is skipped. |
-| `lora_adapter_dir` | path | unset | Optional PEFT LoRA adapter (`adapter_config.json` + `adapter_model.safetensors`). |
-| `strategy` | enum | `mask` | `mask` · `hash` · `token_replace` · `drop`. |
-| `categories` | list | all three | Subset of `person` / `organization` / `location`. |
-| `threshold` | f32 | `0.5` | Detection confidence cutoff (0.0–1.0). |
+| Key                | Type | Default   | Notes                                                                             |
+| ------------------ | ---- | --------- | --------------------------------------------------------------------------------- |
+| `enabled`          | bool | `false`   | Master switch for the pass.                                                       |
+| `model_dir`        | path | unset     | Required to actually redact. Unset → pass is skipped.                             |
+| `lora_adapter_dir` | path | unset     | Optional PEFT LoRA adapter (`adapter_config.json` + `adapter_model.safetensors`). |
+| `strategy`         | enum | `mask`    | `mask` · `hash` · `token_replace` · `drop`.                                       |
+| `categories`       | list | all three | Subset of `person` / `organization` / `location`.                                 |
+| `threshold`        | f32  | `0.5`     | Detection confidence cutoff (0.0–1.0).                                            |
 
 ## Strategies
 

@@ -3,7 +3,7 @@ title: MCP Tools Reference
 description: Complete catalog of hacienda-mcp tools grouped by capability area.
 ---
 
-import { Aside, Badge } from '@astrojs/starlight/components';
+import { Aside, Badge } from "@astrojs/starlight/components";
 
 hacienda-mcp exposes all tools over stdio MCP, making them available to any compatible agent. All paths are byte-precise repo-relative (`RelPath`). Lists are capped at 1000 items; by default 100. Tool descriptions state matching semantics (substring, prefix, scope-aware) and what's indexed (name-only vs scope-resolved).
 
@@ -11,20 +11,20 @@ hacienda-mcp exposes all tools over stdio MCP, making them available to any comp
 
 Query your project's structure: symbols, references, calls, and definitions across **300+ languages** via tree-sitter.
 
-| Tool | Purpose | Matching |
-|---|---|---|
-| `outline` | Full per-file structure: symbols, line/col, signatures, imports. `l2: true` adds calls + docs. | scope-aware |
-| `search_symbols` | Find symbols by name across all indexed files, optional kind filter. | substring |
-| `find_references` | Where a name is called — all call sites of any callee matching the name. | substring |
-| `find_callers` | Who calls one specific definition (path + name + optional kind). Resolves the definition first, then runs a name-only scan. | resolves def, then name-only |
-| `goto_definition` | Resolve a reference at a source position to its definition. | scope-aware |
-| `call_graph` | Walk the call chain up or down from a symbol. `--direction` (up/down), `--max-depth`. | exact name |
-| `architecture_map` | Whole-repo overview: hub modules/files/symbols ranked by centrality (PageRank + fan-in/out) and churn, plus dependency cycles (SCCs). `granularity` (module/file/symbol), optional `focus` path-prefix. | graph-derived |
-| `find_implementations` | Types that implement or inherit from a trait/interface. | substring |
-| `find_files` | Fuzzy path search (fzf/fd-style) ranked by nucleo-matcher score. `limit`, optional `path_contains` and `language` filters. | fuzzy substring |
-| `dependents` | Heuristic reverse lookup: what imports a given module. | import-based |
-| `workspace_grep` | Pattern search with optional language and path filters. | regex |
-| `list_files` | Enumerate indexed paths, optional `path_contains` and `language` filters. | substring |
+| Tool                   | Purpose                                                                                                                                                                                                 | Matching                     |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `outline`              | Full per-file structure: symbols, line/col, signatures, imports. `l2: true` adds calls + docs.                                                                                                          | scope-aware                  |
+| `search_symbols`       | Find symbols by name across all indexed files, optional kind filter.                                                                                                                                    | substring                    |
+| `find_references`      | Where a name is called — all call sites of any callee matching the name.                                                                                                                                | substring                    |
+| `find_callers`         | Who calls one specific definition (path + name + optional kind). Resolves the definition first, then runs a name-only scan.                                                                             | resolves def, then name-only |
+| `goto_definition`      | Resolve a reference at a source position to its definition.                                                                                                                                             | scope-aware                  |
+| `call_graph`           | Walk the call chain up or down from a symbol. `--direction` (up/down), `--max-depth`.                                                                                                                   | exact name                   |
+| `architecture_map`     | Whole-repo overview: hub modules/files/symbols ranked by centrality (PageRank + fan-in/out) and churn, plus dependency cycles (SCCs). `granularity` (module/file/symbol), optional `focus` path-prefix. | graph-derived                |
+| `find_implementations` | Types that implement or inherit from a trait/interface.                                                                                                                                                 | substring                    |
+| `find_files`           | Fuzzy path search (fzf/fd-style) ranked by nucleo-matcher score. `limit`, optional `path_contains` and `language` filters.                                                                              | fuzzy substring              |
+| `dependents`           | Heuristic reverse lookup: what imports a given module.                                                                                                                                                  | import-based                 |
+| `workspace_grep`       | Pattern search with optional language and path filters.                                                                                                                                                 | regex                        |
+| `list_files`           | Enumerate indexed paths, optional `path_contains` and `language` filters.                                                                                                                               | substring                    |
 
 See [Code Intelligence capabilities](/capabilities/code-intelligence/) for detailed examples.
 
@@ -32,19 +32,19 @@ See [Code Intelligence capabilities](/capabilities/code-intelligence/) for detai
 
 Query your repository's history, blame, diffs, and churn — powered by `gix` with a built-in history index for microsecond latency.
 
-| Tool | Purpose | Scope |
-|---|---|---|
-| `working_tree_status` | Staged and unstaged files right now. | — |
-| `recent_changes` | Recent commits with their file lists. | branch depth |
-| `search_git_history` | Full-text search commit authors and messages. | branch depth |
-| `commits_touching` | Commits that modified a given path. | posting-list (indexed) |
-| `find_commits_by_path` | Commits matching a path pattern. | branch depth |
-| `hot_files` | The most frequently changed files, ranked by churn. | branch depth |
-| `diff_file` | File diff across two revisions. | — |
-| `diff_outline` | Structure diff of a file across revisions. | scope-aware |
-| `blame_file` | Who last changed each line. | per-line |
-| `blame_symbol` | Who last changed a symbol's body. | per-symbol |
-| `symbol_history` | When a symbol's body changed over time. | commit walk |
+| Tool                   | Purpose                                             | Scope                  |
+| ---------------------- | --------------------------------------------------- | ---------------------- |
+| `working_tree_status`  | Staged and unstaged files right now.                | —                      |
+| `recent_changes`       | Recent commits with their file lists.               | branch depth           |
+| `search_git_history`   | Full-text search commit authors and messages.       | branch depth           |
+| `commits_touching`     | Commits that modified a given path.                 | posting-list (indexed) |
+| `find_commits_by_path` | Commits matching a path pattern.                    | branch depth           |
+| `hot_files`            | The most frequently changed files, ranked by churn. | branch depth           |
+| `diff_file`            | File diff across two revisions.                     | —                      |
+| `diff_outline`         | Structure diff of a file across revisions.          | scope-aware            |
+| `blame_file`           | Who last changed each line.                         | per-line               |
+| `blame_symbol`         | Who last changed a symbol's body.                   | per-symbol             |
+| `symbol_history`       | When a symbol's body changed over time.             | commit walk            |
 
 See [Git Intelligence capabilities](/capabilities/git-intelligence/) for examples.
 
@@ -52,8 +52,8 @@ See [Git Intelligence capabilities](/capabilities/git-intelligence/) for example
 
 Full-text and semantic search over **90+ document formats** — PDFs, Office files, HTML, email, and images — with built-in extraction and OCR.
 
-| Tool | Purpose |
-|---|---|
+| Tool               | Purpose                                                                             |
+| ------------------ | ----------------------------------------------------------------------------------- |
 | `search_documents` | Search PDFs, Office, HTML, images by meaning and text. Returns pointers + snippets. |
 
 See [Document Search capabilities](/capabilities/document-search/) for setup and examples.
@@ -62,10 +62,10 @@ See [Document Search capabilities](/capabilities/document-search/) for setup and
 
 Semantic + keyword search over indexed code chunks. Returns pointers; fetch bodies with `get_chunk`. Requires `--features code-search`.
 
-| Tool | Purpose | Modes |
-|---|---|---|
+| Tool          | Purpose                                                                                                                                                           | Modes                  |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
 | `search_code` | Search code by meaning, term, or symbol. `mode`: `hybrid` (RRF fusion, default), `semantic` (vector KNN), `keyword` (BM25). Optional `rerank` cross-encoder pass. | vector + BM25 + symbol |
-| `get_chunk` | Fetch one code chunk's source body (pairs with `search_code`). | — |
+| `get_chunk`   | Fetch one code chunk's source body (pairs with `search_code`).                                                                                                    | —                      |
 
 See [Code Search capabilities](/capabilities/code-search/) for examples and mode details.
 
@@ -73,14 +73,14 @@ See [Code Search capabilities](/capabilities/code-search/) for examples and mode
 
 Per-repo memory agents can read and write. Clones of the same repo share it; unrelated repos stay separate. Vectors powered by LanceDB.
 
-| Tool | Purpose | Scope |
-|---|---|---|
-| `memory_put` | Store a key/value pair (text, optionally grouped). | per-repo |
-| `memory_get` | Retrieve a value by key. | per-repo |
-| `memory_delete` | Remove a key. | per-repo |
-| `memory_list` | List keys, optionally by prefix. | per-repo |
-| `memory_search` | Search stored values by meaning. | per-repo |
-| `memory_audit` | Recompute memory importance, archive stale entries, refresh verdicts. | per-repo |
+| Tool            | Purpose                                                               | Scope    |
+| --------------- | --------------------------------------------------------------------- | -------- |
+| `memory_put`    | Store a key/value pair (text, optionally grouped).                    | per-repo |
+| `memory_get`    | Retrieve a value by key.                                              | per-repo |
+| `memory_delete` | Remove a key.                                                         | per-repo |
+| `memory_list`   | List keys, optionally by prefix.                                      | per-repo |
+| `memory_search` | Search stored values by meaning.                                      | per-repo |
+| `memory_audit`  | Recompute memory importance, archive stale entries, refresh verdicts. | per-repo |
 
 See [Shared memory](/concepts/memory/) for examples.
 
@@ -88,44 +88,44 @@ See [Shared memory](/concepts/memory/) for examples.
 
 Spot files that change together and suggest notes worth saving — you approve before anything is kept.
 
-| Tool | Purpose |
-|---|---|
-| `proposals_mine` | Suggest notes from files that change together. `--commits`, `--min-count`, `--min-confidence`, `--max-files-per-commit`. |
-| `proposals_list` | List pending suggestions, optional kind filter. |
-| `proposal_accept` | Keep a suggestion as a memory entry. |
-| `proposal_reject` | Dismiss a suggestion for good. |
+| Tool              | Purpose                                                                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `proposals_mine`  | Suggest notes from files that change together. `--commits`, `--min-count`, `--min-confidence`, `--max-files-per-commit`. |
+| `proposals_list`  | List pending suggestions, optional kind filter.                                                                          |
+| `proposal_accept` | Keep a suggestion as a memory entry.                                                                                     |
+| `proposal_reject` | Dismiss a suggestion for good.                                                                                           |
 
 ## Web Crawl
 
 Fetch and index web pages. Results join the document search index.
 
-| Tool | Purpose |
-|---|---|
-| `web_scrape` | Fetch and index a single page. |
-| `web_crawl` | Follow links from a starting URL. |
-| `web_map` | Discover a site's pages without fetching bodies. |
+| Tool         | Purpose                                          |
+| ------------ | ------------------------------------------------ |
+| `web_scrape` | Fetch and index a single page.                   |
+| `web_crawl`  | Follow links from a starting URL.                |
+| `web_map`    | Discover a site's pages without fetching bodies. |
 
 ## Agent Comms
 
 A shared chat layer for agents on the same repo: explicit thread membership (repository, path-glob, or subject-scoped), private 2-member threads, and a recency-filtered inbox. Requires `--features comms`.
 
-| Tool | Purpose |
-|---|---|
-| `thread_start` | Create a new thread, addressed by at least two of subject / path-glob / members. Required: `subject`. Optional: `path`, `members`. |
-| `thread_post` | Post a message to a thread. Required: `thread`, `subject`. Optional: `body`, `reply_to`. |
-| `thread_history` | Recent messages in a thread (front-matter only). |
-| `thread_list` | List discoverable threads and their members. |
-| `thread_join` | Join a thread explicitly. |
-| `thread_leave` | Leave a thread. |
-| `thread_members` | List current members of a thread. |
-| `thread_add_member` | Add an agent to a thread. |
-| `thread_remove_member` | Remove an agent from a thread. |
-| `thread_archive` | Archive a thread (read-only, still discoverable). |
-| `inbox_read` | Your inbox (front-matter only). |
-| `inbox_ack` | Acknowledge inbox messages so they stop resurfacing. |
-| `message_get` | Read one message in full. |
-| `agent_list` | Active agents in the comms system. |
-| `agent_register` | Set or update your agent handle. |
+| Tool                   | Purpose                                                                                                                            |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `thread_start`         | Create a new thread, addressed by at least two of subject / path-glob / members. Required: `subject`. Optional: `path`, `members`. |
+| `thread_post`          | Post a message to a thread. Required: `thread`, `subject`. Optional: `body`, `reply_to`.                                           |
+| `thread_history`       | Recent messages in a thread (front-matter only).                                                                                   |
+| `thread_list`          | List discoverable threads and their members.                                                                                       |
+| `thread_join`          | Join a thread explicitly.                                                                                                          |
+| `thread_leave`         | Leave a thread.                                                                                                                    |
+| `thread_members`       | List current members of a thread.                                                                                                  |
+| `thread_add_member`    | Add an agent to a thread.                                                                                                          |
+| `thread_remove_member` | Remove an agent from a thread.                                                                                                     |
+| `thread_archive`       | Archive a thread (read-only, still discoverable).                                                                                  |
+| `inbox_read`           | Your inbox (front-matter only).                                                                                                    |
+| `inbox_ack`            | Acknowledge inbox messages so they stop resurfacing.                                                                               |
+| `message_get`          | Read one message in full.                                                                                                          |
+| `agent_list`           | Active agents in the comms system.                                                                                                 |
+| `agent_register`       | Set or update your agent handle.                                                                                                   |
 
 See [Agent Comms capabilities](/concepts/agent-comms/) for orchestration examples.
 
@@ -133,13 +133,13 @@ See [Agent Comms capabilities](/concepts/agent-comms/) for orchestration example
 
 Coordinate across multiple repos and worktrees on the same machine. The registry is daemon-managed; claims are advisory (no locking) but help avoid collisions. Requires `--features comms`.
 
-| Tool | Purpose |
-|---|---|
-| `workspaces` | List all workspaces the daemon knows about (keyed by root path). |
-| `worktrees` | List worktrees under a workspace. |
-| `branches` | List branches in a worktree. |
-| `worktree_claim` | Advisory claim on a worktree for the current agent. No locking; collision detection is cooperative. |
-| `worktree_release` | Release a claim. |
+| Tool               | Purpose                                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------------------- |
+| `workspaces`       | List all workspaces the daemon knows about (keyed by root path).                                    |
+| `worktrees`        | List worktrees under a workspace.                                                                   |
+| `branches`         | List branches in a worktree.                                                                        |
+| `worktree_claim`   | Advisory claim on a worktree for the current agent. No locking; collision detection is cooperative. |
+| `worktree_release` | Release a claim.                                                                                    |
 
 See CLI: `hacienda-mcp registry` (worktree/branch listing), `hacienda-mcp statusline` (current status).
 
@@ -147,40 +147,40 @@ See CLI: `hacienda-mcp registry` (worktree/branch listing), `hacienda-mcp status
 
 Let agents spawn, type into, and read terminal sessions. Requires `--features shells`.
 
-| Tool | Purpose |
-|---|---|
-| `shell_spawn` | Start a detached shell session (`--cwd`, `--env`, `--title`). Returns `session_id`. |
-| `shell_send` | Type into a session's stdin (`--no-enter` to suppress newline). |
-| `shell_capture` | Read a session's visible screen (`--lines` to limit). |
-| `shell_list` | List live sessions. |
-| `shell_kill` | End a session. |
-| `shell_broadcast` | Send input to multiple sessions at once. |
+| Tool              | Purpose                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| `shell_spawn`     | Start a detached shell session (`--cwd`, `--env`, `--title`). Returns `session_id`. |
+| `shell_send`      | Type into a session's stdin (`--no-enter` to suppress newline).                     |
+| `shell_capture`   | Read a session's visible screen (`--lines` to limit).                               |
+| `shell_list`      | List live sessions.                                                                 |
+| `shell_kill`      | End a session.                                                                      |
+| `shell_broadcast` | Send input to multiple sessions at once.                                            |
 
 ## Token Saving
 
 Compression, expansion, and delta utilities for keeping context window efficient.
 
-| Tool | Purpose |
-|---|---|
-| `compress` | Shrink code (keep shape, drop bodies) or prose. Returns honest token counts. |
-| `expand` | Fetch a symbol's full body (inverse of outline). |
-| `delta` | Show only what changed when re-reading a file. |
-| `checkpoint` | Summarize a session: what was queried, tokens saved. |
+| Tool           | Purpose                                                                      |
+| -------------- | ---------------------------------------------------------------------------- |
+| `compress`     | Shrink code (keep shape, drop bodies) or prose. Returns honest token counts. |
+| `expand`       | Fetch a symbol's full body (inverse of outline).                             |
+| `delta`        | Show only what changed when re-reading a file.                               |
+| `checkpoint`   | Summarize a session: what was queried, tokens saved.                         |
 | `detect_waste` | Flag wasteful tool use (e.g., re-reading files hacienda-mcp already mapped). |
 
 ## Admin
 
 Refresh the index, telemetry, and cache management.
 
-| Tool | Purpose |
-|---|---|
-| `rescan` | Update one path (or full scan if no path). |
-| `status` | Project overview: file count, languages, cache path. |
-| `repo_info` | Git info: branch, HEAD, origin remote. |
-| `telemetry_summary` | What's been queried and tokens saved. |
-| `cache_stats` | Disk footprint (per-component, matches `du`) and RAM. |
-| `cache_gc` | Reclaim unused space (safe while the server runs). |
-| `cache_clear` | Clear part of the cache by component (`views`, `blobs`, `lance`, `git-cache`, `telemetry`, `all`). |
+| Tool                | Purpose                                                                                            |
+| ------------------- | -------------------------------------------------------------------------------------------------- |
+| `rescan`            | Update one path (or full scan if no path).                                                         |
+| `status`            | Project overview: file count, languages, cache path.                                               |
+| `repo_info`         | Git info: branch, HEAD, origin remote.                                                             |
+| `telemetry_summary` | What's been queried and tokens saved.                                                              |
+| `cache_stats`       | Disk footprint (per-component, matches `du`) and RAM.                                              |
+| `cache_gc`          | Reclaim unused space (safe while the server runs).                                                 |
+| `cache_clear`       | Clear part of the cache by component (`views`, `blobs`, `lance`, `git-cache`, `telemetry`, `all`). |
 
 ## Metadata & Pagination
 
@@ -193,7 +193,10 @@ All list-returning tools:
 For index scans (symbol + reference tools), hacienda-mcp internally uses `scan_cap = limit * 8` to bound work on common names.
 
 <Aside>
-Tool descriptions are the routing surface for agents. Read them carefully — they describe matching semantics (substring vs. prefix), scope resolution (name-only vs. scope-aware), and what each tool trades off. This helps agents pick the right tool for the question.
+  Tool descriptions are the routing surface for agents. Read them carefully —
+  they describe matching semantics (substring vs. prefix), scope resolution
+  (name-only vs. scope-aware), and what each tool trades off. This helps agents
+  pick the right tool for the question.
 </Aside>
 
 ## Lifecycle notices
@@ -202,11 +205,11 @@ Tool descriptions are the routing surface for agents. Read them carefully — th
 it isn't fully ready, `status` and every code-map read tool may include a `notice` object instead
 of, or alongside, their normal result:
 
-| Field | Meaning |
-|---|---|
-| `state` | One of `warming_up`, `building_index`, `rescanning`. |
-| `message` | Human/agent-readable explanation of what's happening. |
-| `retry` | `true` to retry shortly for complete results; `false` if the result is usable but may be stale. |
+| Field     | Meaning                                                                                         |
+| --------- | ----------------------------------------------------------------------------------------------- |
+| `state`   | One of `warming_up`, `building_index`, `rescanning`.                                            |
+| `message` | Human/agent-readable explanation of what's happening.                                           |
+| `retry`   | `true` to retry shortly for complete results; `false` if the result is usable but may be stale. |
 
 `status` additionally reports `warming` / `warm_ms` (in-memory preload of an existing index) and
 `indexing` / `index_build_ms` (first-time index build). Treat an empty or partial result carrying

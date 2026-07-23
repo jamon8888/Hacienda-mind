@@ -1,7 +1,9 @@
 use streaming_iterator::StreamingIterator;
 use tree_sitter::{Node, Query, QueryMatch};
 
-use super::{ExtractError, FileMapL1, Implementation, Import, SCHEMA_VER, Symbol, SymbolKind, capture_name};
+use super::{
+    DetectedEntity, ExtractError, FileMapL1, Implementation, Import, SCHEMA_VER, Symbol, SymbolKind, capture_name,
+};
 use crate::lang::{
     CaptureClass, LangId, ParseOutcome, parse_with_default_timeout, try_get_classified_combined_l1_query, with_parser,
 };
@@ -45,6 +47,9 @@ pub(crate) fn extract_l1_from_tree(
         symbols,
         imports,
         implementations,
+        redaction: None,
+        redacted_entities: DetectedEntity::default(),
+        attestation: None,
     })
 }
 

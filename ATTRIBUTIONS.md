@@ -31,10 +31,10 @@ import-aware navigation for Python and Java.
   exist in the current grammar (e.g. Python's `except_group_clause`) are stripped at engine-build
   time in `src/intel/stackgraph.rs`.
 - Rule bug fixes for valid modern constructs are applied **directly to the rule files**. Each of the
-  following upstream rules aborted the *entire file's* stack-graph build (silently losing all
+  following upstream rules aborted the _entire file's_ stack-graph build (silently losing all
   resolution) on a common construct; a sweep of a real Python codebase surfaced them and the fixes
   take it to 100% of files building:
-  - `typed_parameter` restricted to identifier-named params (`. (identifier) @name`) so a *typed*
+  - `typed_parameter` restricted to identifier-named params (`. (identifier) @name`) so a _typed_
     splat parameter (`**kwargs: T` / `*args: T`) no longer binds the splat pattern as a plain name.
   - class superclass list restricted to `[(identifier) (attribute) (subscript)]` so a keyword-argument
     base (`class X(TypedDict, total=False)`, `metaclass=…`) is not treated as a superclass.

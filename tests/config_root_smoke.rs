@@ -177,5 +177,8 @@ fn init_leaves_an_existing_gitignore_untouched() {
     // ~keep `.gitignore` is preserved verbatim and never grows a `.hacienda-mcp/` line.
     let after = fs::read_to_string(root.join(".gitignore")).expect("read gitignore");
     assert_eq!(after, "target/\n", "existing .gitignore left byte-for-byte untouched");
-    assert!(!after.contains(".hacienda-mcp"), "no .hacienda-mcp entry added, got: {after:?}");
+    assert!(
+        !after.contains(".hacienda-mcp"),
+        "no .hacienda-mcp entry added, got: {after:?}"
+    );
 }

@@ -3,7 +3,7 @@ title: Performance
 description: Scan speeds, query latency, and git-history index measurements.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside } from "@astrojs/starlight/components";
 
 All measurements are from an **Apple M4** (10 cores — 4 performance + 6 efficiency, 16 GB RAM, macOS 26) using the hardening harness (`scripts/harden.sh`), which clones upstream repos fresh and indexes them. Warm, steady-state numbers; the first scan is slower (cold I/O). Re-scans only touch what changed, so keeping a project up to date is far faster.
 
@@ -11,15 +11,15 @@ All measurements are from an **Apple M4** (10 cores — 4 performance + 6 effici
 
 Measured with the hardening harness, which clones each project fresh, then runs `hacienda-mcp scan`:
 
-| Project | Files | Languages | Scan time |
-|---|---|---|---|
-| gin | 130 | Go | 0.1 s |
-| requests | 128 | Python | 0.1 s |
-| ripgrep | 221 | Rust | 0.6 s |
-| tokio | 861 | Rust | 0.4 s |
-| react | 7 242 | TS / JSX | 2.0 s |
-| django | 7 065 | Python | 2.4 s |
-| TypeScript compiler | 81 324 | TS / JS / JSON | 18 s |
+| Project             | Files  | Languages      | Scan time |
+| ------------------- | ------ | -------------- | --------- |
+| gin                 | 130    | Go             | 0.1 s     |
+| requests            | 128    | Python         | 0.1 s     |
+| ripgrep             | 221    | Rust           | 0.6 s     |
+| tokio               | 861    | Rust           | 0.4 s     |
+| react               | 7 242  | TS / JSX       | 2.0 s     |
+| django              | 7 065  | Python         | 2.4 s     |
+| TypeScript compiler | 81 324 | TS / JS / JSON | 18 s      |
 
 The TypeScript compiler is the worst case — 81k files in 18 seconds. This is dominated by tree-sitter parsing (~30% of time) and per-file index commits (~14% mutex contention on Fjall). Blob I/O and serialization consume ~16%. Allocations are under 2%.
 
@@ -35,12 +35,12 @@ hacienda-mcp precomputes a per-repo git-history index — posting lists mapping 
 
 Warm, in-process query latency on the same M4:
 
-| Repo | Commits | `commits_touching` | `recent_changes` | index build | index size |
-|---|---|---|---|---|---|
-| django | 2 000 | 39 µs | 15 µs | 0.5 s | 1.7 MB (6 % of `.git`) |
-| tokio | 3 984 | 37 µs | 13 µs | 0.9 s | 2.1 MB (12 %) |
-| requests | 6 480 | 38 µs | 15 µs | 1.0 s | 1.9 MB (14 %) |
-| TypeScript | 2 000 | 37 µs | 13 µs | 3.2 s | 30 MB (12 %) |
+| Repo       | Commits | `commits_touching` | `recent_changes` | index build | index size             |
+| ---------- | ------- | ------------------ | ---------------- | ----------- | ---------------------- |
+| django     | 2 000   | 39 µs              | 15 µs            | 0.5 s       | 1.7 MB (6 % of `.git`) |
+| tokio      | 3 984   | 37 µs              | 13 µs            | 0.9 s       | 2.1 MB (12 %)          |
+| requests   | 6 480   | 38 µs              | 15 µs            | 1.0 s       | 1.9 MB (14 %)          |
+| TypeScript | 2 000   | 37 µs              | 13 µs            | 3.2 s       | 30 MB (12 %)           |
 
 History queries answer in **tens of microseconds**, flat across history depth, because the newest-first posting lists decode only the commits a query returns.
 
@@ -85,7 +85,8 @@ Eager L2 (call-site extraction) is on by default and adds to scan time. Set `eag
 skip it for faster scans, at the cost of disabling reference search.
 
 <Aside type="note">
-All numbers are from production hacienda-mcp builds (`cargo build --release`). Debug builds are much slower and not representative.
+  All numbers are from production hacienda-mcp builds (`cargo build --release`).
+  Debug builds are much slower and not representative.
 </Aside>
 
 ## Re-scan Performance
@@ -105,6 +106,7 @@ cargo test --release --test harden -- --ignored --nocapture
 ```
 
 It runs:
+
 - Full scan on each repo
 - All code-map tools (symbol search, find_references, call_graph, etc.)
 - Representative git tools (blame, recent_changes, commits_touching)

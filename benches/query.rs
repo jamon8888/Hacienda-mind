@@ -6,11 +6,11 @@
 //! and `dependents_of`. The store is built once in `setup` so the bench measures
 //! the query path, not the scan.
 
+use criterion::{Criterion, criterion_group, criterion_main};
 use hacienda_mcp::config::ConfigV1;
 use hacienda_mcp::query::{dependents_of, file_outline, search_symbols};
 use hacienda_mcp::scanner::{EmbedMode, ScanSource, scan};
 use hacienda_mcp::store::{Store, VIEW_WORKING};
-use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 use tempfile::TempDir;
 

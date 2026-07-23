@@ -1,0 +1,43 @@
+[build]
+# Auto-detect optimal job count based on system resources
+jobs = 0
+
+# Incremental compilation with optimal settings for fast iteration
+incremental = true
+
+# Cache and target directory separation for better isolation
+cache-dir = "${HOME}/.cargo/cache"
+target-dir = "${HOME}/.cargo/target"
+
+[build.artifact-based-caching]
+enabled = true
+
+[profile.release]
+# Aggressive optimization for release builds
+opt-level = 3            # Maximum optimization
+lto = "thin"             # Link-time optimization (memory tradeoff)
+codegen-units = 16       # More codegen units = faster incremental builds
+panic = "abort"          # Smaller binary, faster linking
+strip = true             # Remove debug symbols
+
+[profile.dev]
+# Fast compilation for development
+opt-level = 2
+incremental = true
+
+[profile.test]
+# Balanced testing profile
+opt-level = 2
+incremental = true
+
+[registries.crates-io]
+# Use sparse registry for faster crate discovery
+protocol = "sparse"
+
+[env]
+# Environment variables for build optimization
+CARGO_INCREMENTAL = "2"
+CARGO_DEPS_DEBUGINFO = "0"
+RUSTUP_TOOLCHAIN_OVERRIDE = "stable"
+CARGO_REGISTRIES_CRATES_IO_PROTOCOL = "sparse"
+CARGO_TARGET_DIR = "${HOME}/.cargo/target"

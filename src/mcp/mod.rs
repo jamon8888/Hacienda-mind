@@ -33,6 +33,7 @@ mod helpers_graph;
 mod helpers_grep;
 mod helpers_impls;
 mod helpers_intel;
+mod helpers_pii;
 #[cfg(feature = "memory")]
 mod helpers_proposals;
 #[cfg(all(feature = "comms", any(unix, windows)))]
@@ -67,6 +68,7 @@ mod tools_compress;
 mod tools_git;
 mod tools_governance;
 mod tools_memory;
+mod tools_pii;
 #[cfg(all(feature = "comms", any(unix, windows)))]
 mod tools_registry;
 #[cfg(all(feature = "shells", any(unix, windows)))]
@@ -87,6 +89,7 @@ pub(crate) mod types_governance;
 mod types_graph;
 mod types_impls;
 pub(crate) mod types_memory;
+mod types_pii;
 #[cfg(all(feature = "comms", any(unix, windows)))]
 mod types_registry;
 #[cfg(all(feature = "shells", any(unix, windows)))]
@@ -722,6 +725,7 @@ impl BasemindServer {
         }
         #[allow(unused_mut)]
         let mut router = Self::tool_router_core()
+            + Self::tool_router_pii()
             + Self::tool_router_archmap()
             + Self::tool_router_git()
             + Self::tool_router_memory()

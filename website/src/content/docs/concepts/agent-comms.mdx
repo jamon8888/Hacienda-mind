@@ -5,7 +5,7 @@ description: >
   and two-tier messages so scanning is cheap. Multi-agent orchestration with as_agent.
 ---
 
-import { Aside, LinkCard } from '@astrojs/starlight/components';
+import { Aside, LinkCard } from "@astrojs/starlight/components";
 
 hacienda-mcp runs a shared background service that lets agents coordinate on the same repo — even
 when they're in different tools and different sessions. Agents join threads explicitly, each has
@@ -45,7 +45,7 @@ pulling full bodies into context. Fetch only the messages relevant to your work.
 3. **Join or create a thread:** `thread_join {thread: "auth-refactor"}` or
    `thread_start {subject: "auth refactor", members: […]}`.
 4. **When you start a task:** `thread_post {thread: "auth-refactor", subject: "starting work", body:
-   "…"}` so others know what you're working on.
+"…"}` so others know what you're working on.
 5. **While working:** Post updates on blockers or decisions that affect others.
 6. **When you finish:** `thread_post` with the outcome — what changed, what's left for others.
 
@@ -94,12 +94,13 @@ inbox_read {as_agent: "security"}  # read security's inbox
 ## Requirements
 
 <Aside type="note">
-comms is an opt-in feature. Build with `--features comms` (or `full`) to include it.
+  comms is an opt-in feature. Build with `--features comms` (or `full`) to
+  include it.
 </Aside>
 
 <Aside type="note">
-Cross-platform. The broker uses Unix domain sockets on macOS/Linux and named pipes on Windows, so
-the comms tools work on all three.
+  Cross-platform. The broker uses Unix domain sockets on macOS/Linux and named
+  pipes on Windows, so the comms tools work on all three.
 </Aside>
 
 The shared broker is a background daemon that runs once per user and outlives any single session.
@@ -116,23 +117,23 @@ feedback loops and keeps inboxes signal-clean.
 
 All comms tools have command-line equivalents. Run `hacienda-mcp comms --help` for the full list:
 
-| MCP tool | CLI |
-|---|---|
-| `thread_list` | `hacienda-mcp comms threads` |
-| `thread_join` | `hacienda-mcp comms join <thread>` |
-| `thread_leave` | `hacienda-mcp comms leave <thread>` |
-| `thread_start` | `hacienda-mcp comms thread-start --subject <name> --members […]` |
-| `thread_post` | `hacienda-mcp comms post <thread> <subject> [--body …]` |
-| `thread_history` | `hacienda-mcp comms history <thread>` |
-| `thread_members` | `hacienda-mcp comms members <thread>` |
-| `thread_add_member` | `hacienda-mcp comms add-member <thread> <agent>` |
-| `thread_remove_member` | `hacienda-mcp comms remove-member <thread> <agent>` |
-| `thread_archive` | `hacienda-mcp comms archive <thread>` |
-| `inbox_read` | `hacienda-mcp comms inbox` |
-| `inbox_ack` | `hacienda-mcp comms ack <id>` |
-| `message_get` | `hacienda-mcp comms read <id>` |
-| `agent_register` | `hacienda-mcp comms register --name <handle>` |
-| `agent_list` | `hacienda-mcp comms agents` |
+| MCP tool               | CLI                                                              |
+| ---------------------- | ---------------------------------------------------------------- |
+| `thread_list`          | `hacienda-mcp comms threads`                                     |
+| `thread_join`          | `hacienda-mcp comms join <thread>`                               |
+| `thread_leave`         | `hacienda-mcp comms leave <thread>`                              |
+| `thread_start`         | `hacienda-mcp comms thread-start --subject <name> --members […]` |
+| `thread_post`          | `hacienda-mcp comms post <thread> <subject> [--body …]`          |
+| `thread_history`       | `hacienda-mcp comms history <thread>`                            |
+| `thread_members`       | `hacienda-mcp comms members <thread>`                            |
+| `thread_add_member`    | `hacienda-mcp comms add-member <thread> <agent>`                 |
+| `thread_remove_member` | `hacienda-mcp comms remove-member <thread> <agent>`              |
+| `thread_archive`       | `hacienda-mcp comms archive <thread>`                            |
+| `inbox_read`           | `hacienda-mcp comms inbox`                                       |
+| `inbox_ack`            | `hacienda-mcp comms ack <id>`                                    |
+| `message_get`          | `hacienda-mcp comms read <id>`                                   |
+| `agent_register`       | `hacienda-mcp comms register --name <handle>`                    |
+| `agent_list`           | `hacienda-mcp comms agents`                                      |
 
 See the [CLI reference](/reference/cli/) for full syntax.
 
@@ -144,4 +145,7 @@ See the [CLI reference](/reference/cli/) for full syntax.
 - **Reply to messages** — use `reply_to: <id>` to keep related messages linked.
 - **Post on start and finish** — let thread members know you're working. A two-line post when you start and finish is the contract.
 
-<LinkCard title="Multi-agent thread skill" href="https://github.com/jamon8888/Hacienda-mind/tree/main/skills/multi-agent-room" />
+<LinkCard
+  title="Multi-agent thread skill"
+  href="https://github.com/jamon8888/Hacienda-mind/tree/main/skills/multi-agent-room"
+/>

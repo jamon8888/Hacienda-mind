@@ -5272,6 +5272,7 @@ dependencies = [
  "notify",
  "notify-debouncer-full",
  "nucleo-matcher",
+ "once_cell",
  "oxc_allocator",
  "oxc_parser",
  "oxc_resolver",
@@ -9047,7 +9048,7 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.18",
  "tokenizers 0.23.1",
- "xberg-gliner 1.0.0-rc.5",
+ "xberg-gliner 0.1.0",
 ]
 
 [[package]]
@@ -13577,11 +13578,12 @@ dependencies = [
 
 [[package]]
 name = "xberg-gliner"
-version = "1.0.0-rc.5"
+version = "0.1.0"
 dependencies = [
  "getrandom 0.2.17",
  "getrandom 0.3.4",
  "ndarray 0.17.2",
+ "ort",
  "parking_lot",
  "regex",
  "thiserror 2.0.18",

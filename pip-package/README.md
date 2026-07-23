@@ -5,6 +5,7 @@ web crawl, git history, and agent-to-agent comms so multiple agents coordinate w
 300+ languages, one MCP server.
 
 <!-- markdownlint-disable-next-line MD013 -->
+
 [![Docs](https://img.shields.io/badge/docs-github.com/jamon8888/Hacienda-mind-965aff)](https://github.com/jamon8888/Hacienda-mind)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jamon8888/Hacienda-mind/blob/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/hacienda-mcp.svg)](https://pypi.org/project/basemind/)

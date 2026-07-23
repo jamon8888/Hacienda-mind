@@ -24,18 +24,18 @@ Invoke with a natural-language question about this repo's code, history, or docu
 
 Route the question to the tool that answers it directly:
 
-| Example question | Tool |
-|---|---|
-| "Where is X defined?" | `search_symbols` |
-| "What calls X?" | `find_references` (any name) or `find_callers` (specific def) |
-| "What's the shape of this file?" | `outline` (add `l2: true` for calls + docs) |
-| "What changed recently?" | `recent_changes`, `commits_touching`, `symbol_history` |
-| "Who last touched this?" | `blame_file` / `blame_symbol` |
-| "Where's the churn?" | `hot_files` |
-| "Search PDFs/docs in the repo by meaning?" | `search_documents` |
-| "Recall something remembered earlier?" | `memory_get` / `memory_list` / `memory_search` |
-| "Remember this for later sessions?" | `memory_put` (delete with `memory_delete`) |
-| "Refresh the index after editing code?" | `rescan` (pass `paths: [...]` to limit the scope) |
+| Example question                           | Tool                                                          |
+| ------------------------------------------ | ------------------------------------------------------------- |
+| "Where is X defined?"                      | `search_symbols`                                              |
+| "What calls X?"                            | `find_references` (any name) or `find_callers` (specific def) |
+| "What's the shape of this file?"           | `outline` (add `l2: true` for calls + docs)                   |
+| "What changed recently?"                   | `recent_changes`, `commits_touching`, `symbol_history`        |
+| "Who last touched this?"                   | `blame_file` / `blame_symbol`                                 |
+| "Where's the churn?"                       | `hot_files`                                                   |
+| "Search PDFs/docs in the repo by meaning?" | `search_documents`                                            |
+| "Recall something remembered earlier?"     | `memory_get` / `memory_list` / `memory_search`                |
+| "Remember this for later sessions?"        | `memory_put` (delete with `memory_delete`)                    |
+| "Refresh the index after editing code?"    | `rescan` (pass `paths: [...]` to limit the scope)             |
 
 ## Notes
 

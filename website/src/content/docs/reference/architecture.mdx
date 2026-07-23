@@ -3,7 +3,7 @@ title: Architecture
 description: How hacienda-mcp is built — from scanning to serving to indexing.
 ---
 
-import { Aside, FileTree } from '@astrojs/starlight/components';
+import { Aside, FileTree } from "@astrojs/starlight/components";
 
 hacienda-mcp is a single Rust crate with one binary (`hacienda-mcp`) serving three roles: **`hacienda-mcp scan`** indexes a workspace, **`hacienda-mcp serve`** runs the MCP stdio server, and the **daemon** (`hacienda-mcp comms daemon`, auto-spawned; singleton per user) is the sole writer managing the global cache.
 
@@ -52,19 +52,19 @@ Location: `~/.local/share/hacienda-mcp/views/<workspace_hash>/<view>/index.fjall
 A disk-backed, append-only LSM tree (Fjall) provides lightning-fast lookups. The daemon is the sole
 writer; all `hacienda-mcp serve` sessions read concurrently from the same index via a read-only handle:
 
-| Keyspace | Purpose |
-|---|---|
-| `meta` | Schema version and constants |
-| `symbols_by_path` | Per-file symbol lookup |
-| `symbols_by_name` | Name-prefix range scans (drives `search_symbols`) |
-| `calls_by_path` | Per-file call lookup |
-| `calls_by_callee` | Callee-prefix range scans (drives `find_references`) |
-| `imports_by_path` | Per-file import lookup |
-| `imports_by_module` | Module-prefix range scans (drives `dependents`) |
-| `implementations_by_path` | Per-file implementation lookup |
+| Keyspace                   | Purpose                                                  |
+| -------------------------- | -------------------------------------------------------- |
+| `meta`                     | Schema version and constants                             |
+| `symbols_by_path`          | Per-file symbol lookup                                   |
+| `symbols_by_name`          | Name-prefix range scans (drives `search_symbols`)        |
+| `calls_by_path`            | Per-file call lookup                                     |
+| `calls_by_callee`          | Callee-prefix range scans (drives `find_references`)     |
+| `imports_by_path`          | Per-file import lookup                                   |
+| `imports_by_module`        | Module-prefix range scans (drives `dependents`)          |
+| `implementations_by_path`  | Per-file implementation lookup                           |
 | `implementations_by_trait` | Trait-prefix range scans (drives `find_implementations`) |
-| `embeddings` | Reserved for future in-Fjall vector index |
-| `memory_by_key` | Agent memory namespaced by (scope, visibility, owner) |
+| `embeddings`               | Reserved for future in-Fjall vector index                |
+| `memory_by_key`            | Agent memory namespaced by (scope, visibility, owner)    |
 
 All composite keys are **length-prefixed** (`u16:len ‖ bytes`), ensuring a prefix like `Foo` never spills into `Foobar`.
 
@@ -254,5 +254,9 @@ The background daemon (singleton per user) manages agent communication and share
 Why a daemon? Content-addressed blobs and a single Fjall writer are the key wins: all repos/worktrees on one machine share blob deduplication, and N sessions can read concurrently from a single index without downgrade-to-read-only issues. The daemon is the sole Fjall writer and enforces this via socket-bind-as-lock (singleton enforcement).
 
 <Aside>
-The architecture trades off simplicity for performance: content-addressed blobs enable deduplication, the inverted index gives instant lookups, and the git-history index makes history queries microsecond-fast. At the same time, incremental scanning and a split memory substrate support multi-agent coordination without blocking.
+  The architecture trades off simplicity for performance: content-addressed
+  blobs enable deduplication, the inverted index gives instant lookups, and the
+  git-history index makes history queries microsecond-fast. At the same time,
+  incremental scanning and a split memory substrate support multi-agent
+  coordination without blocking.
 </Aside>

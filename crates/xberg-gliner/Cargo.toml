@@ -1,0 +1,42 @@
+[package]
+name = "xberg-gliner"
+version = "0.1.0"
+edition = "2024"
+description = "Stripped span-mode GLiNER ONNX runtime used by xberg NER. Vendored into hacienda-mcp for the in-process PII redaction backend."
+license = "Apache-2.0"
+repository = "https://github.com/jamon8888/Hacienda-mind"
+homepage = "https://github.com/jamon8888/Hacienda-mind"
+keywords = ["nlp", "ner", "gliner", "onnx"]
+categories = ["text-processing"]
+
+[lib]
+name = "xberg_gliner"
+path = "src/lib.rs"
+
+[features]
+# Preserves prior default behavior exactly: plain `cargo build`/`cargo test`
+# (no --features flag) still auto-provisions ONNX Runtime via download.
+# `ort-backend` alone only compiles the `ort` crate in — it has no binary
+# provisioning strategy, so it must NOT be the default (linking would fail
+# for any default-feature consumer, e.g. `cargo test -p xberg-gliner`).
+default = ["ort-bundled"]
+ort-backend = ["dep:ort"]
+ort-bundled = ["ort-backend", "ort/download-binaries", "ort/tls-rustls"]
+ort-dynamic = ["ort-backend", "ort/load-dynamic"]
+
+[dependencies]
+ndarray = "0.17"
+ort = { version = "2.0.0-rc.12", default-features = false, features = ["std", "api-18", "ndarray"], optional = true }
+parking_lot = "0.12.5"
+regex = "1.12"
+thiserror = "2"
+tokenizers = { version = "0.23", default-features = false, features = ["fancy-regex"] }
+
+# tokenizers pulls getrandom transitively (via ahash, rand); force-enable the
+# wasm_js backend for every getrandom major in the graph so wasm32 links.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
+getrandom_03 = { package = "getrandom", version = "0.3", features = ["wasm_js"] }
+
+[lints]
+workspace = true

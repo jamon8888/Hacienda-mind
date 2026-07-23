@@ -87,7 +87,7 @@ pub(super) fn run_search_git_history(
     hits.truncate(limit);
     let next_cursor = has_more.then(|| super::cursor::Cursor::encode_in_memory((skip + hits.len()) as u64, snapshot));
 
-    let commits: Vec<GitCommitHit> = hits.into_iter().map(commit_to_hit).collect();
+    let commits: Vec<GitCommitHit> = hits.into_iter().map(|c| commit_to_hit(c, &state.config.pii)).collect();
     json_result(&SearchGitHistoryResponse {
         commits,
         partial,
@@ -96,13 +96,13 @@ pub(super) fn run_search_git_history(
     })
 }
 
-fn commit_to_hit(c: CommitInfo) -> GitCommitHit {
+fn commit_to_hit(c: CommitInfo, pii_cfg: &crate::config::PiiConfig) -> GitCommitHit {
     GitCommitHit {
         sha: c.sha,
         short_sha: c.short_sha,
         summary: c.summary,
-        author: c.author,
-        author_email: c.author_email,
+        author: crate::extract::pii::redact_author_identity(&c.author, pii_cfg),
+        author_email: crate::extract::pii::redact_author_identity(&c.author_email, pii_cfg),
         author_time_unix: c.author_time_unix,
         body: c.body,
     }

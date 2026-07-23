@@ -9,15 +9,15 @@ Lives at `.hacienda-mcp/views/<view>/index.fjall/`. Source: `src/index/{mod,keys
 
 ## Keyspaces
 
-| Keyspace | Purpose |
-|---|---|
-| `meta` | Constants (e.g. `schema_ver`). |
-| `symbols_by_path` | Per-file outline lookups. |
-| `symbols_by_name` | `name`-prefix range scans for symbol search. |
-| `calls_by_path` | Per-file call lookups. |
-| `calls_by_callee` | `callee`-prefix range scans — drives `find_references`. |
-| `imports_by_module` | Future fast-path for `dependents`. |
-| `embeddings` | Reserved for vector search; empty today. |
+| Keyspace            | Purpose                                                 |
+| ------------------- | ------------------------------------------------------- |
+| `meta`              | Constants (e.g. `schema_ver`).                          |
+| `symbols_by_path`   | Per-file outline lookups.                               |
+| `symbols_by_name`   | `name`-prefix range scans for symbol search.            |
+| `calls_by_path`     | Per-file call lookups.                                  |
+| `calls_by_callee`   | `callee`-prefix range scans — drives `find_references`. |
+| `imports_by_module` | Future fast-path for `dependents`.                      |
+| `embeddings`        | Reserved for vector search; empty today.                |
 
 ### Key shape
 

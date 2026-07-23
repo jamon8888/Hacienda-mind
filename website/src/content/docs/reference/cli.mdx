@@ -3,7 +3,7 @@ title: CLI Reference
 description: Complete command list for the hacienda-mcp command-line interface.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside } from "@astrojs/starlight/components";
 
 CLI commands mirror the MCP tools 1:1 (enforced by `tests/cli_parity.rs`). Add `--json` for machine-readable output. Each tool and example below matches the MCP surface exactly.
 
@@ -28,23 +28,23 @@ hacienda-mcp query get-chunk <path> [--chunk-id --byte-start]
 hacienda-mcp query expand <path> <name> [--kind]
 ```
 
-| Command | Purpose |
-|---|---|
-| `outline <path> [--l2]` | A file's structure: symbols, lines, signatures. `--l2` adds calls + docs. |
-| `symbol <needle> [--kind]` | Find a symbol by name, optionally filtered by kind. |
-| `search <needle>` | Text search across indexed files. |
-| `references <name>` | Find everywhere a name is called. |
-| `callers <path> <name> [--kind]` | Find callers of one specific definition. |
-| `goto-definition <path> <line> [--column]` | Resolve a reference position to its scope-resolved definition. |
-| `implementations <trait>` | Types that implement or inherit from a name. |
-| `call-graph <name> [--direction --max-depth]` | Walk the call chain up or down. |
-| `grep <pattern> [--language --path-contains]` | Pattern search with filters. |
-| `list-files [--path-contains --language]` | List indexed files. |
-| `status` / `repo-info` | Project overview / git info (branch, HEAD, origin). |
-| `dependents <module>` | What imports a given module. |
-| `search-code <query> [--limit --format]` | Semantic (vector) search over code chunks; returns pointers. Needs `--features code-search`. |
-| `get-chunk <path> [--chunk-id --byte-start]` | Fetch one code chunk's source body (the `search-code` fetch half). |
-| `expand <path> <name> [--kind]` | A symbol's raw source body (the inverse of an outline entry). |
+| Command                                       | Purpose                                                                                      |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `outline <path> [--l2]`                       | A file's structure: symbols, lines, signatures. `--l2` adds calls + docs.                    |
+| `symbol <needle> [--kind]`                    | Find a symbol by name, optionally filtered by kind.                                          |
+| `search <needle>`                             | Text search across indexed files.                                                            |
+| `references <name>`                           | Find everywhere a name is called.                                                            |
+| `callers <path> <name> [--kind]`              | Find callers of one specific definition.                                                     |
+| `goto-definition <path> <line> [--column]`    | Resolve a reference position to its scope-resolved definition.                               |
+| `implementations <trait>`                     | Types that implement or inherit from a name.                                                 |
+| `call-graph <name> [--direction --max-depth]` | Walk the call chain up or down.                                                              |
+| `grep <pattern> [--language --path-contains]` | Pattern search with filters.                                                                 |
+| `list-files [--path-contains --language]`     | List indexed files.                                                                          |
+| `status` / `repo-info`                        | Project overview / git info (branch, HEAD, origin).                                          |
+| `dependents <module>`                         | What imports a given module.                                                                 |
+| `search-code <query> [--limit --format]`      | Semantic (vector) search over code chunks; returns pointers. Needs `--features code-search`. |
+| `get-chunk <path> [--chunk-id --byte-start]`  | Fetch one code chunk's source body (the `search-code` fetch half).                           |
+| `expand <path> <name> [--kind]`               | A symbol's raw source body (the inverse of an outline entry).                                |
 
 ## Git Commands
 
@@ -62,19 +62,19 @@ hacienda-mcp git blame-symbol <path> <name>
 hacienda-mcp git symbol-history <path> <name>
 ```
 
-| Command | Purpose |
-|---|---|
-| `working-tree-status` | What's staged and unstaged right now. |
-| `recent-changes [--limit]` | Recent commits with their files. |
+| Command                                                     | Purpose                                                    |
+| ----------------------------------------------------------- | ---------------------------------------------------------- |
+| `working-tree-status`                                       | What's staged and unstaged right now.                      |
+| `recent-changes [--limit]`                                  | Recent commits with their files.                           |
 | `search <pattern> [--field author\|message\|all] [--limit]` | Full-text search over commit history at full branch depth. |
-| `commits-touching <path>` | Commits that modified a given path. |
-| `find-commits-by-path <pattern>` | Commits matching a path pattern. |
-| `hot-files [--limit]` | The most frequently changed files. |
-| `diff-file <path> <old> <new>` | File diff across commits. |
-| `diff-outline <path> [--rev]` | Structure diff across commits. |
-| `blame-file <path>` | Who last changed each line. |
-| `blame-symbol <path> <name>` | Who last changed a symbol. |
-| `symbol-history <path> <name>` | When a symbol's body changed over time. |
+| `commits-touching <path>`                                   | Commits that modified a given path.                        |
+| `find-commits-by-path <pattern>`                            | Commits matching a path pattern.                           |
+| `hot-files [--limit]`                                       | The most frequently changed files.                         |
+| `diff-file <path> <old> <new>`                              | File diff across commits.                                  |
+| `diff-outline <path> [--rev]`                               | Structure diff across commits.                             |
+| `blame-file <path>`                                         | Who last changed each line.                                |
+| `blame-symbol <path> <name>`                                | Who last changed a symbol.                                 |
+| `symbol-history <path> <name>`                              | When a symbol's body changed over time.                    |
 
 ## Memory Commands
 
@@ -87,13 +87,13 @@ hacienda-mcp memory search <query>
 hacienda-mcp memory search-documents <query>
 ```
 
-| Command | Purpose |
-|---|---|
-| `put <key> <value>` | Store a value. |
-| `get <key>` | Retrieve a value. |
-| `delete <key>` | Remove a value. |
-| `list [--prefix]` | List keys, optionally by prefix. |
-| `search <query>` | Search stored values by meaning. |
+| Command                    | Purpose                               |
+| -------------------------- | ------------------------------------- |
+| `put <key> <value>`        | Store a value.                        |
+| `get <key>`                | Retrieve a value.                     |
+| `delete <key>`             | Remove a value.                       |
+| `list [--prefix]`          | List keys, optionally by prefix.      |
+| `search <query>`           | Search stored values by meaning.      |
 | `search-documents <query>` | Search documents and memory together. |
 
 ## Suggestions Commands
@@ -106,13 +106,13 @@ hacienda-mcp governance reject <id> [--reason]
 hacienda-mcp governance audit [--key --individual --dry-run --include-archived]
 ```
 
-| Command | Purpose |
-|---|---|
-| `mine [--commits --min-count --min-confidence --max-files-per-commit]` | Suggest notes from files that change together. |
-| `proposals [--kind --limit]` | List pending suggestions. |
-| `accept <id> [--key]` | Keep a suggestion. |
-| `reject <id> [--reason]` | Dismiss a suggestion. |
-| `audit [--key --individual --dry-run --include-archived]` | Recompute memory importance, archive stale entries. |
+| Command                                                                | Purpose                                             |
+| ---------------------------------------------------------------------- | --------------------------------------------------- |
+| `mine [--commits --min-count --min-confidence --max-files-per-commit]` | Suggest notes from files that change together.      |
+| `proposals [--kind --limit]`                                           | List pending suggestions.                           |
+| `accept <id> [--key]`                                                  | Keep a suggestion.                                  |
+| `reject <id> [--reason]`                                               | Dismiss a suggestion.                               |
+| `audit [--key --individual --dry-run --include-archived]`              | Recompute memory importance, archive stale entries. |
 
 ## Cache Commands
 
@@ -122,10 +122,10 @@ hacienda-mcp cache gc
 hacienda-mcp cache clear --component <comp>
 ```
 
-| Command | Purpose |
-|---|---|
-| `stats` | Disk footprint (per-component + total, matches `du`) and process RAM. |
-| `gc` | Reclaim unused space (safe while the server runs). |
+| Command                    | Purpose                                                                                               |
+| -------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `stats`                    | Disk footprint (per-component + total, matches `du`) and process RAM.                                 |
+| `gc`                       | Reclaim unused space (safe while the server runs).                                                    |
 | `clear --component <comp>` | Clear part of the cache (`blobs`, `views`, `views:<name>`, `lance`, `git-cache`, `telemetry`, `all`). |
 
 ## Web Commands
@@ -136,11 +136,11 @@ hacienda-mcp web crawl <seed-url>
 hacienda-mcp web map <url>
 ```
 
-| Command | Purpose |
-|---|---|
-| `scrape <url>` | Fetch and index a single page. |
-| `crawl <seed-url>` | Follow links from a starting URL. |
-| `map <url>` | Discover a site's pages without fetching bodies. |
+| Command            | Purpose                                          |
+| ------------------ | ------------------------------------------------ |
+| `scrape <url>`     | Fetch and index a single page.                   |
+| `crawl <seed-url>` | Follow links from a starting URL.                |
+| `map <url>`        | Discover a site's pages without fetching bodies. |
 
 ## Comms Commands
 
@@ -160,19 +160,19 @@ hacienda-mcp comms start
 hacienda-mcp comms stop
 ```
 
-| Command | Purpose |
-|---|---|
-| `rooms` | List rooms. |
-| `join <room>` | Join a room. |
-| `leave <room>` | Leave a room. |
-| `room-create <room>` | Create a room. |
-| `post <room> <subject> [--body --reply-to --tag]` | Post a message. |
-| `history <room>` | Recent messages in a room (front-matter only). |
-| `inbox [--mark-read]` | Your inbox (front-matter only). |
-| `read <id>` | Read one message in full. |
-| `register --name <handle>` | Set your agent handle. |
-| `agents` | List active agents. |
-| `status` / `start` / `stop` | Check, start, or stop the shared daemon. |
+| Command                                           | Purpose                                        |
+| ------------------------------------------------- | ---------------------------------------------- |
+| `rooms`                                           | List rooms.                                    |
+| `join <room>`                                     | Join a room.                                   |
+| `leave <room>`                                    | Leave a room.                                  |
+| `room-create <room>`                              | Create a room.                                 |
+| `post <room> <subject> [--body --reply-to --tag]` | Post a message.                                |
+| `history <room>`                                  | Recent messages in a room (front-matter only). |
+| `inbox [--mark-read]`                             | Your inbox (front-matter only).                |
+| `read <id>`                                       | Read one message in full.                      |
+| `register --name <handle>`                        | Set your agent handle.                         |
+| `agents`                                          | List active agents.                            |
+| `status` / `start` / `stop`                       | Check, start, or stop the shared daemon.       |
 
 ## Shells Commands
 
@@ -187,14 +187,14 @@ hacienda-mcp shells list
 hacienda-mcp shells broadcast <text> --session <id>…
 ```
 
-| Command | Purpose |
-|---|---|
+| Command                                 | Purpose                                              |
+| --------------------------------------- | ---------------------------------------------------- |
 | `spawn <command> [--cwd --env --title]` | Start a detached shell session; prints `session_id`. |
-| `send <session-id> <text> [--no-enter]` | Type into a session's stdin. |
-| `capture <session-id> [--lines]` | Read a session's visible screen. |
-| `kill <session-id>` | End a session. |
-| `list` | List live sessions. |
-| `broadcast <text> --session <id>…` | Send input to multiple sessions at once. |
+| `send <session-id> <text> [--no-enter]` | Type into a session's stdin.                         |
+| `capture <session-id> [--lines]`        | Read a session's visible screen.                     |
+| `kill <session-id>`                     | End a session.                                       |
+| `list`                                  | List live sessions.                                  |
+| `broadcast <text> --session <id>…`      | Send input to multiple sessions at once.             |
 
 ## Core Commands
 
@@ -213,23 +213,24 @@ hacienda-mcp detect-waste
 hacienda-mcp telemetry
 ```
 
-| Command | Purpose |
-|---|---|
-| `scan` | Full index of the project. |
-| `rescan <path>` | Update one path. |
-| `watch` | Keep the index fresh as files change (no server). |
-| `serve [--no-watch]` | Start the MCP server. Default keeps index fresh; `--no-watch` disables auto-refresh. |
-| `init` | Re-runnable onboarding: write `basemind.toml`, select capabilities, inject usage rules. |
-| `lang <list\|install\|clean>` | Manage downloaded language grammars. |
-| `hook install` | Add a git pre-commit hook that runs a scan. |
-| `compress-output` | Backend for output compression guardrail. |
-| `delta --old <path>` | Backend for delta-reads guardrail. |
-| `checkpoint` | Summarize a session: what was queried, tokens saved. |
-| `detect-waste` | Flag wasteful tool use. |
-| `telemetry` | What's been queried and how many tokens were saved. |
+| Command                       | Purpose                                                                                 |
+| ----------------------------- | --------------------------------------------------------------------------------------- |
+| `scan`                        | Full index of the project.                                                              |
+| `rescan <path>`               | Update one path.                                                                        |
+| `watch`                       | Keep the index fresh as files change (no server).                                       |
+| `serve [--no-watch]`          | Start the MCP server. Default keeps index fresh; `--no-watch` disables auto-refresh.    |
+| `init`                        | Re-runnable onboarding: write `basemind.toml`, select capabilities, inject usage rules. |
+| `lang <list\|install\|clean>` | Manage downloaded language grammars.                                                    |
+| `hook install`                | Add a git pre-commit hook that runs a scan.                                             |
+| `compress-output`             | Backend for output compression guardrail.                                               |
+| `delta --old <path>`          | Backend for delta-reads guardrail.                                                      |
+| `checkpoint`                  | Summarize a session: what was queried, tokens saved.                                    |
+| `detect-waste`                | Flag wasteful tool use.                                                                 |
+| `telemetry`                   | What's been queried and how many tokens were saved.                                     |
 
 <Aside type="note">
-All commands support `--json` for machine-readable output. Query and git commands take the same
-filters as their MCP counterparts (`--limit`, `--language`, `--path-contains`, …). Cursor-based
-pagination (`--cursor`) is exposed on `comms history` and `comms inbox`.
+  All commands support `--json` for machine-readable output. Query and git
+  commands take the same filters as their MCP counterparts (`--limit`,
+  `--language`, `--path-contains`, …). Cursor-based pagination (`--cursor`) is
+  exposed on `comms history` and `comms inbox`.
 </Aside>

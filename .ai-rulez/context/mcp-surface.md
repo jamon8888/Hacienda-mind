@@ -8,29 +8,29 @@ priority: high
 
 ## Code-map tools
 
-| Tool | Purpose |
-|---|---|
-| `outline` | Full per-file structure: symbols + line/col + signatures + imports. `l2: true` includes calls + docs. |
-| `search_symbols` | Substring lookup across every indexed file, with optional kind filter. In-RAM `memmem`. |
-| `find_references` | Call sites of any callee whose identifier matches `name`. Backed by Fjall `calls_by_callee`. No scope resolution; `Foo::bar()` and `bar()` both match `name="bar"`. |
-| `find_callers` | Callers of a specific definition (path + name + optional kind). Resolves the definition first (echoed in `definition`), then runs the same name-based scan as `find_references`. |
-| `list_files` | Enumerate indexed paths, optional `path_contains` + `language` filters. |
-| `find_files` | Fuzzy subsequence filename/path search (fzf/fd-style), ranked by `nucleo-matcher` score. |
-| `dependents` | Heuristic reverse-lookup via imports. |
-| `status` / `repo_info` | Repo overview: file count, language breakdown, cache directory. |
-| `symbol_history` | Cross-commit history of a symbol's structural hash via the outline cache + structural-hash machinery. |
+| Tool                   | Purpose                                                                                                                                                                          |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `outline`              | Full per-file structure: symbols + line/col + signatures + imports. `l2: true` includes calls + docs.                                                                            |
+| `search_symbols`       | Substring lookup across every indexed file, with optional kind filter. In-RAM `memmem`.                                                                                          |
+| `find_references`      | Call sites of any callee whose identifier matches `name`. Backed by Fjall `calls_by_callee`. No scope resolution; `Foo::bar()` and `bar()` both match `name="bar"`.              |
+| `find_callers`         | Callers of a specific definition (path + name + optional kind). Resolves the definition first (echoed in `definition`), then runs the same name-based scan as `find_references`. |
+| `list_files`           | Enumerate indexed paths, optional `path_contains` + `language` filters.                                                                                                          |
+| `find_files`           | Fuzzy subsequence filename/path search (fzf/fd-style), ranked by `nucleo-matcher` score.                                                                                         |
+| `dependents`           | Heuristic reverse-lookup via imports.                                                                                                                                            |
+| `status` / `repo_info` | Repo overview: file count, language breakdown, cache directory.                                                                                                                  |
+| `symbol_history`       | Cross-commit history of a symbol's structural hash via the outline cache + structural-hash machinery.                                                                            |
 
 ### Git tools (require `hacienda-mcp serve` inside a git repo)
 
-| Tool | Purpose |
-|---|---|
-| `working_tree_status` | `git status` summary with staged / unstaged classification. |
-| `recent_changes` | Recent commits with paths + summaries. |
-| `commits_touching` | Commits that modified a given path. |
-| `find_commits_by_path` | Path-filtered commit log. |
-| `diff_file` / `diff_outline` | File and outline diffs across revs. |
-| `hot_files` | Churn-ranked files. |
-| `blame_file` / `blame_symbol` | Per-line and per-symbol blame. |
+| Tool                          | Purpose                                                     |
+| ----------------------------- | ----------------------------------------------------------- |
+| `working_tree_status`         | `git status` summary with staged / unstaged classification. |
+| `recent_changes`              | Recent commits with paths + summaries.                      |
+| `commits_touching`            | Commits that modified a given path.                         |
+| `find_commits_by_path`        | Path-filtered commit log.                                   |
+| `diff_file` / `diff_outline`  | File and outline diffs across revs.                         |
+| `hot_files`                   | Churn-ranked files.                                         |
+| `blame_file` / `blame_symbol` | Per-line and per-symbol blame.                              |
 
 #### Contract rules
 

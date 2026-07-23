@@ -135,7 +135,10 @@ async fn embedder(state: &ServerState) -> Result<Arc<SharedEmbedder>, McpError> 
 
 fn engine(state: &ServerState) -> Result<&crawlberg::CrawlEngineHandle, McpError> {
     state.crawl_engine.as_ref().ok_or_else(|| {
-        McpError::internal_error("crawl engine not initialised; check hacienda-mcp serve startup logs", None)
+        McpError::internal_error(
+            "crawl engine not initialised; check hacienda-mcp serve startup logs",
+            None,
+        )
     })
 }
 
@@ -162,6 +165,7 @@ pub(super) async fn run_web_scrape(state: &ServerState, params: WebScrapeParams)
         let lance = lance_store(state).await?;
         let embedder = embedder(state).await?;
         let documents_cfg = state.config.documents.clone();
+        let pii_cfg = state.config.pii.clone();
         let scope_for_block = scope.clone();
         let final_url_for_block = result.final_url.clone();
         let mime_for_block = result.content_type.clone();
@@ -170,6 +174,7 @@ pub(super) async fn run_web_scrape(state: &ServerState, params: WebScrapeParams)
                 lance.as_ref(),
                 &embedder,
                 &documents_cfg,
+                &pii_cfg,
                 &scope_for_block,
                 &final_url_for_block,
                 &mime_for_block,
@@ -231,6 +236,7 @@ pub(super) async fn run_web_crawl(state: &ServerState, params: WebCrawlParams) -
     let lance = lance_store(state).await?;
     let embedder = embedder(state).await?;
     let documents_cfg = Arc::new(state.config.documents.clone());
+    let pii_cfg = Arc::new(state.config.pii.clone());
 
     let mut total_chunks = 0usize;
     let mut pages_indexed = 0usize;
@@ -272,6 +278,7 @@ pub(super) async fn run_web_crawl(state: &ServerState, params: WebCrawlParams) -
         let lance_for_block = Arc::clone(&lance);
         let embedder_for_block = Arc::clone(&embedder);
         let docs_for_block = Arc::clone(&documents_cfg);
+        let pii_for_block = Arc::clone(&pii_cfg);
         let sem = Arc::clone(&semaphore);
         let scope_for_block = page_scope;
         let path_for_block = page.normalized_url.clone();
@@ -288,6 +295,7 @@ pub(super) async fn run_web_crawl(state: &ServerState, params: WebCrawlParams) -
                     lance_for_block.as_ref(),
                     &embedder_for_block,
                     &docs_for_block,
+                    &pii_for_block,
                     &scope_for_block,
                     &path_for_block,
                     &mime_for_block,

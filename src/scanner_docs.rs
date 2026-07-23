@@ -69,12 +69,7 @@ pub(crate) fn preset_dim(name: &str) -> anyhow::Result<u16> {
 /// Translate the project-level `[documents]` config into the xberg-facing
 /// [`DocConfig`] the extractor expects. Pulled out so the wiring in
 /// `process_file` stays a single call.
-pub(crate) fn doc_config_from(
-    cfg: &DocumentsConfig,
-    llm: &LlmConfig,
-    pii: &PiiConfig,
-    embed: bool,
-) -> DocConfig {
+pub(crate) fn doc_config_from(cfg: &DocumentsConfig, llm: &LlmConfig, pii: &PiiConfig, embed: bool) -> DocConfig {
     DocConfig {
         max_characters: cfg.max_characters,
         overlap: cfg.overlap,
@@ -488,6 +483,7 @@ mod tests {
     /// the model check closes the stale-vector hole. It stays reusable when the preset is unchanged.
     #[test]
     fn cached_doc_not_reusable_when_preset_model_differs_at_same_dim() {
+        use crate::config::DetectedEntity;
         use crate::extract::doc::{DocChunk, FileMapDoc};
         let doc = FileMapDoc {
             schema_ver: 0,
@@ -506,6 +502,9 @@ mod tests {
             keywords: Vec::new(),
             entities: Vec::new(),
             summary: None,
+            redaction: None,
+            redacted_entities: DetectedEntity::default(),
+            attestation: None,
         };
 
         let same = DocumentsConfig {

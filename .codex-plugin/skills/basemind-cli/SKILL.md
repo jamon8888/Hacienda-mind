@@ -41,37 +41,37 @@ command covers the question.
 
 ## Command routing (copy this into your mental model)
 
-| Question | Command | Notes |
-|---|---|---|
-| "Where is X defined?" | `hacienda-mcp query symbol "X"` | Substring match, optional `--kind` filter. |
-| "What's the shape of file F?" | `hacienda-mcp query outline path/F` | Add `--l2` for calls + docs. |
-| "What calls X?" (any name) | `hacienda-mcp query references "X"` | Name match, no scope resolution. |
-| "What calls this specific definition?" | `hacienda-mcp query callers path name [--kind]` | Specific definition lookup. |
-| "Trace the call graph?" | `hacienda-mcp query call-graph "name" [--direction --max-depth]` | BFS over calls. |
-| "What implements / extends X?" | `hacienda-mcp query implementations "X"` | Rust, Python, TS/TSX, JS. |
-| "What imports module M?" | `hacienda-mcp query dependents "M"` | Reverse-lookup via imports. |
-| "What files are indexed?" | `hacienda-mcp query list-files [--language --path-contains]` | Filter by language/path. |
-| "What changed recently?" | `hacienda-mcp git recent-changes [--limit N]` | Recent commits with paths. |
-| "When did symbol X last change?" | `hacienda-mcp git symbol-history path name` | Cross-commit structural hash. |
-| "Who wrote this line / symbol?" | `hacienda-mcp git blame-file path` / `blame-symbol path name` | Per-line / per-symbol. |
-| "Where's the churn?" | `hacienda-mcp git hot-files [--window N --top-k K]` | Churn-ranked files. |
-| "What's dirty in the working tree?" | `hacienda-mcp git working-tree-status` | Staged/unstaged summary. |
-| "Diff a file between revs?" | `hacienda-mcp git diff-file path old new` / `diff-outline path` | File / outline diffs. |
-| "What's indexed?" | `hacienda-mcp query status` | File count, languages, cache dir. |
-| "What's HEAD / branch?" | `hacienda-mcp query repo-info` | Branch, HEAD, origin. |
-| "Regex over file contents?" | `hacienda-mcp query grep "pattern" [--language --path-contains]` | Full-text search. |
-| "Semantic search over docs?" | `hacienda-mcp memory search-documents "query"` | Needs `documents` feature. |
-| "Recall something stored earlier?" | `hacienda-mcp memory get "key"` / `list` / `search "q"` | KNN + exact match. |
-| "Remember this for future sessions?" | `hacienda-mcp memory put "key" "value"` | Delete with `memory delete "key"`. |
-| "Cache size?" | `hacienda-mcp cache stats` | On-disk size + orphan accounting. |
-| "Reclaim cache space?" | `hacienda-mcp cache gc` | Reclaim orphaned blobs. Safe alongside serve. |
-| "Clear caches?" | `hacienda-mcp cache clear --component blobs\|views\|all` | Destructive; use CLI not MCP. |
-| "Pull this URL into RAG?" | `hacienda-mcp web scrape <url>` | Single page (requires `--features crawl`). |
-| "Ingest a docs site?" | `hacienda-mcp web crawl <seed-url>` | Link-following crawl. |
-| "What URLs exist on this site?" | `hacienda-mcp web map <url>` | Sitemap + link discovery. |
-| "Keep index fresh?" | `hacienda-mcp watch` | Live re-index watcher; no MCP server (that's `serve`). |
-| "Refresh the index after edits?" | `hacienda-mcp scan` | Full or incremental scan. |
-| "Per-tool activity summary?" | `hacienda-mcp telemetry` | Histogram + estimated tokens saved. |
+| Question                               | Command                                                          | Notes                                                  |
+| -------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------ |
+| "Where is X defined?"                  | `hacienda-mcp query symbol "X"`                                  | Substring match, optional `--kind` filter.             |
+| "What's the shape of file F?"          | `hacienda-mcp query outline path/F`                              | Add `--l2` for calls + docs.                           |
+| "What calls X?" (any name)             | `hacienda-mcp query references "X"`                              | Name match, no scope resolution.                       |
+| "What calls this specific definition?" | `hacienda-mcp query callers path name [--kind]`                  | Specific definition lookup.                            |
+| "Trace the call graph?"                | `hacienda-mcp query call-graph "name" [--direction --max-depth]` | BFS over calls.                                        |
+| "What implements / extends X?"         | `hacienda-mcp query implementations "X"`                         | Rust, Python, TS/TSX, JS.                              |
+| "What imports module M?"               | `hacienda-mcp query dependents "M"`                              | Reverse-lookup via imports.                            |
+| "What files are indexed?"              | `hacienda-mcp query list-files [--language --path-contains]`     | Filter by language/path.                               |
+| "What changed recently?"               | `hacienda-mcp git recent-changes [--limit N]`                    | Recent commits with paths.                             |
+| "When did symbol X last change?"       | `hacienda-mcp git symbol-history path name`                      | Cross-commit structural hash.                          |
+| "Who wrote this line / symbol?"        | `hacienda-mcp git blame-file path` / `blame-symbol path name`    | Per-line / per-symbol.                                 |
+| "Where's the churn?"                   | `hacienda-mcp git hot-files [--window N --top-k K]`              | Churn-ranked files.                                    |
+| "What's dirty in the working tree?"    | `hacienda-mcp git working-tree-status`                           | Staged/unstaged summary.                               |
+| "Diff a file between revs?"            | `hacienda-mcp git diff-file path old new` / `diff-outline path`  | File / outline diffs.                                  |
+| "What's indexed?"                      | `hacienda-mcp query status`                                      | File count, languages, cache dir.                      |
+| "What's HEAD / branch?"                | `hacienda-mcp query repo-info`                                   | Branch, HEAD, origin.                                  |
+| "Regex over file contents?"            | `hacienda-mcp query grep "pattern" [--language --path-contains]` | Full-text search.                                      |
+| "Semantic search over docs?"           | `hacienda-mcp memory search-documents "query"`                   | Needs `documents` feature.                             |
+| "Recall something stored earlier?"     | `hacienda-mcp memory get "key"` / `list` / `search "q"`          | KNN + exact match.                                     |
+| "Remember this for future sessions?"   | `hacienda-mcp memory put "key" "value"`                          | Delete with `memory delete "key"`.                     |
+| "Cache size?"                          | `hacienda-mcp cache stats`                                       | On-disk size + orphan accounting.                      |
+| "Reclaim cache space?"                 | `hacienda-mcp cache gc`                                          | Reclaim orphaned blobs. Safe alongside serve.          |
+| "Clear caches?"                        | `hacienda-mcp cache clear --component blobs\|views\|all`         | Destructive; use CLI not MCP.                          |
+| "Pull this URL into RAG?"              | `hacienda-mcp web scrape <url>`                                  | Single page (requires `--features crawl`).             |
+| "Ingest a docs site?"                  | `hacienda-mcp web crawl <seed-url>`                              | Link-following crawl.                                  |
+| "What URLs exist on this site?"        | `hacienda-mcp web map <url>`                                     | Sitemap + link discovery.                              |
+| "Keep index fresh?"                    | `hacienda-mcp watch`                                             | Live re-index watcher; no MCP server (that's `serve`). |
+| "Refresh the index after edits?"       | `hacienda-mcp scan`                                              | Full or incremental scan.                              |
+| "Per-tool activity summary?"           | `hacienda-mcp telemetry`                                         | Histogram + estimated tokens saved.                    |
 
 ## Output format
 

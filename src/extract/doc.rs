@@ -22,8 +22,8 @@ use xberg::{ExtractInput, extract};
 
 use super::{ExtractError, SCHEMA_VER};
 use crate::config::{
-    DocLanguageConfig, KeywordAlgorithm, KeywordsConfig, LlmConfig, NerBackend, NerConfig, PiiConfig,
-    SummarizationConfig, SummarizationStrategy,
+    DetectedEntity, DocLanguageConfig, KeywordAlgorithm, KeywordsConfig, LlmConfig, NerBackend, NerConfig, PiiConfig,
+    RedactionState, SummarizationConfig, SummarizationStrategy,
 };
 
 /// Per-file document extraction result. Mirrors the shape of `FileMapL1` —
@@ -75,9 +75,24 @@ pub struct FileMapDoc {
     /// no LLM model configured).
     ///
     /// TAIL field — pre-iter-7 blobs deserialise via `#[serde(default)]` and
+    /// Document-level summary produced by the summarisation post-processor.
+    /// `None` when summarisation was disabled at scan time or when xberg
+    /// declined to produce one (e.g. empty content, abstractive strategy with
+    /// no LLM model configured).
+    ///
+    /// TAIL field — pre-iter-7 blobs deserialise via `#[serde(default)]` and
     /// surface as `None`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub summary: Option<DocSummary>,
+    /// Redaction outcome for this document. `None` = pre-feature blob.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub redaction: Option<RedactionState>,
+    /// Tally of detected PII categories (persisted for audit report).
+    #[serde(default, skip_serializing_if = "DetectedEntity::is_empty")]
+    pub redacted_entities: DetectedEntity,
+    /// Attestation hash over (redacted_content, model_id, config_hash).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub attestation: Option<String>,
 }
 
 /// Mirror of `xberg::keywords::Keyword`, narrowed to the fields we persist.
@@ -401,17 +416,18 @@ pub fn extract_doc(path: &Path, mime_type: Option<&str>, config: &DocConfig) -> 
 
     let mut chunks: Vec<DocChunk> = Vec::new();
     let mut embedding_dim: u16 = 0;
+    let mut redacted_state = RedactionState::Redacted;
+    let mut redacted_tally = DetectedEntity::default();
+
     if let Some(input_chunks) = result.chunks {
         for c in input_chunks {
             let dim = c.embedding.as_ref().map(|v| v.len()).unwrap_or(0);
             if dim > 0 && embedding_dim == 0 {
                 embedding_dim = u16::try_from(dim).unwrap_or(u16::MAX);
             }
-            let text = if config.pii.enabled {
-                crate::extract::pii::redact_pii(&c.content, &config.pii).0
-            } else {
-                c.content
-            };
+            let (text, ents, state) = crate::extract::pii::redact_code_text(&c.content, &config.pii);
+            redacted_state = state.worst(&redacted_state);
+            redacted_tally.merge(&ents);
             chunks.push(DocChunk {
                 byte_start: u32::try_from(c.metadata.byte_start).unwrap_or(u32::MAX),
                 byte_end: u32::try_from(c.metadata.byte_end).unwrap_or(u32::MAX),
@@ -427,46 +443,78 @@ pub fn extract_doc(path: &Path, mime_type: Option<&str>, config: &DocConfig) -> 
         String::new()
     };
 
-    let metadata = metadata_pairs(&result.metadata);
+    // Redact metadata values
+    let metadata = metadata_pairs(&result.metadata)
+        .into_iter()
+        .map(|(k, v)| {
+            let (redacted, ents, state) = crate::extract::pii::redact_code_text(&v, &config.pii);
+            redacted_state = state.worst(&redacted_state);
+            redacted_tally.merge(&ents);
+            (k, redacted)
+        })
+        .collect();
 
+    // Redact keywords
     let keywords: Vec<DocKeyword> = result
         .extracted_keywords
         .unwrap_or_default()
         .into_iter()
-        .map(|k| DocKeyword {
-            text: k.text,
-            score: k.score,
-            algorithm: keyword_algorithm_str(&k.algorithm).to_string(),
+        .map(|k| {
+            let (redacted_text, ents, state) = crate::extract::pii::redact_code_text(&k.text, &config.pii);
+            redacted_state = state.worst(&redacted_state);
+            redacted_tally.merge(&ents);
+            DocKeyword {
+                text: redacted_text,
+                score: k.score,
+                algorithm: keyword_algorithm_str(&k.algorithm).to_string(),
+            }
         })
         .collect();
 
+    // Redact entities
     let entities: Vec<DocEntity> = result
         .entities
         .unwrap_or_default()
         .into_iter()
-        .map(|e| DocEntity {
-            category: entity_category_str(e.category).into_owned(),
-            text: e.text,
-            start: e.start,
-            end: e.end,
-            confidence: e.confidence,
+        .map(|e| {
+            let (redacted_text, ents, state) = crate::extract::pii::redact_code_text(&e.text, &config.pii);
+            redacted_state = state.worst(&redacted_state);
+            redacted_tally.merge(&ents);
+            DocEntity {
+                category: entity_category_str(e.category).into_owned(),
+                text: redacted_text,
+                start: e.start,
+                end: e.end,
+                confidence: e.confidence,
+            }
         })
         .collect();
 
-    let summary = result.summary.map(|s| DocSummary {
-        text: s.text,
-        strategy: s.strategy.to_string(),
-        token_count: s.token_count,
+    // Redact summary
+    let summary = result.summary.map(|s| {
+        let (redacted_text, ents, state) = crate::extract::pii::redact_code_text(&s.text, &config.pii);
+        redacted_state = state.worst(&redacted_state);
+        redacted_tally.merge(&ents);
+        DocSummary {
+            text: redacted_text,
+            strategy: s.strategy.to_string(),
+            token_count: s.token_count,
+        }
     });
+
+    // Redact content
+    let (content, content_ents, content_state) = crate::extract::pii::redact_code_text(&result.content, &config.pii);
+    redacted_state = content_state.worst(&redacted_state);
+    redacted_tally.merge(&content_ents);
+
+    // Attestation
+    let config_hash = format!("{:?}", config.pii);
+    let att = crate::extract::pii::attestation(&content, "gliner2-guardrails", &config_hash);
 
     Ok(FileMapDoc {
         schema_ver: SCHEMA_VER,
         mime_type: result.mime_type.into_owned(),
-        content: if config.pii.enabled {
-            crate::extract::pii::redact_pii(&result.content, &config.pii).0
-        } else {
-            result.content
-        },
+        content,
         metadata,
         detected_languages: result.detected_languages.unwrap_or_default(),
         chunks,
@@ -475,6 +523,9 @@ pub fn extract_doc(path: &Path, mime_type: Option<&str>, config: &DocConfig) -> 
         keywords,
         entities,
         summary,
+        redaction: Some(redacted_state),
+        redacted_entities: redacted_tally,
+        attestation: Some(att),
     })
 }
 

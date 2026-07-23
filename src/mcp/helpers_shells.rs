@@ -270,7 +270,11 @@ async fn try_couple_session_thread(
         thread.id.into_string()
     };
 
-    const IDENTITY_KEYS: [&str; 3] = ["HACIENDA_MCP_AGENT_ID", "HACIENDA_MCP_PARENT_AGENT_ID", "HACIENDA_MCP_THREAD_ID"];
+    const IDENTITY_KEYS: [&str; 3] = [
+        "HACIENDA_MCP_AGENT_ID",
+        "HACIENDA_MCP_PARENT_AGENT_ID",
+        "HACIENDA_MCP_THREAD_ID",
+    ];
     environment.retain(|entry| {
         let key = entry.split('=').next().unwrap_or(entry);
         !IDENTITY_KEYS.contains(&key)

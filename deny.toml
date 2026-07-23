@@ -72,6 +72,10 @@ allow = ["bzip2-1.0.6"]
 name = "inferno"
 allow = ["CDDL-1.0"]
 
+[[licenses.exceptions]]
+name = "nom-exif"
+allow = ["Apache-2.0", "MIT"]
+
 [licenses.private]
 ignore = false
 registries = []

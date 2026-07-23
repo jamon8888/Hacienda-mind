@@ -155,19 +155,19 @@ A Fjall LSM keyspace at `~/.local/share/hacienda-mcp/views/<workspace_hash>/<vie
 Daemon-managed; all serving sessions read concurrently from a read-only handle. Source:
 `src/index/{mod,keys,writer}.rs`.
 
-| Keyspace | Purpose |
-|---|---|
-| `meta` | Constants (e.g. `schema_ver`). |
-| `symbols_by_path` | Per-file outline lookups. |
-| `symbols_by_name` | `name`-prefix range scans for symbol search. |
-| `calls_by_path` | Per-file call lookups. |
-| `calls_by_callee` | `callee`-prefix range scans — drives `find_references`. |
-| `imports_by_module` | `module`-prefix range scans — drives `dependents`. |
-| `imports_by_path` | Per-file import lookups. |
-| `implementations_by_trait` | `trait`-prefix range scans — drives `find_implementations`. |
-| `implementations_by_path` | Per-file implementation lookups. |
-| `embeddings` | Reserved for in-Fjall vector index; LanceDB owns the live vectors. |
-| `memory_by_key` | Agent memory (`memory_put` / `memory_get`); LanceDB owns the embeddings. |
+| Keyspace                   | Purpose                                                                  |
+| -------------------------- | ------------------------------------------------------------------------ |
+| `meta`                     | Constants (e.g. `schema_ver`).                                           |
+| `symbols_by_path`          | Per-file outline lookups.                                                |
+| `symbols_by_name`          | `name`-prefix range scans for symbol search.                             |
+| `calls_by_path`            | Per-file call lookups.                                                   |
+| `calls_by_callee`          | `callee`-prefix range scans — drives `find_references`.                  |
+| `imports_by_module`        | `module`-prefix range scans — drives `dependents`.                       |
+| `imports_by_path`          | Per-file import lookups.                                                 |
+| `implementations_by_trait` | `trait`-prefix range scans — drives `find_implementations`.              |
+| `implementations_by_path`  | Per-file implementation lookups.                                         |
+| `embeddings`               | Reserved for in-Fjall vector index; LanceDB owns the live vectors.       |
+| `memory_by_key`            | Agent memory (`memory_put` / `memory_get`); LanceDB owns the embeddings. |
 
 Key shapes (length-prefixed, see `src/index/keys.rs`):
 

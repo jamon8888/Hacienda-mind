@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["basemind-opencode@latest"],
+  "mcp": {
+    "basemind": {
+      "type": "local",
+      "command": ["basemind", "serve"],
+      "enabled": true
+    }
+  }
+}

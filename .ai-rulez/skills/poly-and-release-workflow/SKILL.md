@@ -40,7 +40,7 @@ HACIENDA_MCP_HARDEN_NO_BUILD=1 \
 ## Commit + push
 
 - Conventional Commit prefix (`feat:`, `fix:`, `perf:`, `chore:`, `refactor:`).
-- Body explains *why*. Mention schema bumps (`INDEX_SCHEMA_VER` / blob format) and added dependencies.
+- Body explains _why_. Mention schema bumps (`INDEX_SCHEMA_VER` / blob format) and added dependencies.
 - Co-author trailer per repo convention.
 - Push directly to `main` is approved for the active iteration loop; PRs only when explicitly requested.
 

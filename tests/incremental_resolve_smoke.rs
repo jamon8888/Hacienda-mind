@@ -58,7 +58,14 @@ fn scan_paths_refreshes_resolved_edges_after_edit() {
 
     let after = "const count = 1;\nfunction f() {\n  return count + count + count;\n}\n";
     fs::write(&app_abs, after).unwrap();
-    scan_paths(root, &mut store, &cfg, &[app_abs], hacienda_mcp::scanner::EmbedMode::Inline).unwrap();
+    scan_paths(
+        root,
+        &mut store,
+        &cfg,
+        &[app_abs],
+        hacienda_mcp::scanner::EmbedMode::Inline,
+    )
+    .unwrap();
 
     let mut uses = hacienda_mcp::query::resolved_references(&store, &app, def_start);
     uses.sort_by_key(|(_, s)| *s);
@@ -111,8 +118,14 @@ fn scan_paths_purges_resolved_edges_for_removed_file() {
     let gone = RelPath::from("gone.js");
     let def_start = count_def_start(src);
 
-    assert_eq!(hacienda_mcp::query::resolved_references(&store, &gone, def_start).len(), 2);
-    assert_eq!(hacienda_mcp::query::resolved_references(&store, &keep, def_start).len(), 2);
+    assert_eq!(
+        hacienda_mcp::query::resolved_references(&store, &gone, def_start).len(),
+        2
+    );
+    assert_eq!(
+        hacienda_mcp::query::resolved_references(&store, &keep, def_start).len(),
+        2
+    );
 
     fs::remove_file(&gone_abs).unwrap();
     scan_paths(

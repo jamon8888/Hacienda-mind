@@ -209,7 +209,11 @@ fn scan_skips_submodule_paths_by_default() {
 
     let repo = Repo::discover(root).expect("discover parent");
     let subs = repo.submodule_paths();
-    assert_eq!(subs, vec![hacienda_mcp::path::RelPath::from("vendored")], "got {subs:?}");
+    assert_eq!(
+        subs,
+        vec![hacienda_mcp::path::RelPath::from("vendored")],
+        "got {subs:?}"
+    );
 
     {
         let mut store = Store::open(root, VIEW_WORKING).unwrap();
